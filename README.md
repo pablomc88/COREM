@@ -7,4 +7,4 @@ The code has been extensively tested in Linux. The software can be also installe
 
 Martínez-Cañada, P., Morillas, C., Pino, B., Ros, E., Pelayo, F. A Computational Framework for Realistic Retina Modeling. In International Journal of Neural Systems. Accepted for publication.
 
-COREM is licensed under GNU General Public License. See [LICENSE](LICENSE) for more information.
+COREM is licensed under GNU General Public License. See [LICENSE](LICENSE) for more information. Some components of the source code are also licensed under CeCILL-C. 
