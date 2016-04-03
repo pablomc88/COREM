@@ -1,0 +1,79 @@
+# Automake file for external dynamic modules for NEST
+#
+# Hans Ekkehard Plesser, April 2008
+# Automake file for the Developer Module
+#
+# libmymodule is built as a normal, installable library.
+# It will be installed to $prefix/lib by make install.
+#
+# Headers from this directory are not to be installed upon
+# make install. They are therefore included in _SOURCES.
+
+
+# 1. Exchange "my" in "mymodule" with the name of your model below
+#    (ten locations).
+# 2. Add all .cpp and .h files from your code as *_SOURCES. Header files
+#    are given only so that they will be included in the tarball if you
+#    run "make dist" on your module.
+# 3. The mymodule* stuff creates a module that can be loaded at runtime.
+#    It is called mymodule.so.
+# 4. The libmymodule* stuff creates a library against which NEST can be
+#    linked.
+
+libdir= @libdir@/nest
+
+# We need to install the module header for static linking on BlueGene
+include_HEADERS = COREM.h
+
+# All other source files
+source_files=  COREM.cpp COREM.h
+		    retina_interface.cpp retina_interface.h  \
+		    ../../src/GaussFilter.cpp ../../src/GaussFilter.h\
+		    ../../src/multimeter.cpp ../../src/multimeter.h\
+		    ../../src/LinearFilter.cpp ../../src/LinearFilter.h\
+		    ../../src/SingleCompartment.cpp ../../src/SingleCompartment.h\
+		    ../../src/module.cpp ../../src/module.h\
+		    ../../src/Retina.cpp ../../src/Retina.h\
+		    ../../src/GratingGenerator.cpp ../../src/GratingGenerator.h\
+		    ../../src/InterfaceNEST.cpp ../../src/InterfaceNEST.h\
+		    ../../src/StaticNonLinearity.cpp ../../src/StaticNonLinearity.h\
+		    ../../src/DisplayManager.cpp ../../src/DisplayManager.h\
+		    ../../src/FileReader.cpp ../../src/FileReader.h\
+		    ../../src/whiteNoise.cpp ../../src/whiteNoise.h\
+		    ../../src/impulse.cpp ../../src/impulse.h\
+		    ../../src/ShortTermPlasticity.cpp ../../src/ShortTermPlasticity.h\
+		    ../../src/fixationalMovGrating.cpp ../../srcfixationalMovGrating.h\
+		    ../../src/constants.cpp ../../src/constants.h
+
+if BUILD_DYNAMIC_USER_MODULES
+  lib_LTLIBRARIES= libCOREM.la COREM.la
+  COREM_la_CXXFLAGS= @AM_CXXFLAGS@
+  COREM_la_SOURCES=  $(source_files)
+  COREM_la_LDFLAGS=  -module -lX11 -lpthread
+else
+  lib_LTLIBRARIES= libCOREM.la
+endif
+
+CXX+= -std=c++0x
+
+libCOREM_la_CXXFLAGS= @AM_CXXFLAGS@ -DLINKED_MODULE
+libCOREM_la_SOURCES=  $(source_files)
+
+MAKEFLAGS= @MAKE_FLAGS@
+
+AM_CPPFLAGS= @NEST_CPPFLAGS@ \
+             @INCLTDL@
+
+.PHONY: install-slidoc
+
+pkgdatadir=@datadir@/nest
+
+nobase_pkgdata_DATA=\
+	sli/COREM-init.sli
+
+install-slidoc:
+	NESTRCFILENAME=/dev/null $(DESTDIR)$(NEST_PREFIX)/bin/sli --userargs="@HELPDIRS@" $(NEST_PREFIX)/share/nest/sli/install-help.sli
+
+install-data-hook: install-exec install-slidoc
+
+EXTRA_DIST= sli
