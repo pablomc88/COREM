@@ -65,7 +65,7 @@ OBJECTS       = build/main.o \
 		build/fixationalMovGrating.o \
 		build/constants.o
 
-TARGET        = COREM
+TARGET        = corem
 
 
 first: all
@@ -88,9 +88,22 @@ first: all
 .c.o:
 	$(CC) -c $(CFLAGS) $(INCPATH) -o "$@" "$<"
 
+####### Install rules
+
+PREFIX = /usr/local
+
+.PHONY: install
+install: corem
+	mkdir -p $(DESTDIR)$(PREFIX)/bin
+	cp $< $(DESTDIR)$(PREFIX)/bin/corem
+
+.PHONY: uninstall
+uninstall:
+	rm -f $(DESTDIR)$(PREFIX)/bin/corem
+
 ####### Build rules
 
-files := $(shell mkdir build/) $(shell mkdir results/)
+files := $(shell mkdir build/)
 
 all: Makefile $(TARGET)
 
@@ -98,8 +111,8 @@ $(TARGET):  $(OBJECTS)
 	$(LINK) $(LFLAGS) -o $(TARGET) $(OBJECTS) $(OBJCOMP) $(LIBS)
 
 dist: 
-	@test -d .tmp/COREM1.0.0 || mkdir -p .tmp/COREM1.0.0
-	$(COPY_FILE) --parents $(SOURCES) $(DIST) .tmp/COREM1.0.0/ && $(COPY_FILE) --parents src/GaussFilter.h src/multimeter.h src/LinearFilter.h src/SingleCompartment.h src/module.h src/Retina.h src/GratingGenerator.h src/InterfaceNEST.h src/StaticNonLinearity.h src/DisplayManager.h src/FileReader.h src/whiteNoise.h src/impulse.h src/ShortTermPlasticity.h src/fixationalMovGrating.h src/constants.h .tmp/COREM1.0.0/ && $(COPY_FILE) --parents src/main.cpp src/GaussFilter.cpp src/multimeter.cpp src/LinearFilter.cpp src/SingleCompartment.cpp src/module.cpp src/Retina.cpp src/GratingGenerator.cpp src/InterfaceNEST.cpp src/StaticNonLinearity.cpp src/DisplayManager.cpp src/FileReader.cpp src/whiteNoise.cpp src/impulse.cpp src/ShortTermPlasticity.cpp src/fixationalMovGrating.cpp src/constants.cpp .tmp/COREM1.0.0/ && (cd `dirname .tmp/COREM1.0.0` && $(TAR) COREM1.0.0.tar COREM1.0.0 && $(COMPRESS) COREM1.0.0.tar) && $(MOVE) `dirname .tmp/COREM1.0.0`/COREM1.0.0.tar.gz . && $(DEL_FILE) -r .tmp/COREM1.0.0
+	@test -d .tmp/corem1.0.0 || mkdir -p .tmp/corem1.0.0
+	$(COPY_FILE) --parents $(SOURCES) $(DIST) .tmp/corem1.0.0/ && $(COPY_FILE) --parents src/GaussFilter.h src/multimeter.h src/LinearFilter.h src/SingleCompartment.h src/module.h src/Retina.h src/GratingGenerator.h src/InterfaceNEST.h src/StaticNonLinearity.h src/DisplayManager.h src/FileReader.h src/whiteNoise.h src/impulse.h src/ShortTermPlasticity.h src/fixationalMovGrating.h src/constants.h .tmp/corem1.0.0/ && $(COPY_FILE) --parents src/main.cpp src/GaussFilter.cpp src/multimeter.cpp src/LinearFilter.cpp src/SingleCompartment.cpp src/module.cpp src/Retina.cpp src/GratingGenerator.cpp src/InterfaceNEST.cpp src/StaticNonLinearity.cpp src/DisplayManager.cpp src/FileReader.cpp src/whiteNoise.cpp src/impulse.cpp src/ShortTermPlasticity.cpp src/fixationalMovGrating.cpp src/constants.cpp .tmp/corem1.0.0/ && (cd `dirname .tmp/corem1.0.0` && $(TAR) corem1.0.0.tar corem1.0.0 && $(COMPRESS) corem1.0.0.tar) && $(MOVE) `dirname .tmp/corem1.0.0`/corem1.0.0.tar.gz . && $(DEL_FILE) -r .tmp/corem1.0.0
 
 
 clean:compiler_clean 
