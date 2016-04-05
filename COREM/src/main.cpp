@@ -2,8 +2,8 @@
 /* BeginDocumentation
  * Name: main
  *
- * Description: fixed time-step simulation of the retina script specified
- * in "constants.cpp" or passed through arguments.
+ * Description: fixed time-step simulation of the retina script
+ * passed through arguments.
  *
  *
  * Author: Pablo Martinez Cañada. University of Granada. CITIC-UGR. Spain.
@@ -27,7 +27,7 @@ int main(int argc, char *argv[])
 
     string currentDirRoot = constants::getPath();
 
-    // delete files in results folder (if any) (comment these lines when optimizing)
+    // delete files in results folder (if any)
     DIR *dir;
     struct dirent *ent;
     string resdir = currentDirRoot+"results/";
@@ -44,55 +44,51 @@ int main(int argc, char *argv[])
             const char * todelete = (results).c_str();
             system(todelete);
         }
-
-    }closedir (dir);
+        closedir (dir);
+    }else{
+        const char * tocreate = ("mkdir "+currentDirRoot+"results/").c_str();
+        system(tocreate);
+    }
 
     // Create retina interface
     string retinaString;
     const char * outID;
 
     // read arguments or default script
-    if (argc==1){
-        retinaString = currentDirRoot + constants::retinaScript;
-        outID = constants::resultID;
-    }else{
-        retinaString = currentDirRoot + "Retina_scripts/" + (string)argv[1];
-        if(argc==2)
-            outID = argv[1];
-        else if(argc==3)
-            outID = argv[2];
-    }
+    if (argc > 1){
+        retinaString = currentDirRoot + (string)argv[1];
 
-    const char * retinaSim = retinaString.c_str();
-    InterfaceNEST interface;
-    interface.allocateValues(retinaSim,outID,constants::outputfactor,0);
-
-    // Read number of trials and simulation time
-    double trials = interface.getTotalNumberTrials();
-    int simTime = interface.getSimTime();
-    double simStep = interface.getSimStep();
-
-//    cout << "Simulation time: "<< simTime << endl;
-//    cout << "Trials: "<< trials << endl;
-//    cout << "Simulation step: "<< simStep << endl;
-
-    // Simulation
-    for(int i=0;i<trials;i++){
-
-        // Create new retina interface for every trial (reset values)
+        // Create interface
+        const char * retinaSim = retinaString.c_str();
         InterfaceNEST interface;
-        interface.allocateValues(retinaSim,outID,constants::outputfactor,i);
+        interface.allocateValues(retinaSim,"output",constants::outputfactor,0);
 
-//        cout << "-- Trial "<< i << " --" << endl;
+        // Read number of trials and simulation time
+        double trials = interface.getTotalNumberTrials();
+        int simTime = interface.getSimTime();
+        double simStep = interface.getSimStep();
 
-        if(interface.getAbortExecution()==false){
-            for(int k=0;k<simTime;k+=simStep){
-                interface.update();
+    //    cout << "Simulation time: "<< simTime << endl;
+    //    cout << "Trials: "<< trials << endl;
+    //    cout << "Simulation step: "<< simStep << endl;
+
+        // Simulation
+        for(int i=0;i<trials;i++){
+
+            // Create new retina interface for every trial (reset values)
+            InterfaceNEST interface;
+            interface.allocateValues(retinaSim,"output",constants::outputfactor,i);
+
+    //        cout << "-- Trial "<< i << " --" << endl;
+
+            if(interface.getAbortExecution()==false){
+                for(int k=0;k<simTime;k+=simStep){
+                    interface.update();
+                }
             }
+
         }
 
-    }
-
-
+    }else{cout << "Please provide a retina script in arguments" << endl;}
    return 1;
 }

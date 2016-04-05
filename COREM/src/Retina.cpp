@@ -362,6 +362,8 @@ bool Retina::setInputSeq(string s){
 
         closedir( dp );
         valueToReturn = true;
+    }else{
+        cout << "Errors found reading the retina script" << endl;
     }
 
       if (valueToReturn){
