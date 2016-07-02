@@ -5,6 +5,6 @@ Most of the retina simulators are more focused on fitting specific retina functi
 
 The code has been extensively tested in Linux. The software can be also installed in Mac OS with some minor modifications of the Makefile. Installation instructions as well as the user manual can be found in the [wiki](https://github.com/pablomc88/COREM/wiki). COREM is the result of a research work and its associated publication is:
 
-`Martínez-Cañada, P., Morillas, C., Pino, B., Ros, E., Pelayo, F. A Computational Framework for Realistic Retina Modeling. In International Journal of Neural Systems. Accepted for publication.`
+`Martínez-Cañada, P., Morillas, C., Pino, B., Ros, E., Pelayo, F. (2016) A Computational Framework for Realistic Retina Modeling. In International Journal of Neural Systems.`
 
 COREM is licensed under GNU General Public License. See [LICENSE](LICENSE) for more information. Some components of the source code are also licensed under CeCILL-C. 
