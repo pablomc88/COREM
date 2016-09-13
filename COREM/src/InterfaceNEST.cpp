@@ -132,8 +132,8 @@ double InterfaceNEST::getValue(double cell){
 
     for(int k=1;k<retina.getNumberModules();k++){
         neuron = retina.getModule(k);
-        const char * charID = (neuron->getModuleID()).c_str();
-        if (strcmp(charID,charIDO)==0){
+        string charID = neuron->getModuleID();
+        if (charID.compare(charIDO)==0){
             neuron_to_display = k;
             break;
         }

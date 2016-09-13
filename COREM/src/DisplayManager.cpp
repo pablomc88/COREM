@@ -332,9 +332,9 @@ void DisplayManager::updateDisplay(CImg <double> *input, Retina &retina, int ste
                 strs1 << (int)min;
 
             string str1 = strs1.str();
-            const char * min_value_text = (str1.substr(0,4)).c_str();
+            string min_value_text = str1.substr(0,4);
 
-            bars[k]->draw_text(0,bars[k]->height()-20,min_value_text,color,0,1,20);
+            bars[k]->draw_text(0,bars[k]->height()-20,min_value_text.c_str(),color,0,1,20);
 
             if(abs(max)<100)
                 strs2 << max;
@@ -343,9 +343,9 @@ void DisplayManager::updateDisplay(CImg <double> *input, Retina &retina, int ste
 
 
             string str2 = strs2.str();
-            const char * max_value_text = (str2.substr(0,4)).c_str();
+            string max_value_text = str2.substr(0,4);
 
-            bars[k]->draw_text(0,10,max_value_text,color,0,1,20);
+            bars[k]->draw_text(0,10,max_value_text.c_str(),color,0,1,20);
 
             // show image
             intermediateImages[k]->crop(margin[k+1],margin[k+1],0,0,sizeY-margin[k+1]-1,sizeX-margin[k+1]-1,0,0,false);

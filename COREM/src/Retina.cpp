@@ -269,9 +269,9 @@ for (int i=1;i<modules.size();i++){
             //search for the first image
             for (int m=1;m<modules.size();m++){
                 module* n = modules[m];
-                const char * cellName1 = l[0].c_str();
-                const char * cellName2 = (n->getModuleID()).c_str();
-                if (strcmp(cellName1,cellName2)==0){
+                string cellName1 = l[0];
+                string cellName2 = n->getModuleID();
+                if (cellName1.compare(cellName2)==0){
                     accumulator = *(n->getOutput());
                     break;
                 }
@@ -283,9 +283,9 @@ for (int i=1;i<modules.size();i++){
 
                 for (int m=1;m<modules.size();m++){
                     module* n = modules[m];
-                    const char * cellName1 = l[k].c_str();
-                    const char * cellName2 = (n->getModuleID()).c_str();
-                    if (strcmp(cellName1,cellName2)==0){
+                    string cellName1 = l[k];
+                    string cellName2 = n->getModuleID();
+                    if (cellName1.compare(cellName2)==0){
 
                        if (p[k-1]==0){
                             accumulator += *(n->getOutput());

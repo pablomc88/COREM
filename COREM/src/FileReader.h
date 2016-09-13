@@ -53,7 +53,7 @@ public:
     // parsing of retina script and initialization of retina modules
     void parseFile(Retina &retina,DisplayManager &displayMg);
     bool getContReading(){return continueReading;}
-    void abort(int line);
+    void abort(int line, char *error_msg);
 };
 
 #endif // FILEREADER_H

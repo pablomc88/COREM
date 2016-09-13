@@ -138,7 +138,7 @@ void FileReader::parseFile(Retina& retina, DisplayManager &displayMg){
                             action = 15;
                         }
                         else{
-                            abort(line);
+                            abort(line,"Unknown action command");
                             break;
                         }
                     }
@@ -146,7 +146,7 @@ void FileReader::parseFile(Retina& retina, DisplayManager &displayMg){
                 }
                 else if (*token[0] != '#')
                 {
-                    abort(line);
+                    abort(line,"neither 'retina' nor '#' token found at line beginning");
                     break;
                 }
 
@@ -188,7 +188,7 @@ void FileReader::parseFile(Retina& retina, DisplayManager &displayMg){
                     }
 
                     else{
-                        abort(line);
+                        abort(line,"Unknown module type");
                         break;
                     }
 
@@ -214,11 +214,11 @@ void FileReader::parseFile(Retina& retina, DisplayManager &displayMg){
 
                                     i+=2;
                                 }else{
-                                    abort(line);
+                                    abort(line,"Incorrect parameter format");
                                     break;
                                 }
                                 if (!token[i]){
-                                    abort(line);
+                                    abort(line,"Incorrect format of parameters");
                                     break;
                                 }
                             }
@@ -231,18 +231,18 @@ void FileReader::parseFile(Retina& retina, DisplayManager &displayMg){
                                 if(continueReading){
                                     retina.addModule(newModule,token[3]);
                                 }else{
-                                    abort(line);
+                                    abort(line,"Error setting specified parameters");
                                     break;
                                 }
                             }
 
 
                         }else{
-                            abort(line);
+                            abort(line,"Incorrect parameter start format");
                             break;
                         }
                     }else{
-                        abort(line);
+                        abort(line,"No parameter start found");
                         break;
                     }
 
@@ -279,14 +279,14 @@ void FileReader::parseFile(Retina& retina, DisplayManager &displayMg){
                                     operations.push_back(1);
                                 }else
                                 {
-                                    abort(line);
+                                    abort(line,"Neither '+' or '-' token found");
                                     break;
                                 }
                                 change=true;
                             }
                             i+=1;
                             if (!token[i]){
-                                abort(line);
+                                abort(line,"Expected token not found");
                                 break;
                             }
                         }
@@ -298,12 +298,12 @@ void FileReader::parseFile(Retina& retina, DisplayManager &displayMg){
                             if(verbose)cout << "Modules connected to "<< token[i+1] << endl;
 
                             if (!continueReading){
-                                abort(line);
+                                abort(line,"Error connecting expecified modules");
                                 break;
                             }
 
                         }else{
-                            abort(line);
+                            abort(line,"Expected two module IDs and correct format");
                             break;
                         }
 
@@ -314,12 +314,12 @@ void FileReader::parseFile(Retina& retina, DisplayManager &displayMg){
                         continueReading=retina.connect(modulesID,token[3],operations,token[4]);
                         if(verbose)cout << "Modules connected to "<< token[3] << endl;
                         if (!continueReading){
-                            abort(line);
+                            abort(line,"Incorrect module IDs for connect action command");
                             break;
                         }
                     }
                 }else{
-                    abort(line);
+                    abort(line,"Not enough parameters");
                     break;
                 }
 
@@ -332,11 +332,11 @@ void FileReader::parseFile(Retina& retina, DisplayManager &displayMg){
                     if (atof(token[2])>0)
                         retina.set_step(atof(token[2]));
                     else{
-                        abort(line);
+                        abort(line,"Expected positive value (>0)");
                         break;
                     }
                 }else{
-                    abort(line);
+                    abort(line,"Expected temporal step value");
                     break;
                 }
 
@@ -353,17 +353,17 @@ void FileReader::parseFile(Retina& retina, DisplayManager &displayMg){
                             if(verbose)cout << "Pixels per degree = " << atof(token[3]) << endl;
                         }
                         else{
-                            abort(line);
+                            abort(line,"Expected positive parameter (>0)");
                             break;
                         }
                     }else{
-                        abort(line);
+                        abort(line,"Expected '{' and '}' around parameter");
                         break;
                     }
 
 
                 }else{
-                    abort(line);
+                    abort(line,"Expected pixel per degree parameter");
                     break;
                 }
 
@@ -377,11 +377,11 @@ void FileReader::parseFile(Retina& retina, DisplayManager &displayMg){
                     if (atof(token[2])>0)
                         retina.setRepetitions(atof(token[2]));
                     else{
-                        abort(line);
+                        abort(line,"Expected a positive number of repetitions (>0)");
                         break;
                     }
                 }else{
-                    abort(line);
+                    abort(line,"Expected value of number of repetitions");
                     break;
                 }
 
@@ -395,11 +395,11 @@ void FileReader::parseFile(Retina& retina, DisplayManager &displayMg){
                     if (atof(token[2])>=0)
                         displayMg.setDelay(atof(token[2]));
                     else{
-                        abort(line);
+                        abort(line,"Expected positive or zero value (>=0)");
                         break;
                     }
                 }else{
-                    abort(line);
+                    abort(line,"Expected value of display delay");
                     break;
                 }
 
@@ -414,11 +414,11 @@ void FileReader::parseFile(Retina& retina, DisplayManager &displayMg){
                     if (atof(token[2])>0)
                         displayMg.setImagesPerRow(atof(token[2]));
                     else{
-                        abort(line);
+                        abort(line,"Expected a positive value (>0)");
                         break;
                     }
                 }else{
-                    abort(line);
+                    abort(line,"Expected number of windows");
                     break;
                 }
 
@@ -442,7 +442,7 @@ void FileReader::parseFile(Retina& retina, DisplayManager &displayMg){
                                 retina.setRepetitions(1.0);
                                 if(verbose)cout << "Grating generated." << endl;
                             }else{
-                                abort(line);
+                                abort(line,"Expected parameter list of grating: 'type','step','length1','length2','length3','sizeX','sizeY','freq','period','Lum','Contr','phi_s','phi_t','orientation','red_weight','green_weight','blue_weight','red_phase','green_phase','blue_phase'");
                                 break;
                             }
                         }else if(strcmp(token[2], "fixationalMovGrating") == 0 ){
@@ -452,7 +452,7 @@ void FileReader::parseFile(Retina& retina, DisplayManager &displayMg){
                                 retina.setRepetitions(1.0);
                                 if(verbose)cout << "Grating of fixational movements generated." << endl;
                             }else{
-                                abort(line);
+                                abort(line,"Expected parameter list of fixationalMovGrating: 'sizeX','sizeY','circle_radius','jitter_period','spatial_period','step_size','Lum','Contr','orientation','red_weight','green_weight','blue_weight','type1','type2','switch'");
                                 break;
                             }
 
@@ -462,7 +462,7 @@ void FileReader::parseFile(Retina& retina, DisplayManager &displayMg){
                                 retina.setRepetitions(1.0);
                                 if(verbose)cout << "White noise generated." << endl;
                             }else{
-                                abort(line);
+                                abort(line,"Expected parameter list of whiteNoise: 'mean','contrast1','contrast2','period','switch','sizeX','sizeY'");
                                 break;
                             }
                         }
@@ -472,23 +472,23 @@ void FileReader::parseFile(Retina& retina, DisplayManager &displayMg){
                                 retina.setRepetitions(1.0);
                                 if(verbose)cout << "Impulse generated." << endl;
                             }else{
-                                abort(line);
+                                abort(line,"Expected parameter list of impulse: 'start','stop','amplitude','offset','sizeX','sizeY'");
                                 break;
                             }
                         }
                         else{
-                            abort(line);
+                            abort(line,"Unknown input type");
                             break;
                         }
 
 
                     }
                     else{
-                        abort(line);
+                        abort(line,"Parameter start token ('{') not found");
                         break;
                     }
                 }else{
-                    abort(line);
+                    abort(line,"Tokens for input action command not found");
                     break;
                 }
 
@@ -509,16 +509,16 @@ void FileReader::parseFile(Retina& retina, DisplayManager &displayMg){
             case 11:
 
                 if (token[2] && token[3] && token[4] && token[5]){
-
+                    bool module_id_found;
                     // Search for the module ID
+                    module_id_found=false;
                     continueReading=false;
                     for(int l=1;l<retina.getNumberModules();l++){
                         module *m = retina.getModule(l);
-                        const char * ID = (m->getModuleID()).c_str();
-
-                        if(strcmp(token[2],ID)==0){
+                        string ID = m->getModuleID();
+                        if(ID.compare(token[2])==0){
                             continueReading=true;
-
+                            module_id_found=true;
                             if(strcmp(token[3],"True")==0){
                                 displayMg.setIsShown(true,l);
                                 if(verbose)cout << "Module "<<  token[2] <<" is displayed." << endl;
@@ -530,7 +530,7 @@ void FileReader::parseFile(Retina& retina, DisplayManager &displayMg){
                                 if(verbose)cout << "Module "<<  token[2] <<" is not displayed." << endl;
                             }
                             else{
-                                abort(line);
+                                abort(line,"Expected a 'True' or 'False' value after module ID");
                                 break;
                             }
 
@@ -552,7 +552,7 @@ void FileReader::parseFile(Retina& retina, DisplayManager &displayMg){
                                 if(verbose)cout << "Module "<<  token[2] <<" is not displayed." << endl;
                             }
                             else{
-                                abort(line);
+                                abort(line,"Expected 'True' or 'False' value for Input");
                                 break;
                             }
 
@@ -561,9 +561,12 @@ void FileReader::parseFile(Retina& retina, DisplayManager &displayMg){
                             }
 
                     }
+                    else
+                        if(!module_id_found)
+                            abort(line,"Specified module ID not found");
 
                 }else{
-                    abort(line);
+                    abort(line,"Parameters for Show window not found");
                     break;
                 }
 
@@ -581,17 +584,17 @@ void FileReader::parseFile(Retina& retina, DisplayManager &displayMg){
                             if(verbose)cout << "Display zoom = " << atof(token[3]) << endl;
                         }
                         else{
-                            abort(line);
+                            abort(line,"Expected a positive value (>0)");
                             break;
                         }
                     }else{
-                        abort(line);
+                        abort(line,"Expected '{' and '}' around parameter value");
                         break;
                     }
 
 
                 }else{
-                    abort(line);
+                    abort(line,"Expected parameters for Windows Zoom not found");
                     break;
                 }
 
@@ -605,7 +608,7 @@ void FileReader::parseFile(Retina& retina, DisplayManager &displayMg){
                     // read multimeter type
                     if (strcmp(token[2], "spatial") != 0 && strcmp(token[2], "temporal") != 0 && strcmp(token[2], "Linear-Nonlinear") != 0)
                     {
-                        abort(line);
+                        abort(line,"Expected any of the parameters for multimeter: 'spatial','temporal','Linear-Nonlinear'");
                         break;
                     }
 
@@ -637,45 +640,47 @@ void FileReader::parseFile(Retina& retina, DisplayManager &displayMg){
                                         else
                                             continueReading=false;
                                     }else{
-                                        abort(line);
+                                        abort(line,"Expected spatial multimeter parameter list: 'timeStep','rowcol','value','Show'");
                                         break;
                                     }
                                 }else if(strcmp(token[2], "temporal") == 0 && token[6] && token[7] && token[8] && token[9] && token[10] && token[11] && token[12]){
                                     if(strcmp(token[6], "x") == 0 && strcmp(token[8], "y") == 0 && strcmp(token[11], "Show") == 0){
                                         displayMg.addMultimeterTempSpat(token[3],token[4],atof(token[7]),atof(token[9]),true,token[12]);
                                     }else{
-                                        abort(line);
+                                        abort(line,"Expected temporal multimeter parameter list: 'x','y','Show'");
                                         break;
                                     }
                                 }else if(strcmp(token[2], "Linear-Nonlinear") == 0 && token[6] && token[7] && token[8] && token[9] && token[10] && token[11] && token[12] && token[13] && token[14] && token[15] && token[16] && token[17] && token[18] && token[19] && token[20]){
                                     if(strcmp(token[6], "x") == 0 && strcmp(token[8], "y") == 0 && strcmp(token[10], "segment") == 0 && strcmp(token[12], "interval") == 0 && strcmp(token[14], "start") == 0 && strcmp(token[16], "stop") == 0 && strcmp(token[18], "Show") == 0){
                                         displayMg.addMultimeterLN(token[3],token[4],atof(token[7]),atof(token[9]),atof(token[11]),atof(token[13]),atof(token[15]),atof(token[17]),token[19]);
                                     }else{
-                                        abort(line);
+                                        abort(line,"Expected Linear-Nonlinear multimeter parameter list: 'x','y','segment','interval','start','stop','Show'");
                                         break;
                                     }
                                 }
                                 else{
-                                    abort(line);
+                                    abort(line,"Expected any of the multimeter types ('spatial', 'temporal', 'Linear-Nonlinear') and corresponding parameters");
                                     break;
                                 }
                             }
                             else{
-                                abort(line);
+                                abort(line,"Parameter syntax error or specified module ID not found");
                                 break;
                             }
 
 
 
                         }else{
-                            abort(line);
+                            abort(line,"Expected parameter list start token ('{')");
                             break;
                         }
                     }else{
-                        abort(line);
+                        abort(line,"Expected parameter token");
                         break;
                     }
 
+                }else{
+                    // Shouldn't we abort here?
                 }
 
                 action = 0;
@@ -688,11 +693,11 @@ void FileReader::parseFile(Retina& retina, DisplayManager &displayMg){
                     if (atof(token[2])>0)
                         retina.setSimTime(atof(token[2]));
                     else{
-                        abort(line);
+                        abort(line,"Expected a positive time value (>0)");
                         break;
                     }
                 }else{
-                    abort(line);
+                    abort(line,"Expected simulation time value");
                     break;
                 }
 
@@ -708,11 +713,11 @@ void FileReader::parseFile(Retina& retina, DisplayManager &displayMg){
                     if (atof(token[2])>0)
                         retina.setSimTotalRep(atof(token[2]));
                     else{
-                        abort(line);
+                        abort(line,"Expected a positive value (>0)");
                         break;
                     }
                 }else{
-                    abort(line);
+                    abort(line,"Expected number of trials value");
                     break;
                 }
 
@@ -736,8 +741,8 @@ void FileReader::parseFile(Retina& retina, DisplayManager &displayMg){
 
 //-------------------------------------------------//
 
-void FileReader::abort(int line){
-    cout << "Incorrect syntax in line " << line << endl;
+void FileReader::abort(int line, char *error_msg){
+    cout << "Incorrect syntax in line " << line << ": " << error_msg << endl;
     cout << "Aborting parsing of retina file." << endl;
     continueReading = false;
 

@@ -46,8 +46,8 @@ int main(int argc, char *argv[])
         }
         closedir (dir);
     }else{
-        const char * tocreate = ("mkdir "+currentDirRoot+"results/").c_str();
-        system(tocreate);
+        string tocreate = "mkdir "+currentDirRoot+"results/";
+        system(tocreate.c_str());
     }
 
     // Create retina interface
@@ -68,9 +68,9 @@ int main(int argc, char *argv[])
         int simTime = interface.getSimTime();
         double simStep = interface.getSimStep();
 
-    //    cout << "Simulation time: "<< simTime << endl;
-    //    cout << "Trials: "<< trials << endl;
-    //    cout << "Simulation step: "<< simStep << endl;
+        //cout << "Simulation time: "<< simTime << endl;
+        //cout << "Trials: "<< trials << endl;
+        //cout << "Simulation step: "<< simStep << endl;
 
         // Simulation
         for(int i=0;i<trials;i++){
@@ -79,7 +79,8 @@ int main(int argc, char *argv[])
             InterfaceNEST interface;
             interface.allocateValues(retinaSim,"output",constants::outputfactor,i);
 
-    //        cout << "-- Trial "<< i << " --" << endl;
+            //cout << "-- Trial "<< i << " --" << endl;
+            //cout << "   AbortExecution " << interface.getAbortExecution() << endl;
 
             if(interface.getAbortExecution()==false){
                 for(int k=0;k<simTime;k+=simStep){

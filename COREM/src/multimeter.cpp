@@ -183,24 +183,26 @@ void multimeter::showLNAnalysisAvg(int col, int row, double waitTime,double segm
 
     // read values from file
     const char* to_file = readFile(LNFile);
-
-    std::ifstream fin;
-    fin.open(to_file);
     vector<double> F;
 
-    while (!fin.eof())
+    std::ifstream fin;
+    fin.open(to_file, std::ifstream::in);
+    if(fin.is_open())
     {
-      char buf[1000];
-      fin.getline(buf,1000);
-      const char* token[1] = {};
-      token[0] = strtok(buf, "\n");
 
-      F.push_back(atof(token[0]));
+        while (!fin.eof())
+        {
+          char buf[1000];
+          fin.getline(buf,1000);
+          const char* token[1] = {};
+          token[0] = strtok(buf, "\n");
+          if(token[0] != NULL)
+             F.push_back(atof(token[0]));
 
+        }
+
+        fin.close(); 
     }
-
-    fin.close(); 
-
     // Non-linearity: The stimulus is convolved with the filter.
     // g = S*F
 
@@ -819,7 +821,7 @@ const char* multimeter::readFile(const char * File){
 
     string stringResult = getDir()+ "results/";
     const char * root = (stringResult).c_str();
-    char result[1000];
+    static char result[1000];
 
     strcpy(result,root);
     strcat(result,File);

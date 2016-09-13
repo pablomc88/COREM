@@ -5,9 +5,9 @@ MAKEFILE      = Makefile
 CC            = gcc
 CXX           = g++
 CFLAGS        = -m64 -pipe -O2 -Wall -W -D_REENTRANT -fPIE $(DEFINES)
-CXXFLAGS      = -m64 -pipe -fopenmp -std=c++0x -O2 -Wall -W -D_REENTRANT -fPIE $(DEFINES)
+CXXFLAGS      = -m64 -pipe -fopenmp -std=c++0x -O2 -Wall -Wno-unused-parameter -W -D_REENTRANT -fPIE $(DEFINES)
 LINK          = g++
-LFLAGS        = -m64 -fopenmp -Wl,-O1 -Wl
+LFLAGS        = -m64 -fopenmp -Wl,-O1
 LIBS          = $(SUBLIBS) -lX11 -lpthread 
 AR            = ar cqs
 TAR           = tar -cf
