@@ -218,7 +218,7 @@ void FileReader::parseFile(Retina& retina, DisplayManager &displayMg){
                                     break;
                                 }
                                 if (!token[i]){
-                                    abort(line,"Incorrect format of parameters");
+                                    abort(line,"Incorrect parameter format");
                                     break;
                                 }
                             }
@@ -238,7 +238,7 @@ void FileReader::parseFile(Retina& retina, DisplayManager &displayMg){
 
 
                         }else{
-                            abort(line,"Incorrect parameter start format");
+                            abort(line,"Incorrect start of parameter list");
                             break;
                         }
                     }else{
@@ -303,7 +303,7 @@ void FileReader::parseFile(Retina& retina, DisplayManager &displayMg){
                             }
 
                         }else{
-                            abort(line,"Expected two module IDs and correct format");
+                            abort(line,"Expected two module IDs");
                             break;
                         }
 
