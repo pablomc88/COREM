@@ -4,10 +4,10 @@ MAKEFILE      = Makefile
 
 CC            = gcc
 CXX           = g++
-CFLAGS        = -m64 -pipe -O2 -Wall -W -D_REENTRANT -fPIE $(DEFINES)
-CXXFLAGS      = -m64 -pipe -fopenmp -std=c++0x -O2 -Wall -Wno-unused-parameter -W -D_REENTRANT -fPIE $(DEFINES)
+CFLAGS        = -m64 -pipe -Wall -W -D_REENTRANT -fPIE $(DEFINES)
+CXXFLAGS      = -m64 -pipe -fopenmp -std=c++0x -Wall -Wno-unused-parameter -W -D_REENTRANT -fPIE $(DEFINES)
 LINK          = g++
-LFLAGS        = -m64 -fopenmp -Wl,-O1
+LFLAGS        = -m64 -fopenmp
 LIBS          = $(SUBLIBS) -lX11 -lpthread 
 AR            = ar cqs
 TAR           = tar -cf
@@ -69,6 +69,16 @@ TARGET        = corem
 
 
 first: all
+
+debug: CXXFLAGS += -DDEBUG -g
+debug: CFLAGS += -DDEBUG -g
+debug: first
+
+release: CXXFLAGS += -O2
+release: CFLAGS += -O2
+release: LFLAGS += -Wl,-O1
+release: first
+
 ####### Implicit rules
 
 .SUFFIXES: .o .c .cpp .cc .cxx .C
@@ -106,6 +116,7 @@ uninstall:
 files := $(shell mkdir build/)
 
 all: Makefile $(TARGET)
+
 
 $(TARGET):  $(OBJECTS)  
 	$(LINK) $(LFLAGS) -o $(TARGET) $(OBJECTS) $(OBJCOMP) $(LIBS)
