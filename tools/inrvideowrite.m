@@ -1,4 +1,27 @@
-classdef inrfile<handle
+% inrvideowrite class creatres a movie file with INRimage format
+% 
+% To create the movie firstly the class constructor must be called.
+% Then we call the add_frame method one time per each frame we want to
+% insert in the movie
+% Finally we call the destructor of the class to update and close the file
+% Example to create a 3-frame 320x240 movie:
+%  vid = inrvideowrite('movie.inr')
+%  vid.add_frame(uint8(255*ones(240,320)))
+%  vid.add_frame(uint8(zeros(240,320)))
+%  vid.add_frame(uint8(255*ones(240,320)))
+%  vid.delete()
+% The input matrix of add_frame must have the same size and data type for all the calls.
+%
+%   See also INRWRITE.
+
+%   Copyright (C) 2016 by Richard R. Carrillo 
+%   $Revision: 1.0 $  $Date: 26/9/2016 $
+
+%   This program is free software; you can redistribute it and/or modify
+%   it under the terms of the GNU General Public License as published by
+%   the Free Software Foundation; either version 3 of the License, or
+%   (at your option) any later version.
+classdef inrvideowrite<handle
    properties
       ydim,xdim,zdim
       inr_type
@@ -24,7 +47,7 @@ classdef inrfile<handle
       data_size
    end
    methods
-      function obj = inrfile(filename)
+      function obj = inrvideowrite(filename)
          obj.inr_type_len = 0; % When this proprty is set to 0, it indicates that the other properties are not set yet.
          obj.fh=fopen(filename,'w');
          if nargin ~= -1
