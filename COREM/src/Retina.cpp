@@ -1,3 +1,7 @@
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <stdio.h>
 #include "Retina.h"
 
 Retina::Retina(int x, int y, double temporal_step){
@@ -106,6 +110,10 @@ int Retina::getSizeY(){
 
 double Retina::getStep(){
     return step;
+}
+
+void Retina::setVerbosity(bool verbose_flag){
+    verbose = verbose_flag;
 }
 
 void Retina::setSimTotalRep(double r){
@@ -345,40 +353,41 @@ int Retina::getNumberModules(){
 bool Retina::setInputSeq(string s){
 
     bool valueToReturn = false;
-    const char * directory = s.c_str();
+    struct stat input_seq_path_stat;
 
     std::vector <std::string> result;
-    dirent* de;
-    DIR* dp=opendir (directory);
+    DIR* dp=opendir(s.c_str());
 
     if (dp){
-        while (true)
-          {
-              de = readdir( dp );
-              if (de == NULL) break;
-              result.push_back( std::string( de->d_name ) );
-              std::sort( result.begin(), result.end() );
-          }
-
-        closedir( dp );
-        valueToReturn = true;
+        dirent* de;
+        do{ // For each directory entry:
+            de = readdir(dp);
+            if (de != NULL){ // We got a valid entry
+                std::string curr_input_file_path(s + de->d_name); // Compose the entire current dir entry path
+            
+                if(stat(curr_input_file_path.c_str(), &input_seq_path_stat) == 0){ // Try to get information about the de->d_name
+                    if(!S_ISDIR(input_seq_path_stat.st_mode)){ // Directories (including . and ..) are not included in the input file sequence
+                        result.push_back( curr_input_file_path );
+                        valueToReturn = true; // At least one image was found, proceed
+                    }
+                }else
+                    perror("Error accessing input sequence directory: ");
+            }
+        }while (de != NULL); // Continue while we get valid directory entries
+        closedir(dp);
     }else{
-        cout << "Errors found reading the retina script" << endl;
+        cout << "Error reading retina script: Cannot open input sequence directory " << s << endl;
     }
 
       if (valueToReturn){
 
-          const char * ff = result[2].c_str();
-          const char* dir = directory;
-          char input_im_example[1000];
-          strcpy(input_im_example,dir);
-          strcat(input_im_example,ff);
-
-          CImg <double> image(input_im_example);
+          CImg <double> image(result[0].c_str());  // First file of the sequence. result[1] and result[0] are current and up direcgory
           sizeX = image.height();
           sizeY = image.width();
 
-          numberImages = result.size()-2;
+          std::sort( result.begin(), result.end() );
+
+          numberImages = result.size();
           inputSeq = new CImg<double>*[numberImages];
 
           for (int i=0;i<numberImages;i++){
@@ -386,18 +395,13 @@ bool Retina::setInputSeq(string s){
           }
 
           for(int i=0;i<numberImages;i++){
-              const char * file = result[i+2].c_str();
-              const char* dir = directory;
-              char input_im[1000];
-              strcpy(input_im,dir);
-              strcat(input_im,file);
 
-              CImg <double> image(input_im);
+              CImg <double> image(result[i].c_str());
               *(inputSeq[i])=image;
 
           }
 
-          if(verbose)cout << numberImages << " images read from "<< directory << endl;
+          if(verbose) cout << numberImages << " images read from " << s << endl;
           inputType = 0;
 
       }

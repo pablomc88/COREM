@@ -741,7 +741,7 @@ void FileReader::parseFile(Retina& retina, DisplayManager &displayMg){
 
 //-------------------------------------------------//
 
-void FileReader::abort(int line, char *error_msg){
+void FileReader::abort(int line, const char *error_msg){
     cout << "Incorrect syntax in line " << line << ": " << error_msg << endl;
     cout << "Aborting parsing of retina file." << endl;
     continueReading = false;

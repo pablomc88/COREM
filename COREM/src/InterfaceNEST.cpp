@@ -48,6 +48,10 @@ double InterfaceNEST::getSimStep(){
 
 //------------------------------------------------------------------------------//
 
+void  InterfaceNEST::setVerbosity(bool verbose_flag){
+    retina.setVerbosity(verbose_flag);
+}
+
 void InterfaceNEST::allocateValues(const char *retinaPath, const char * outputFile,double outputfactor,double currentRep){
 
 

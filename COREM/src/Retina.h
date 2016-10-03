@@ -14,7 +14,7 @@
  */
 
 
-#include "dirent.h"
+#include <dirent.h>
 #include <algorithm>
 
 
@@ -85,6 +85,7 @@ public:
     int getSizeX();
     int getSizeY();
     double getStep();
+    void setVerbosity(bool verbose_flag);
     void setSimCurrentRep(double r);
     void setSimTotalRep(double r);
     void setSimTime(int t);

@@ -64,6 +64,7 @@ public:
     bool getAbortExecution(){return abortExecution;}
     Retina& getRetina(){return retina;}
     double getSimStep();
+    void setVerbosity(bool verbose_flag);
 
     // modification of generators (for optimization)
     void setWhiteNoise(double mean, double contrast1,double contrast2, double period, double switchT,string id,double start, double stop);
