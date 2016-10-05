@@ -160,13 +160,13 @@ void SingleCompartment::feedInput(const CImg<double>& new_input,bool isCurrent,i
     int number_of_conductances = 0;
     for(int k=0;k<typeSynapse.size();k++){
 
-        if (k<port){
+        if (k<port){ // For each synapse (input module) of this module, count the number of previous synpses in the list 
             if (typeSynapse[k]==0)
-                number_of_currents+=1;
+                number_of_currents+=1; // Accumulate the number of previous current port in the list
             else
                 number_of_conductances+=1;
 
-        }else if(k==port){
+        }else if(k==port){ // Subtract the number of synspses of the type different from the current one to get the relative position
             if (isCurrent)
                 port = port - number_of_conductances;
             else
@@ -176,11 +176,17 @@ void SingleCompartment::feedInput(const CImg<double>& new_input,bool isCurrent,i
     }
 
     // feed new input
-        if(isCurrent && port<number_current_ports){
+    if(isCurrent){ // type is Current
+        if(port<number_current_ports)
             *(currents[port])=new_input;
-        }else if(port<number_conductance_ports){
+        else
+            cout << "Warning: Found 'Current' input number " << port+1 << " in SingleCompartment module but only " << number_current_ports << " 'Current' ports have been defined in parameters" << endl;
+    }else{ // type is Conductance
+        if(port<number_conductance_ports)
             *(conductances[port])=new_input;
-        }
+        else
+            cout << "Warning: Found 'Conductance' input number " << port+1 << " in SingleCompartment module but only " << number_conductance_ports << " 'Conductance' ports have been defined in parameters" << endl;
+    }
 
 }
 
