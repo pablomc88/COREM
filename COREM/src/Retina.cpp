@@ -405,7 +405,7 @@ bool Retina::setInputSeq(string s){
                 inputType = 0;
 
               }
-        } else { // The user has specified a file as input sequence: load all the movie files
+        } else { // The user has specified a file as input sequence: load all the movie file
         
             CImg <double> inp_movie(s.c_str()); // We assume that the specified file is a sequence of images
             sizeX = inp_movie.height();

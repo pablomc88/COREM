@@ -228,7 +228,7 @@ void SingleCompartment::update(){
         //tau
         tau->fill(taum);
         // potential at infinity
-        potential_inf->fill(El);
+        potential_inf->fill(El); // El is set equal to E parameter
         for(int k=0;k<number_current_ports;k++){
             (*potential_inf) += (*(currents[k]))*Rm;
         }

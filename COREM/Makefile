@@ -46,6 +46,7 @@ SOURCES       = src/main.cpp \
 		src/impulse.cpp \
 		src/ShortTermPlasticity.cpp \
 		src/fixationalMovGrating.cpp \
+		src/RetinaOutput.cpp \
 		src/constants.cpp 
 OBJECTS       = build/main.o \
 		build/GaussFilter.o \
@@ -63,6 +64,7 @@ OBJECTS       = build/main.o \
 		build/impulse.o \
 		build/ShortTermPlasticity.o \
 		build/fixationalMovGrating.o \
+		build/RetinaOutput.o \
 		build/constants.o
 
 TARGET        = corem
@@ -178,6 +180,7 @@ build/main.o: src/main.cpp CImg-1.6.0_rolling141127/CImg.h \
 		src/GaussFilter.h \
 		src/GratingGenerator.h \
 		src/fixationalMovGrating.h \
+		src/RetinaOutput.h \
 		src/whiteNoise.h \
 		src/impulse.h \
 		src/FileReader.h \
@@ -206,6 +209,12 @@ build/SingleCompartment.o: src/SingleCompartment.cpp src/SingleCompartment.h \
 		src/constants.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o build/SingleCompartment.o src/SingleCompartment.cpp
 
+build/RetinaOutput.o: src/RetinaOutput.cpp src/RetinaOutput.h \
+		src/module.h \
+		CImg-1.6.0_rolling141127/CImg.h \
+		src/constants.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o build/RetinaOutput.o src/RetinaOutput.cpp
+
 build/module.o: src/module.cpp src/module.h \
 		CImg-1.6.0_rolling141127/CImg.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o build/module.o src/module.cpp
@@ -215,6 +224,7 @@ build/Retina.o: src/Retina.cpp src/Retina.h \
 		CImg-1.6.0_rolling141127/CImg.h \
 		src/LinearFilter.h \
 		src/SingleCompartment.h \
+		src/RetinaOutput.h \
 		src/constants.h \
 		src/GaussFilter.h \
 		src/GratingGenerator.h \
@@ -236,6 +246,7 @@ build/InterfaceNEST.o: src/InterfaceNEST.cpp src/InterfaceNEST.h \
 		src/module.h \
 		src/LinearFilter.h \
 		src/SingleCompartment.h \
+		src/RetinaOutput.h \
 		src/GaussFilter.h \
 		src/GratingGenerator.h \
 		src/fixationalMovGrating.h \
@@ -259,6 +270,7 @@ build/DisplayManager.o: src/DisplayManager.cpp src/DisplayManager.h \
 		src/module.h \
 		src/LinearFilter.h \
 		src/SingleCompartment.h \
+		src/RetinaOutput.h \
 		src/GaussFilter.h \
 		src/GratingGenerator.h \
 		src/fixationalMovGrating.h \
@@ -275,6 +287,7 @@ build/FileReader.o: src/FileReader.cpp src/FileReader.h \
 		src/module.h \
 		src/LinearFilter.h \
 		src/SingleCompartment.h \
+		src/RetinaOutput.h \
 		src/GaussFilter.h \
 		src/GratingGenerator.h \
 		src/fixationalMovGrating.h \

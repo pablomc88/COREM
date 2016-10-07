@@ -5,8 +5,8 @@
  * Name: singleCompartment
  *
  * Description: generic single-compartment model of the membrane potential,
- * updated by Euler's method. The membrane potential is driven by conductance
- * and current inputs
+ * updated by First-order forward Euler exponential integrator. The membrane
+ * potential is driven by conductance and current inputs
  *
  * Author: Pablo Martinez Cañada. University of Granada. CITIC-UGR. Spain.
  * <pablomc@ugr.es>
@@ -31,7 +31,7 @@ protected:
     int number_current_ports;
     int number_conductance_ports;
     // Nernst potentials
-    vector <double> E;
+    vector <double> E; // As many vector elements as number_conductance_ports
     // membrane capacitance, resistance and tau
     double Cm, Rm, taum, El;
     // membrane potential
