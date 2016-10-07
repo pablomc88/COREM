@@ -105,6 +105,19 @@ void RetinaOutput::feedInput(const CImg<double>& new_input,bool isCurrent,int po
     *inputImage = new_input;
 }
 
+double RetinaOutput::inp_pixel_to_freq(double pixel_value){
+    double firing_rate;
+    
+    if(pixel_value<Input_threshold) // If value under threshold, no output activity must be generated
+        firing_rate=0;
+    else
+        firing_rate=(pixel_value-pixel_value)*Spks_per_inp + Min_freq;
+    
+    if(firing_rate>Max_freq) // Firing rate is saturated
+       Max_freq=0;
+
+    return(firing_rate);
+}
 
 //------------------------------------------------------------------------------//
 
