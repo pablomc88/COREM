@@ -15,9 +15,9 @@
  * StaticNonLinearity
  */
 
-#include "../CImg-1.6.0_rolling141127/CImg.h"
-#include "vector"
 #include <iostream>
+#include <vector>
+#include "../CImg-1.6.0_rolling141127/CImg.h"
 
 using namespace cimg_library;
 using namespace std;
@@ -45,7 +45,7 @@ public:
     // set protected parameters
     module& setSizeX(int x);
     module& setSizeY(int y);
-    module& set_step(double temporal_step);
+    module& set_step(double temporal_step); // Set the duration of a simulation time step (slot) in milliseconds
 
     // add operations or ID of input modules
     void addOperation(vector <int> ops){portArith.push_back(ops);}

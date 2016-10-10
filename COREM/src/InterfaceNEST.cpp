@@ -108,7 +108,6 @@ void InterfaceNEST::allocateValues(const char *retinaPath, const char * outputFi
 
 void InterfaceNEST::update(){
 
-
     CImg<double> *input= retina.feedInput(SimTime);
     retina.update();
     displayMg.updateDisplay(input,retina,SimTime,totalSimTime,CurrentTrial,totalNumberTrials);

@@ -23,21 +23,26 @@
 using namespace cimg_library;
 using namespace std;
 
+// Define spike struct to be used by RetinaOutput class to store generated spikes
+struct spike_t {
+    double time;
+    unsigned long neuron;
+};
+
 class RetinaOutput:public module{
 protected:
     // image buffers
     CImg<double> *inputImage; // Buffer used to temporally store the input values which will be converted to spikes
     
-    vector<double> out_spk_times;
-    vector<double> out_spk_neurons;
+    vector<spike_t> out_spks; // Vector of retina output spikes
     
     // conversion parameters
     double Max_freq, Min_freq; // Max. and min. number of spikes per second that a neuron can fire
     double Input_threshold; // Minimal (sustained) input value requireed for a neuron to generate some output
     double Spks_per_inp; // Conversion factor from input value to output spike frequency
     
-    // membrane potential
-    CImg<double> *last_spk_time, *last_refrac_end_time;
+    // Last firing time and predicted firing time for each output neuron
+    CImg<double> *last_spk_time, *next_spk_time;
 
 public:
     // Constructor, copy, destructor.
@@ -65,7 +70,7 @@ public:
     // This method uses the user parameter (Max_freq, Min_freq, Input_threshold and
     // Spks_per_inp) to convert the magnitude of an input pixel into an instant
     // spike firing rate.
-    double inp_pixel_to_freq(double pixel_value);
+    double inp_pixel_to_freq(double pixel_value); // TODO: static implementation
 
     // Get output image (y(k))
     virtual CImg<double>* getOutput();
