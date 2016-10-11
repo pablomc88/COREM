@@ -124,8 +124,8 @@ void Retina::setSimCurrentRep(double r){
     CurrentTrial = r;
 }
 
-void Retina::setSimTime(int t){
-    SimTime = t;
+void Retina::setTotalSimTime(int t){
+    totalSimTime = t;
 }
 
 double Retina::getSimCurrentRep(){
@@ -136,8 +136,8 @@ double Retina::getSimTotalRep(){
     return totalNumberTrials;
 }
 
-int Retina::getSimTime(){
-    return SimTime;
+int Retina::getTotalSimTime(){
+    return totalSimTime;
 }
 
 //------------------------------------------------------------------------------//
@@ -180,7 +180,7 @@ void Retina::allocateValues(){
 
 CImg<double> *Retina::feedInput(int step){
     CImg <double> *input;
-
+    cout << "timTiame:" << getTotalSimTime() << endl;
     // Input selection
     switch(inputType){
     case 0:

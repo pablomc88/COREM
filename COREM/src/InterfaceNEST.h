@@ -14,8 +14,8 @@
  * module, Retina, ShortTermPlasticity, SingleCompartment, StaticNonLinearity
  */
 
-#include "iostream"
-#include "vector"
+#include <iostream>
+#include <vector>
 
 #include "DisplayManager.h"
 #include "FileReader.h"
@@ -55,7 +55,7 @@ public:
     ~InterfaceNEST(void);
 
     double getTotalNumberTrials();
-    int getSimTime();
+    int getTotalSimTime();
 
     void reset(int X, int Y, double tstep,int rep);
     void allocateValues(const char * retinaPath, const char * outputFile, double outputfactor, double currentRep);

@@ -91,11 +91,11 @@ int main(int argc, char *argv[])
 
         // Read number of trials and simulation time
         double trials = interface.getTotalNumberTrials();
-        int simTime = interface.getSimTime();
+        int totalSimTime = interface.getTotalSimTime();
         double simStep = interface.getSimStep();
 
         if(verbose_flag){
-            cout << "Simulation time: "<< simTime << endl;
+            cout << "Simulation time: "<< totalSimTime << endl;
             cout << "Trials: "<< trials << endl;
             cout << "Simulation step: "<< simStep << endl;
         }
@@ -114,7 +114,7 @@ int main(int argc, char *argv[])
             }
 
             if(interface.getAbortExecution()==false){
-                for(int k=0;k<simTime;k+=simStep){
+                for(int sim_time=0;sim_time<totalSimTime;sim_time+=simStep){
                     interface.update();
                 }
             }

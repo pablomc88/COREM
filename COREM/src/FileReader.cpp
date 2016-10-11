@@ -691,7 +691,7 @@ void FileReader::parseFile(Retina& retina, DisplayManager &displayMg){
 
                 if (token[2]){
                     if (atof(token[2])>0)
-                        retina.setSimTime(atof(token[2]));
+                        retina.setTotalSimTime(atof(token[2]));
                     else{
                         abort(line,"Expected a positive time value (>0)");
                         break;

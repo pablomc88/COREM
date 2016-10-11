@@ -34,7 +34,7 @@ double InterfaceNEST::getTotalNumberTrials(){
 //------------------------------------------------------------------------------//
 
 
-int InterfaceNEST::getSimTime(){
+int InterfaceNEST::getTotalSimTime(){
     return totalSimTime;
 }
 
@@ -65,7 +65,7 @@ void InterfaceNEST::allocateValues(const char *retinaPath, const char * outputFi
     SimTime = 0;
 
     // Simulation parameters
-    totalSimTime = retina.getSimTime();
+    totalSimTime = retina.getTotalSimTime();
     totalNumberTrials = retina.getSimTotalRep();
 
     CurrentTrial = currentRep;

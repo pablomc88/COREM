@@ -34,7 +34,7 @@ class Retina{
 protected:
     // Image size
     int sizeX, sizeY;
-    // simulation step and ppd
+    // simulation step time length and ppd
     double step;
     double pixelsPerDegree;
 
@@ -62,7 +62,7 @@ protected:
     int repetitions;
 
     // Simulation time
-    int SimTime;
+    int totalSimTime;
     // Current and total number of trials
     double CurrentTrial,totalNumberTrials;
 
@@ -88,10 +88,10 @@ public:
     void setVerbosity(bool verbose_flag);
     void setSimCurrentRep(double r);
     void setSimTotalRep(double r);
-    void setSimTime(int t);
+    void setTotalSimTime(int t);
     double getSimCurrentRep();
     double getSimTotalRep();
-    int getSimTime();
+    int getTotalSimTime();
 
     // set and get pixelsPerDegree
     Retina& setPixelsPerDegree(double ppd);
