@@ -26,11 +26,10 @@ void multimeter::showSpatialProfile(CImg<double> img,bool rowCol,int number,stri
     double dim = 0.0;
 
     if(rowCol == true){
-        dim = img.height();
-    }else{
         dim = img.width();
+    }else{
+        dim = img.height();
     }
-
 
     CImg <double> *SpatialProfile1 = new CImg <double>(dim,1,1,1,0);
 
