@@ -45,6 +45,7 @@ RetinaOutput::~RetinaOutput(){
 //------------------------------------------------------------------------------//
 
 void RetinaOutput::allocateValues(){
+    module::allocateValues(); // Use the allocateValues() method of the base class
 }
 
 RetinaOutput& RetinaOutput::set_Max_freq(double max_spk_freq){
@@ -101,9 +102,11 @@ bool RetinaOutput::setParameters(vector<double> params, vector<string> paramID){
 
 //------------------------------------------------------------------------------//
 
-void RetinaOutput::feedInput(const CImg<double>& new_input,bool isCurrent,int port){
+void RetinaOutput::feedInput(double sim_time, const CImg<double>& new_input,bool isCurrent,int port){
     // Ignore port type and copy input image
     *inputImage = new_input;
+    // Update the current simulation time
+    simTime = sim_time;
 }
 
 double RetinaOutput::inp_pixel_to_freq(double pixel_value){

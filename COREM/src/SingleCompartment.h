@@ -58,7 +58,7 @@ public:
     SingleCompartment& set_number_conductance_ports(int number);
 
     // New input and update of equations
-    virtual void feedInput(const CImg<double> &new_input, bool isCurrent, int port);
+    virtual void feedInput(double sim_time, const CImg<double> &new_input, bool isCurrent, int port);
     virtual void update();
     // set Parameters
     virtual bool setParameters(vector<double> params, vector<string> paramID);

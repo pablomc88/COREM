@@ -17,6 +17,9 @@ module::~module(void){
 }
 
 //------------------------------------------------------------------------------//
+void module::allocateValues(){
+    simTime=0;
+    }
 
 module& module::setSizeX(int x){
     if (x>0){

@@ -144,7 +144,7 @@ bool LinearFilter::setParameters(vector<double> params, vector<string> paramID){
 //------------------------------------------------------------------------------//
 
 
-void LinearFilter::feedInput(const CImg<double>& new_input, bool isCurrent, int port){
+void LinearFilter::feedInput(double sim_time, const CImg<double>& new_input, bool isCurrent, int port){
 
     *(last_inputs[0])=new_input;
 

@@ -55,7 +55,7 @@ public:
     LinearFilter& Gamma(double tau,int n);
 
     // New input and update of equations
-    virtual void feedInput(const CImg<double> &new_input, bool isCurrent, int port);
+    virtual void feedInput(double sim_time, const CImg<double> &new_input, bool isCurrent, int port);
     virtual void update();
 
     // Get output image (y(k))

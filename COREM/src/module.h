@@ -26,7 +26,10 @@ class module{
 protected:
     // Image size
     int sizeX, sizeY;
+    // Length of the simulation step (in ms)
     double step;
+    // Current simulation time (in ms)
+    double simTime;
     // module ID
     string ID;
 
@@ -77,11 +80,11 @@ public:
 
     // virtual functions //
     // Allocate values
-    virtual void allocateValues(){}
+    virtual void allocateValues();
     virtual void setX(int x){}
     virtual void setY(int y){}
     // New input and update of equations
-    virtual void feedInput(const CImg<double>& new_input, bool isCurrent, int port){}
+    virtual void feedInput(double sim_time, const CImg<double>& new_input, bool isCurrent, int port){}
     virtual void update(){}
     // Get output image (y(k))
     virtual CImg<double>* getOutput(){}

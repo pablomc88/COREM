@@ -82,7 +82,7 @@ void ShortTermPlasticity::allocateValues(){
 
 }
 
-void ShortTermPlasticity::feedInput(const CImg<double>& new_input, bool isCurrent, int port){
+void ShortTermPlasticity::feedInput(double sim_time, const CImg<double>& new_input, bool isCurrent, int port){
     // copy input image
     *inputImage[0] = new_input;
 }

@@ -61,8 +61,8 @@ protected:
     // Number of repetitions of each image
     int repetitions;
 
-    // Simulation time
-    int totalSimTime;
+    // total (end) simulation time and current simulation time
+    int totalSimTime, simTime;
     // Current and total number of trials
     double CurrentTrial,totalNumberTrials;
 

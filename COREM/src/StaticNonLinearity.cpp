@@ -51,7 +51,7 @@ void StaticNonLinearity::allocateValues(){
 
 }
 
-void StaticNonLinearity::feedInput(const CImg<double>& new_input, bool isCurrent, int port){
+void StaticNonLinearity::feedInput(double sim_time, const CImg<double>& new_input, bool isCurrent, int port){
     // copy input image
     *inputImage = new_input;
 }

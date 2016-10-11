@@ -61,7 +61,7 @@ public:
     RetinaOutput& set_Spks_per_inp(double freq_per_inp_unit);
 
     // Get new input
-    virtual void feedInput(const CImg<double> &new_input, bool isCurrent, int port);
+    virtual void feedInput(double sim_time, const CImg<double> &new_input, bool isCurrent, int port);
     // update of state and output
     virtual void update();
     // set Parameters

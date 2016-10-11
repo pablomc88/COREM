@@ -155,6 +155,10 @@ void Retina::allocateValues(){
     if(verbose)cout << "sizeX = "<< sizeX << endl;
     if(verbose)cout << "sizeY = "<< sizeY << endl;
     if(verbose)cout << "Temporal step = "<< step << " ms" << endl;
+    
+    // Set current simulation time to 0 (this value is updated when feedInput() method is excuted)
+    simTime = 0;
+
     output = new CImg <double>(sizeY,sizeX,1,1,0.0);
     accumulator = *(new CImg <double>(sizeY,sizeX,1,1,0.0));
 
@@ -180,7 +184,10 @@ void Retina::allocateValues(){
 
 CImg<double> *Retina::feedInput(int step){
     CImg <double> *input;
-    cout << "timTiame:" << getTotalSimTime() << endl;
+    
+    // Update Retina current simulation time from InterfaceNEST current simulation time
+    simTime = step;
+
     // Input selection
     switch(inputType){
     case 0:
@@ -309,9 +316,9 @@ for (int i=1;i<modules.size();i++){
     }
 
         if (neuron->getTypeSynapse(o)==0)
-            neuron->feedInput(accumulator,true,o);
+            neuron->feedInput(step, accumulator,true,o);
         else
-            neuron->feedInput(accumulator,false,o);
+            neuron->feedInput(step, accumulator,false,o);
 
     }
 }

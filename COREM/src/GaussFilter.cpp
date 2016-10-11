@@ -276,7 +276,7 @@ void GaussFilter::spaceVariantGaussFiltering(CImg<double> &src){
 
 //------------------------------------------------------------------------------//
 
-void GaussFilter::feedInput(const CImg<double> &new_input, bool isCurrent, int port){
+void GaussFilter::feedInput(double sim_time, const CImg<double> &new_input, bool isCurrent, int port){
       // copy input image
     *inputImage=new_input;
 }

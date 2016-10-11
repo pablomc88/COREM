@@ -152,7 +152,7 @@ bool SingleCompartment::setParameters(vector<double> params, vector<string> para
 
 //------------------------------------------------------------------------------//
 
-void SingleCompartment::feedInput(const CImg<double>& new_input,bool isCurrent,int port){
+void SingleCompartment::feedInput(double sim_time, const CImg<double>& new_input,bool isCurrent,int port){
 
     // the parameter 'port' corresponds to both current and conductance ports.
     // Next piece of code adapts port to its correct range.
