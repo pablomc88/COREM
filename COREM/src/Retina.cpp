@@ -313,7 +313,7 @@ for (int i=1;i<modules.size();i++){
 
             }
 
-    }
+        }
 
         if (neuron->getTypeSynapse(o)==0)
             neuron->feedInput(step, accumulator,true,o);

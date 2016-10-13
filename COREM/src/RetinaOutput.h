@@ -15,9 +15,8 @@
  * SeeAlso: module
  */
 
-#include <iostream>
 #include <vector>
-
+#include <string>
 #include "module.h"
 
 using namespace cimg_library;
@@ -35,11 +34,12 @@ protected:
     CImg<double> *inputImage; // Buffer used to temporally store the input values which will be converted to spikes
     
     vector<spike_t> out_spks; // Vector of retina output spikes
+    string out_spk_filename; // filename (including path) to the spike output file to create
     
     // conversion parameters
     double Max_freq, Min_freq; // Max. and min. number of spikes per second that a neuron can fire
-    double Input_threshold; // Minimal (sustained) input value requireed for a neuron to generate some output
-    double Spks_per_inp; // Conversion factor from input value to output spike frequency
+    double Input_threshold; // Minimal (sustained) input value required for a neuron to generate some output
+    double Spk_freq_per_inp; // Conversion factor from input value to output spike frequency (Hz)
     
     // Last firing time and predicted firing time for each output neuron
     CImg<double> *last_spk_time, *next_spk_time;
@@ -58,7 +58,8 @@ public:
     RetinaOutput& set_Max_freq(double max_spk_freq);
     RetinaOutput& set_Min_freq(double min_spk_freq);
     RetinaOutput& set_Input_threshold(double input_threshold);
-    RetinaOutput& set_Spks_per_inp(double freq_per_inp_unit);
+    RetinaOutput& set_Freq_per_inp(double freq_per_inp_unit);
+    RetinaOutput& set_Out_filename(string filename);
 
     // Get new input
     virtual void feedInput(double sim_time, const CImg<double> &new_input, bool isCurrent, int port);
@@ -72,6 +73,9 @@ public:
     // spike firing rate.
     double inp_pixel_to_freq(double pixel_value); // TODO: static implementation
 
+    // Save the accumulated spike activity into a file
+    bool SaveFile(string spk_filename);
+    
     // Get output image (y(k))
     virtual CImg<double>* getOutput();
 };

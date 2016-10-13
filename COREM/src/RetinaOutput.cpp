@@ -1,14 +1,24 @@
 #include <algorithm> // for std::sort
+#include <iostream>
+
+// For file writing:
+#include <fstream>
+#include <iterator>
+#include <string>
+
+#include <ctime> // To log the current time in output spike file
+
 #include "RetinaOutput.h"
 
 
 RetinaOutput::RetinaOutput(int x, int y, double temporal_step):module(x,y,temporal_step){
 
     // conversion parameters default value
-    Max_freq=100;
-    Min_freq=5;
+    Max_freq=1000;
+    Min_freq=0;
     Input_threshold=0;
-    Spks_per_inp=5;
+    Spk_freq_per_inp=1;
+    out_spk_filename="spikes.spk";
     
     // Input buffer
     inputImage=new CImg<double> (sizeY,sizeX,1,1,0.0);
@@ -27,7 +37,7 @@ RetinaOutput::RetinaOutput(const RetinaOutput &copy):module(copy){
     Max_freq = copy.Max_freq;
     Min_freq = copy.Min_freq;
     Input_threshold = copy.Input_threshold;
-    Spks_per_inp = copy.Spks_per_inp;
+    Spk_freq_per_inp = copy.Spk_freq_per_inp;
 
     inputImage=new CImg<double> (sizeY,sizeX,1,1,0.0);
     last_spk_time=new CImg<double> (sizeY,sizeX,1,1,0.0);
@@ -36,6 +46,10 @@ RetinaOutput::RetinaOutput(const RetinaOutput &copy):module(copy){
 
 RetinaOutput::~RetinaOutput(){
 
+    // Save generated spikes before destructing the object
+    cout << "Saving output spike file: " << out_spk_filename << "... " << flush;
+    cout << (SaveFile(out_spk_filename)?"Ok":"Fail") << endl;
+    
     if(inputImage) delete inputImage;
     if(last_spk_time) delete last_spk_time;
 
@@ -66,9 +80,14 @@ RetinaOutput& RetinaOutput::set_Input_threshold(double input_threshold){
     return(*this);
 }
 
-RetinaOutput& RetinaOutput::set_Spks_per_inp(double freq_per_inp_unit){
+RetinaOutput& RetinaOutput::set_Freq_per_inp(double freq_per_inp_unit){
     if (freq_per_inp_unit>=0)
-        Spks_per_inp = freq_per_inp_unit;
+        Spk_freq_per_inp = freq_per_inp_unit;
+    return(*this);
+}
+
+RetinaOutput& RetinaOutput::set_Out_filename(string filename){
+    out_spk_filename = filename;
     return(*this);
 }
 
@@ -89,8 +108,8 @@ bool RetinaOutput::setParameters(vector<double> params, vector<string> paramID){
         else if (strcmp(s,"Input_threshold")==0){
             set_Input_threshold(params[i]);
         }
-        else if (strcmp(s,"Spks_per_inp")==0){
-            set_Spks_per_inp(params[i]);
+        else if (strcmp(s,"Freq_per_inp")==0){
+            set_Freq_per_inp(params[i]);
         }
         else{
               correct = false;
@@ -115,17 +134,30 @@ double RetinaOutput::inp_pixel_to_freq(double pixel_value){
     if(pixel_value < Input_threshold) // If value under threshold, no output activity must be generated
         firing_rate=0;
     else
-        firing_rate=(pixel_value-Input_threshold)*Spks_per_inp + Min_freq;
+        firing_rate=(pixel_value-Input_threshold)*Spk_freq_per_inp + Min_freq;
     
     if(firing_rate > Max_freq) // Firing rate is saturated
        firing_rate=Max_freq;
 
     return(firing_rate);
 }
+
 //------------------------------------------------------------------------------//
-// function used to compare spikes according to time when sorting
+// function used to compare spikes according to time (and neuron index) when
+// sorting in RetinaOutput::update()
 bool spk_time_comp(spike_t spk1, spike_t spk2){
-    return (spk1.time<spk2.time);
+    bool comp_result;
+    double time_diff;
+    
+    time_diff = spk2.time - spk1.time;
+    if(time_diff > 0)
+        comp_result=true; // spk1.time < spk2.time
+    else if(time_diff < 0)
+        comp_result=false; // spk1.time > spk2.time
+    else // This subordering it is implemented just to ease the visual inspection of the output file
+        comp_result = spk1.neuron < spk2.neuron;
+    
+    return(comp_result);
     }
 
 void RetinaOutput::update(){
@@ -137,52 +169,117 @@ void RetinaOutput::update(){
     vector<spike_t> slot_spks; // Temporal vector of output spikes for current sim. time slot
 
     out_neu_idx=0UL;
-    // For each input image pixel
-    while(inp_img_it<inputImage->end()){  // we use inp_img_it.end() as upper bound for all iterators
+    // For each input image pixel:
+    while(inp_img_it<inputImage->end()){ // we use inp_img_it.end() as upper bound for all iterators
         spike_t new_spk;
+        // Intermediate variables used to calculate next spike time
         double inp_pix_per;
         double tnewf1, toldf0, toldf1;
-        double tslotst;
-        inp_pix_per = 1 / inp_pixel_to_freq(*inp_img_it); // Convert input pixel magnitude into firing period
-        
-        // Time of the first spike that would be generated in current update() call if we the
-        // previous pixel magnitude were the same as the current one
-        tnewf1 = *last_spk_time_it + inp_pix_per;
-        // Time of the last spike that was generated (in the previous sim. slot)
-        toldf0 = *last_spk_time_it;
-        // Time of the first spike that would be generated if the current pixel magnitude were
-        // the same as the previous one
-        toldf1 = *next_spk_time_it;
-        // Start time of the current sim. slot
-        tslotst = step * 1; // <-------- correct it
-        
-        // We assume that the pixel magnitude changes when the simulation slot changes,
-        // Depending on the relative position of the last spike of the prevous slot and
-        // the first spikes of the new slot to the slot start, we calculate the
-        // first spike time of the new slot.
-        new_spk.time = (tnewf1 + toldf0 + sqrt(tnewf1*tnewf1 + toldf0*toldf0 + 4*toldf1*tslotst \
-                                               -4*toldf0*toldf1 - 4*tnewf1*tslotst + 2*tnewf1*toldf0)) / 2;
-        new_spk.neuron=out_neu_idx; // Index of output neuron are assigned in the same way as Cimg pixels
+        double tslotst, slot_len;
+        double sqrt_eq;
 
-        if(new_spk.time < tslotst) // We should not generate spikes for the previous sim. slot
-            new_spk.time = tslotst;
+        // All calculations are done in whole units, so convert class time properties (in ms) into seconds
+        tslotst = simTime / 1000.0; // Start time of the current sim. slot: Convert it into seconds
+        slot_len = step / 1000.0; // Length in time of a simulation slot (step)
+
+        inp_pix_per = 1 / inp_pixel_to_freq(*inp_img_it); // Convert input pixel magnitude into firing rate period
         
-        for(;new_spk.time < tslotst + step; new_spk.time += inp_pix_per){ // We can have several spikes per sim. slot
+        // Time of the first spike that would be generated in current update() call if the
+        // previous pixel magnitude were the same as the current one:
+        tnewf1 = *last_spk_time_it + inp_pix_per;
+        // Time of the last spike that was generated (in a previous sim. slot):
+        toldf0 = *last_spk_time_it;
+        // Time of the first spike that would be generated if the current pixel magnitude and
+        // next ones were the same as the previous ones:
+        toldf1 = *next_spk_time_it;
+        
+        // We assume that the pixel magnitude changes when the simulation time slot changes, 
+        // that is at tslotst.
+        // So, depending on the relative position of the first spike of the new slot
+        // and the relative position of the last (non-emitted) spike prediction of prevous slot
+        // in realation to the slot start, we predict an intermediate first spike time
+        // of the new slot (*next_spk_time_it). For that, we solve the next quadratic equation:
+        // *next_spk_time_it =      (tslotst-toldf0)/(*next_spk_time_it-toldf0)*toldf1 +
+        //                     (1 - (tslotst-toldf0)/(*next_spk_time_it-toldf0))*tnewf1
+        // This equation defines *next_spk_time_it as weighted average of toldf1 and tnewf1,
+        // so, *next_spk_time_it is between these two time values
+        sqrt_eq=tnewf1*tnewf1 + toldf0*toldf0 + 4*toldf1*tslotst \
+                -4*toldf0*toldf1 - 4*tnewf1*tslotst + 2*tnewf1*toldf0;
+        if(sqrt_eq < 0){ // Floatring point precission errors may lead to small negative values
+            // cout << "precission error in spk predict eq.: sqrt(" << sqrt_eq << ")" << endl;
+            sqrt_eq=0.0; // We cannot calculate the square root of a negative value, even if it is very small
+        }
+        *next_spk_time_it = (tnewf1 + toldf0 + sqrt(sqrt_eq)) / 2; // Solve second order equation
+        cout << "sim. time: " << tslotst << " 1st spk time: " << *next_spk_time_it << endl;
+        // Another simpler implementation would be just calculate the next spike time from the last
+        // emitted smike: *next_spk_time_it = tnewf1; ignoring the exact occurrence of the slot time
+
+        new_spk.neuron=out_neu_idx; // Index of output neuron are assigned in the same way as Cimg pixel offsets
+
+        if(*next_spk_time_it >= tslotst) // This should always be true for the equation solution 
+            new_spk.time = *next_spk_time_it;
+        else
+            new_spk.time = tslotst; // We should not generate spikes for the previous sim. slot
+
+        // We can have several spike in a single simulation time slot
+        for(;new_spk.time < tslotst + slot_len; new_spk.time += inp_pix_per){ // We can have several spikes per sim. slot
             slot_spks.push_back(new_spk);
             *last_spk_time_it = new_spk.time; // Update the time of last firing for this neuron
             *next_spk_time_it = new_spk.time + inp_pix_per; // Update the time of predicted next firing for this neuron
         }
-        
+        // Switch to the next neuron (pixel)
         inp_img_it++;
         last_spk_time_it++;
         next_spk_time_it++;
         out_neu_idx++;
     }
+
     // Some programs may require that the spikes are issued in time order
     // So, sort the spikes of current sim. slot before inserting them in the class
     // output spike list
     std::sort(slot_spks.begin(), slot_spks.end(), spk_time_comp);
     out_spks.insert(out_spks.end(), slot_spks.begin(), slot_spks.end());
+}
+
+//------------------------------------------------------------------------------//
+
+// Implement a method to write a spike_t object to a ouput stream
+// This method is used in RetinaOutput::SaveFile()
+ostream& operator<< (ostream& out, const spike_t& spk) {
+    out << spk.neuron << " " << spk.time;
+    return out;
+}
+
+// This function is neither needed nor used
+bool RetinaOutput::SaveFile(string spk_filename){
+    bool ret_correct;
+    
+    ofstream out_spk_file(spk_filename, ios::out);
+    ret_correct=out_spk_file.is_open();
+    if(ret_correct){
+        out_spk_file << "% Output activity file generated by COREM";
+        // get current local time and log it on the output file
+        time_t time_as_secs = time(NULL);
+        if(time_as_secs != (time_t)-1){
+            struct tm *time_local = localtime(&time_as_secs);
+            if(time_local != NULL){
+                out_spk_file << " on " << asctime(time_local); // This string includes \n
+            }
+            else
+                out_spk_file << endl;
+        }
+        else
+            out_spk_file << endl;
+        out_spk_file << "% <neuron index from 0> <spike time in seconds>" << endl;
+        ostream_iterator<spike_t> out_spk_it(out_spk_file, "\n");
+        copy(out_spks.begin(), out_spks.end(), out_spk_it);
+    
+        out_spk_file.close();
+    }
+    else
+        cout << "Unable to open file for output spikes: " << spk_filename << endl;
+  
+    return(ret_correct);
 }
 
 //------------------------------------------------------------------------------//
