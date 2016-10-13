@@ -32,14 +32,16 @@ class RetinaOutput:public module{
 protected:
     // image buffers
     CImg<double> *inputImage; // Buffer used to temporally store the input values which will be converted to spikes
-    
+    default_random_engine rand_gen; // For generating neuron noise
+
     vector<spike_t> out_spks; // Vector of retina output spikes
     string out_spk_filename; // filename (including path) to the spike output file to create
     
-    // conversion parameters
+    // parameters for conversion from input magnitude to firing rate
     double Max_freq, Min_freq; // Max. and min. number of spikes per second that a neuron can fire
     double Input_threshold; // Minimal (sustained) input value required for a neuron to generate some output
     double Spk_freq_per_inp; // Conversion factor from input value to output spike frequency (Hz)
+    double Noise_std_dev; // Sigma parameter of the Gaussian distribution from which random values are drawn to generate additive firing rate noise
     
     // Last firing time and predicted firing time for each output neuron
     CImg<double> *last_spk_time, *next_spk_time;
@@ -60,6 +62,7 @@ public:
     RetinaOutput& set_Input_threshold(double input_threshold);
     RetinaOutput& set_Freq_per_inp(double freq_per_inp_unit);
     RetinaOutput& set_Out_filename(string filename);
+    RetinaOutput& set_Noise_std_dev(double sigma_val);
 
     // Get new input
     virtual void feedInput(double sim_time, const CImg<double> &new_input, bool isCurrent, int port);
