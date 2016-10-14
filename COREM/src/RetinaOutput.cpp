@@ -20,7 +20,7 @@ RetinaOutput::RetinaOutput(int x, int y, double temporal_step):module(x,y,tempor
     Input_threshold=0;
     Spk_freq_per_inp=1;
     out_spk_filename="spikes.spk";
-    Noise_std_dev=0.4;
+    Noise_std_dev=0.6;
     
     // Input buffer
     inputImage=new CImg<double> (sizeY, sizeX, 1, 1, 0);
@@ -197,66 +197,52 @@ void RetinaOutput::update(){
         spike_t new_spk;
         // Intermediate variables used to calculate next spike time
         double inp_pix_freq, inp_pix_per;
-        double tnewf1, toldf0, toldf1;
-        double tslotst, slot_len;
-        double sqrt_eq;
+        double told_spk0, told_spk1;
+        double tslot_start, slot_len;
 
         // All calculations are done in whole units, so convert class time properties (in ms) into seconds
-        tslotst = simTime / 1000.0; // Start time of the current sim. slot: Convert it into seconds
+        tslot_start = simTime / 1000.0; // Start time of the current sim. slot: Convert it into seconds
         slot_len = step / 1000.0; // Length in time of a simulation slot (step)
 
         inp_pix_freq = inp_pixel_to_freq(*inp_img_it); // Convert input pixel magnitude into firing rate
         if(inp_pix_freq > 0) { // If input is not zero, we have to calculate spike times
             inp_pix_per = 1 / inp_pix_freq; // Convert firing rate (Hz) into firing period
 
-            // Time of the first spike that would be generated in current update() call if the
-            // previous pixel magnitude were the same as the current one:
-            tnewf1 = *last_spk_time_it + inp_pix_per;
             // Time of the last spike that was generated (in a previous sim. slot):
-            toldf0 = *last_spk_time_it;
-            // Time of the first spike that would be generated if the current pixel magnitude and
-            // next ones were the same as the previous ones:
-            toldf1 = *next_spk_time_it;
-            if(toldf1 > tslotst+inp_pix_per) // Limit the diminishing effect of the previous activity
-                toldf1 = tslotst+inp_pix_per; // Same effect as no previous activity
+            told_spk0 = *last_spk_time_it;
+            // Time of the first spike that would be now generated if the current pixel magnitude were
+            // the same as the previous one:
+            told_spk1 = *next_spk_time_it;
             
-            // We assume that the pixel magnitude changes when the simulation time slot changes, 
-            // that is at tslotst.
-            // So, depending on the relative position of the first spike of the new slot
-            // and the relative position of the last (non-emitted) spike prediction of prevous slot
-            // in realation to the slot start, we predict an intermediate first spike time
-            // of the new slot (*next_spk_time_it). For that, we solve the next quadratic equation:
-            // *next_spk_time_it =      (tslotst-toldf0)/(*next_spk_time_it-toldf0)*toldf1 +
-            //                     (1 - (tslotst-toldf0)/(*next_spk_time_it-toldf0))*tnewf1
-            // This equation defines *next_spk_time_it as weighted average of toldf1 and tnewf1,
-            // so, *next_spk_time_it is between these two time values
-            sqrt_eq=tnewf1*tnewf1 + toldf0*toldf0 + 4*toldf1*tslotst \
-                    -4*toldf0*toldf1 - 4*tnewf1*tslotst + 2*tnewf1*toldf0;
-
-            if(sqrt_eq < 0){ // Floatring point precission errors may lead to small negative values
-                // cout << "precission error in spk predict eq.: sqrt(" << sqrt_eq << ")" << endl;
-                sqrt_eq=0.0; // We cannot calculate the square root of a negative value, even if it is very small
-            }
-            *next_spk_time_it = (tnewf1 + toldf0 + sqrt(sqrt_eq)) / 2; // Solve second order equation
-
-            // Another simpler implementation would be just calculate the next spike time from the last
-            // emitted smike: *next_spk_time_it = tnewf1; ignoring the exact occurrence of the slot time
+            // To calculate the next spike time we consider how far the current slot start is from the next
+            // predicted firing time for previous input (told_spk1). If they are almost conincident,
+            // The neuron was expected to fire at that time, so it can fire at the start of the slot.
+            // If they are very far (in relation to the firing period), the neuron has just fired, then delay
+            // the firing up to the firing period for the current input (inp_pix_per).
+            // This algorithm preverves the firing rate among slot if the input is constant
+            if(told_spk1 < numeric_limits<double>::infinity()) // Check that the previous input magnitude was different from zero
+                // The value of the fraction should be between 0 and 1, so the next spike should be emitted
+                // between the slot start and the slot start plus the current firing period (inp_pix_per)
+                *next_spk_time_it = tslot_start + ((told_spk1-tslot_start) / (told_spk1-told_spk0)) * inp_pix_per;
+            else // The input activity of previous slot was 0, so the previous expression is an indeterminate form, evaluate its limit
+                *next_spk_time_it = tslot_start + inp_pix_per; // Continue to fire from the slot start plus current firing period
+                // *next_spk_time_it = told_spk0 + inp_pix_per; // Or continue to fire from the last spike using current input (to avoid delays after 0 inputs)
 
             new_spk.neuron=out_neu_idx; // Index of output neuron are assigned in the same way as Cimg pixel offsets
 
-            if(*next_spk_time_it >= tslotst) // This should always be true for the equation solution 
+            if(*next_spk_time_it >= tslot_start) // Ensure that we do not generate spikes for the previous sim. slot
                 new_spk.time = *next_spk_time_it;
             else
-                new_spk.time = tslotst; // We should not generate spikes for the previous sim. slot
+                new_spk.time = tslot_start;
 
-            // We can have several spike in a single simulation time slot
-            for(;new_spk.time < tslotst + slot_len; new_spk.time += inp_pix_per){ // We can have several spikes per sim. slot
+            // We can have several spikes in a single simulation time slot
+            for(;new_spk.time < tslot_start + slot_len; new_spk.time += inp_pix_per){ // We can have several spikes per sim. slot
                 slot_spks.push_back(new_spk);
                 *last_spk_time_it = new_spk.time; // Update the time of last firing for this neuron
                 *next_spk_time_it = new_spk.time + inp_pix_per; // Update the time of predicted next firing for this neuron
             }
         }
-        else // Input is zero, next spike will be emitted at infinity time
+        else // Input is zero, next spike would be emitted at infinity time
             *next_spk_time_it = numeric_limits<double>::infinity();
             
         // Switch to the next neuron (pixel)
