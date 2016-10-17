@@ -36,8 +36,8 @@
     <File Name="src/SingleCompartment.cpp"/>
     <File Name="src/GaussFilter.cpp"/>
     <File Name="src/GratingGenerator.cpp"/>
-    <File Name="src/RetinaOutput.h"/>
-    <File Name="src/RetinaOutput.cpp"/>
+    <File Name="src/SpikingOutput.cpp"/>
+    <File Name="src/SpikingOutput.h"/>
   </VirtualDirectory>
   <Settings Type="Dynamic Library">
     <GlobalSettings>

@@ -16,7 +16,6 @@
 #include "../CImg-1.6.0_rolling141127/CImg.h"
 #include "InterfaceNEST.h"
 #include "constants.h"
-#include "RetinaOutput.h"
 
 using namespace cimg_library;
 using namespace std;

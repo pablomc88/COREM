@@ -10,9 +10,9 @@
 #include <ctime> // To log the current time in output spike file
 #include <limits>
 
-#include "RetinaOutput.h"
+#include "SpikingOutput.h"
 
-RetinaOutput::RetinaOutput(int x, int y, double temporal_step):module(x,y,temporal_step){
+SpikingOutput::SpikingOutput(int x, int y, double temporal_step):module(x,y,temporal_step){
 
     // conversion parameters default value
     Max_freq=1000;
@@ -30,7 +30,7 @@ RetinaOutput::RetinaOutput(int x, int y, double temporal_step):module(x,y,tempor
     next_spk_time=new CImg<double> (sizeY, sizeX, 1, 1, numeric_limits<double>::infinity()); // For a 0 input the next spike time is infinity
 }
 
-RetinaOutput::RetinaOutput(const RetinaOutput &copy):module(copy){
+SpikingOutput::SpikingOutput(const SpikingOutput &copy):module(copy){
 
     //step=copy.step;
     //sizeX=copy.sizeX;
@@ -46,7 +46,7 @@ RetinaOutput::RetinaOutput(const RetinaOutput &copy):module(copy){
     next_spk_time=new CImg<double> (sizeY,sizeX,1,1,0.0);
 }
 
-RetinaOutput::~RetinaOutput(){
+SpikingOutput::~SpikingOutput(){
 
     // Save generated spikes before destructing the object
     cout << "Saving output spike file: " << out_spk_filename << "... " << flush;
@@ -60,47 +60,47 @@ RetinaOutput::~RetinaOutput(){
 
 //------------------------------------------------------------------------------//
 
-void RetinaOutput::allocateValues(){
+void SpikingOutput::allocateValues(){
     module::allocateValues(); // Use the allocateValues() method of the base class
 }
 
-RetinaOutput& RetinaOutput::set_Max_freq(double max_spk_freq){
+SpikingOutput& SpikingOutput::set_Max_freq(double max_spk_freq){
     if (max_spk_freq>=0)
         Max_freq = max_spk_freq;
-    return(*this); // Return value is really not used
+    return(*this); // Return value is really not used but we return it to avoid warnings
 }
 
-RetinaOutput& RetinaOutput::set_Min_freq(double min_spk_freq){
+SpikingOutput& SpikingOutput::set_Min_freq(double min_spk_freq){
     if (min_spk_freq>=0)
         Min_freq = min_spk_freq;
     return(*this);
 }
 
-RetinaOutput& RetinaOutput::set_Input_threshold(double input_threshold){
+SpikingOutput& SpikingOutput::set_Input_threshold(double input_threshold){
     if (input_threshold>=0)
         Input_threshold = input_threshold;
     return(*this);
 }
 
-RetinaOutput& RetinaOutput::set_Freq_per_inp(double freq_per_inp_unit){
+SpikingOutput& SpikingOutput::set_Freq_per_inp(double freq_per_inp_unit){
     if (freq_per_inp_unit>=0)
         Spk_freq_per_inp = freq_per_inp_unit;
     return(*this);
 }
 
-RetinaOutput& RetinaOutput::set_Out_filename(string filename){
+SpikingOutput& SpikingOutput::set_Out_filename(string filename){
     out_spk_filename = filename;
     return(*this);
 }
 
-RetinaOutput& RetinaOutput::set_Noise_std_dev(double sigma_val){
+SpikingOutput& SpikingOutput::set_Noise_std_dev(double sigma_val){
     if (sigma_val>=0)
         Noise_std_dev = sigma_val;
     return(*this);
 }
 //------------------------------------------------------------------------------//
 
-bool RetinaOutput::setParameters(vector<double> params, vector<string> paramID){
+bool SpikingOutput::setParameters(vector<double> params, vector<string> paramID){
 
     bool correct = true;
 
@@ -131,14 +131,14 @@ bool RetinaOutput::setParameters(vector<double> params, vector<string> paramID){
 
 //------------------------------------------------------------------------------//
 
-void RetinaOutput::feedInput(double sim_time, const CImg<double>& new_input,bool isCurrent,int port){
+void SpikingOutput::feedInput(double sim_time, const CImg<double>& new_input,bool isCurrent,int port){
     // Ignore port type and copy input image
     *inputImage = new_input;
     // Update the current simulation time
     simTime = sim_time;
 }
 
-double RetinaOutput::inp_pixel_to_freq(double pixel_value){
+double SpikingOutput::inp_pixel_to_freq(double pixel_value){
     double firing_rate;
     double freq_noise;
     
@@ -167,7 +167,7 @@ double RetinaOutput::inp_pixel_to_freq(double pixel_value){
 
 //------------------------------------------------------------------------------//
 // function used to compare spikes according to time (and neuron index) when
-// sorting in RetinaOutput::update()
+// sorting in SpikingOutput::update()
 bool spk_time_comp(spike_t spk1, spike_t spk2){
     bool comp_result;
     double time_diff;
@@ -183,7 +183,7 @@ bool spk_time_comp(spike_t spk1, spike_t spk2){
     return(comp_result);
     }
 
-void RetinaOutput::update(){
+void SpikingOutput::update(){
 
     unsigned long out_neu_idx; // Index to the current neuron (or image pixel)
     CImg<double>::iterator inp_img_it = inputImage->begin();
@@ -262,14 +262,15 @@ void RetinaOutput::update(){
 //------------------------------------------------------------------------------//
 
 // Implement a method to write a spike_t object to a ouput stream
-// This method is used in RetinaOutput::SaveFile()
+// This method is used in SpikingOutput::SaveFile()
 ostream& operator<< (ostream& out, const spike_t& spk) {
     out << spk.neuron << " " << spk.time;
     return out;
 }
 
-// This function is neither needed nor used
-bool RetinaOutput::SaveFile(string spk_filename){
+// This function is executed when the class object is destructed to save
+// the output activity (spikes) generated during the whole simulation
+bool SpikingOutput::SaveFile(string spk_filename){
     bool ret_correct;
     
     ofstream out_spk_file(spk_filename, ios::out);
@@ -303,6 +304,6 @@ bool RetinaOutput::SaveFile(string spk_filename){
 //------------------------------------------------------------------------------//
 
 // This function is neither needed nor used
-CImg<double>* RetinaOutput::getOutput(){
+CImg<double>* SpikingOutput::getOutput(){
     return inputImage;
 }

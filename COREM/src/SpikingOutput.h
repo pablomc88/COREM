@@ -1,8 +1,8 @@
-#ifndef RETINAOUTPUT_H
-#define RETINAOUTPUT_H
+#ifndef SPIKINGOUTPUT_H
+#define SPIKINGOUTPUT_H
 
 /* BeginDocumentation
- * Name: RetinaOutput
+ * Name: SpikingOutput
  *
  * Description: Special retina module in charge of managing the retina output.
  * In particular it can (instantly) convert the output into spike times and save
@@ -22,13 +22,13 @@
 using namespace cimg_library;
 using namespace std;
 
-// Define spike struct to be used by RetinaOutput class to store generated spikes
+// Define spike struct to be used by SpikingOutput class to store generated spikes
 struct spike_t {
     double time;
     unsigned long neuron;
 };
 
-class RetinaOutput:public module{
+class SpikingOutput:public module{
 protected:
     // image buffers
     CImg<double> *inputImage; // Buffer used to temporally store the input values which will be converted to spikes
@@ -48,21 +48,21 @@ protected:
 
 public:
     // Constructor, copy, destructor.
-    RetinaOutput(int x=1,int y=1,double temporal_step=1.0);
-    RetinaOutput(const RetinaOutput& copy);
-    ~RetinaOutput(void);
+    SpikingOutput(int x=1,int y=1,double temporal_step=1.0);
+    SpikingOutput(const SpikingOutput& copy);
+    ~SpikingOutput(void);
 
     // Allocate values and set protected parameters
     virtual void allocateValues();
     virtual void setX(int x){sizeX=x;}
     virtual void setY(int y){sizeY=y;}
 
-    RetinaOutput& set_Max_freq(double max_spk_freq);
-    RetinaOutput& set_Min_freq(double min_spk_freq);
-    RetinaOutput& set_Input_threshold(double input_threshold);
-    RetinaOutput& set_Freq_per_inp(double freq_per_inp_unit);
-    RetinaOutput& set_Out_filename(string filename);
-    RetinaOutput& set_Noise_std_dev(double sigma_val);
+    SpikingOutput& set_Max_freq(double max_spk_freq);
+    SpikingOutput& set_Min_freq(double min_spk_freq);
+    SpikingOutput& set_Input_threshold(double input_threshold);
+    SpikingOutput& set_Freq_per_inp(double freq_per_inp_unit);
+    SpikingOutput& set_Out_filename(string filename);
+    SpikingOutput& set_Noise_std_dev(double sigma_val);
 
     // Get new input
     virtual void feedInput(double sim_time, const CImg<double> &new_input, bool isCurrent, int port);
@@ -83,4 +83,4 @@ public:
     virtual CImg<double>* getOutput();
 };
 
-#endif // RETINAOUTPUT_H
+#endif // SPIKINGOUTPUT_H
