@@ -12,15 +12,17 @@
 
 #include "SpikingOutput.h"
 
-SpikingOutput::SpikingOutput(int x, int y, double temporal_step):module(x,y,temporal_step){
-
+SpikingOutput::SpikingOutput(int x, int y, double temporal_step, string output_filename):module(x,y,temporal_step){
     // conversion parameters default value
     Max_freq=1000;
     Min_freq=0;
     Input_threshold=0;
     Spk_freq_per_inp=1;
-    out_spk_filename="spikes.spk";
-    Noise_std_dev=0.6;
+    Noise_std_dev=0.0;
+    if(output_filename.compare("") != 0) 
+        out_spk_filename=output_filename;
+    else
+        out_spk_filename="results/spikes.spk";
     
     // Input buffer
     inputImage=new CImg<double> (sizeY, sizeX, 1, 1, 0);
@@ -32,18 +34,16 @@ SpikingOutput::SpikingOutput(int x, int y, double temporal_step):module(x,y,temp
 
 SpikingOutput::SpikingOutput(const SpikingOutput &copy):module(copy){
 
-    //step=copy.step;
-    //sizeX=copy.sizeX;
-    //sizeY=copy.sizeY;
-
     Max_freq = copy.Max_freq;
     Min_freq = copy.Min_freq;
     Input_threshold = copy.Input_threshold;
     Spk_freq_per_inp = copy.Spk_freq_per_inp;
+    Noise_std_dev = copy.Noise_std_dev;
+    out_spk_filename = copy.out_spk_filename;
 
-    inputImage=new CImg<double> (sizeY,sizeX,1,1,0.0);
-    last_spk_time=new CImg<double> (sizeY,sizeX,1,1,0.0);
-    next_spk_time=new CImg<double> (sizeY,sizeX,1,1,0.0);
+    inputImage=new CImg<double>(*copy.inputImage);
+    last_spk_time=new CImg<double>(*copy.last_spk_time);
+    next_spk_time=new CImg<double>(*copy.next_spk_time);
 }
 
 SpikingOutput::~SpikingOutput(){
@@ -52,16 +52,27 @@ SpikingOutput::~SpikingOutput(){
     cout << "Saving output spike file: " << out_spk_filename << "... " << flush;
     cout << (SaveFile(out_spk_filename)?"Ok":"Fail") << endl;
     
-    if(inputImage) delete inputImage;
-    if(last_spk_time) delete last_spk_time;
-
-    if(next_spk_time) delete next_spk_time;
+    delete inputImage;
+    delete last_spk_time;
+    delete next_spk_time;
 }
 
 //------------------------------------------------------------------------------//
 
 void SpikingOutput::allocateValues(){
     module::allocateValues(); // Use the allocateValues() method of the base class
+    
+    // Resize initial value
+    inputImage->assign(sizeY, sizeX, 1, 1, 0);
+    last_spk_time->assign(sizeY, sizeX, 1, 1, 0);
+    next_spk_time->assign(sizeY, sizeX, 1, 1, numeric_limits<double>::infinity()); // For a 0 input the next spike time is infinity
+/*
+    cout << "Max_freq: " << Max_freq << endl;
+    cout << "Min_freq: " << Min_freq << endl;
+    cout << "Input_threshold: " << Input_threshold << endl;
+    cout << "Spk_freq_per_inp: " << Spk_freq_per_inp << endl;
+    cout << "Noise_std_dev: " << Noise_std_dev << endl;
+    cout << "output_filename: " << out_spk_filename << endl;*/
 }
 
 SpikingOutput& SpikingOutput::set_Max_freq(double max_spk_freq){
@@ -85,11 +96,6 @@ SpikingOutput& SpikingOutput::set_Input_threshold(double input_threshold){
 SpikingOutput& SpikingOutput::set_Freq_per_inp(double freq_per_inp_unit){
     if (freq_per_inp_unit>=0)
         Spk_freq_per_inp = freq_per_inp_unit;
-    return(*this);
-}
-
-SpikingOutput& SpikingOutput::set_Out_filename(string filename){
-    out_spk_filename = filename;
     return(*this);
 }
 
@@ -307,3 +313,9 @@ bool SpikingOutput::SaveFile(string spk_filename){
 CImg<double>* SpikingOutput::getOutput(){
     return inputImage;
 }
+
+//------------------------------------------------------------------------------//
+
+bool SpikingOutput::isDummy() {
+    return false;
+    };

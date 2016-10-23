@@ -13,7 +13,7 @@ LinearFilter::LinearFilter(int x, int y, double temporal_step,double initial_val
 
 }
 
-LinearFilter::LinearFilter(const LinearFilter &copy){
+LinearFilter::LinearFilter(const LinearFilter &copy):module(copy){
 
     M=copy.M;
     N=copy.N;
@@ -26,9 +26,9 @@ LinearFilter::LinearFilter(const LinearFilter &copy){
     for(int i=0;i<N+1;++i)
         a[i]=copy.a[i];
 
-    step=copy.step;
+    /*step=copy.step;
     sizeX=copy.sizeX;
-    sizeY=copy.sizeY;
+    sizeY=copy.sizeY;*/
 
     initial_input_value=copy.initial_input_value;
     last_inputs=0;

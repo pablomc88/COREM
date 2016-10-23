@@ -48,7 +48,7 @@ protected:
 
 public:
     // Constructor, copy, destructor.
-    SpikingOutput(int x=1,int y=1,double temporal_step=1.0);
+    SpikingOutput(int x=1, int y=1, double temporal_step=1.0, string output_filename="");
     SpikingOutput(const SpikingOutput& copy);
     ~SpikingOutput(void);
 
@@ -61,7 +61,6 @@ public:
     SpikingOutput& set_Min_freq(double min_spk_freq);
     SpikingOutput& set_Input_threshold(double input_threshold);
     SpikingOutput& set_Freq_per_inp(double freq_per_inp_unit);
-    SpikingOutput& set_Out_filename(string filename);
     SpikingOutput& set_Noise_std_dev(double sigma_val);
 
     // Get new input
@@ -81,6 +80,9 @@ public:
     
     // Get output image (y(k))
     virtual CImg<double>* getOutput();
+    
+    // Returns false to indicate that this class performs computation
+    virtual bool isDummy();
 };
 
 #endif // SPIKINGOUTPUT_H

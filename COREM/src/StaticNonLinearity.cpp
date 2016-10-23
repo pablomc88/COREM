@@ -9,7 +9,7 @@ StaticNonLinearity::StaticNonLinearity(int x, int y, double temporal_step, int t
     isThreshold = false;
 }
 
-StaticNonLinearity::StaticNonLinearity(const StaticNonLinearity& copy){
+StaticNonLinearity::StaticNonLinearity(const StaticNonLinearity& copy):module(copy){
 
 }
 

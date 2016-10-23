@@ -21,11 +21,11 @@ SingleCompartment::SingleCompartment(int x, int y, double temporal_step):module(
     exp_term=new CImg<double> (sizeY,sizeX,1,1,0.0);
 }
 
-SingleCompartment::SingleCompartment(const SingleCompartment &copy){
+SingleCompartment::SingleCompartment(const SingleCompartment &copy):module(copy){
 
-    step=copy.step;
+    /*step=copy.step;
     sizeX=copy.sizeX;
-    sizeY=copy.sizeY;
+    sizeY=copy.sizeY;*/
 
     number_current_ports=copy.number_current_ports;
     number_conductance_ports=copy.number_conductance_ports;

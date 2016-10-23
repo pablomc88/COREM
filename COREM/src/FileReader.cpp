@@ -1,3 +1,4 @@
+#include <string.h>
 #include "FileReader.h"
 
 FileReader::FileReader(int X, int Y, double tstep){
@@ -42,50 +43,224 @@ void FileReader::allocateValues(){
 
 //-------------------------------------------------//
 
-void FileReader::parseFile(Retina& retina, DisplayManager &displayMg){
+bool FileReader::nStringCopy(char *dest_buff, const char *src_str, size_t src_len, size_t dest_size){
+    bool correct_copy;
+    if(dest_size > 0 && dest_buff != NULL && src_str != NULL){ // Nothing to do if there is no space in destination buffer
+        size_t chars_to_copy;
+        
+        if(src_len == (size_t)-1L) // If this paremeter is -1, we calculate the characters to copy from the source string length
+            chars_to_copy = strlen(src_str);
+        else
+            chars_to_copy = src_len; // Copy the number of chars specified through parameter src_len
+        
+        if(chars_to_copy > dest_size-1){
+            correct_copy=false; // Not enough space in destination buffer
+            chars_to_copy = dest_size-1; // Copy as much characters as possible
+        } else
+            correct_copy=true;
 
-    double verbose = false;
+        memcpy(dest_buff, src_str, chars_to_copy); // Copy specified chars excluding the \0
+        dest_buff[chars_to_copy]='\0'; // Always add the \0 if there is some space in destinaton buffer
+    } else
+        correct_copy=false;
+    return(correct_copy);
+}
+
+//-------------------------------------------------//
+
+char *FileReader::getNextToken(const char *str, const char *especial_tokens){
+    // fn state variables
+    static char ret_token[MAX_CHARS_PER_LINE+1]; // Internal buffer which is used to store tokens and return the last one
+    static const char *current_parsing_ptr = NULL; // Intenal fn state which remembers at which position of the input string the fn is parsing
+    static char *current_token_ptr; // Pointer to the remaining space of ret_token
+    // local variable 
+    char *returned_token; // Pointer to the token returned 
+    
+    if(str == NULL){ // This fn has been called to inits its state (before first call to this fn for a new string)
+        current_parsing_ptr = NULL; // Reset internal pointer (fn state)
+        returned_token = NULL; // nothing to return
+    } else {
+        const char *next_token;
+
+        if(current_parsing_ptr == NULL){ // If it is first time we call this fn for a new string and init, the internal state is not initiallized yet
+           current_parsing_ptr = str; // Initialize internal state
+           current_token_ptr = ret_token; // Empty buffer of tokens
+        }
+
+        returned_token = current_token_ptr; // The current (returned) token will be stored in space pointed by current_token_ptr
+
+        next_token = strpbrk(current_parsing_ptr, especial_tokens); // Search for any of the tokens in str
+        if(next_token != NULL) { // especial token found
+            if(next_token > current_parsing_ptr) { // If there are characters before the found especial token:
+                nStringCopy(returned_token, current_parsing_ptr, next_token-current_parsing_ptr, MAX_CHARS_PER_LINE-(returned_token-ret_token)); // copy them as a new token
+                current_parsing_ptr = next_token; // Next parsing string position is the token found
+            } else { // No char before found especial token
+                nStringCopy(returned_token, next_token, 1, MAX_CHARS_PER_LINE-(returned_token-ret_token)); // copy especial token char as a new token
+                current_parsing_ptr = next_token + 1; // Next parsing string position is following the especial token found
+            }
+        } else { // No more tokens
+            size_t last_chars_len;
+            last_chars_len = strlen(current_parsing_ptr);
+            if(last_chars_len > 0) { // There was remaining chars in source string
+                nStringCopy(returned_token, current_parsing_ptr, -1, MAX_CHARS_PER_LINE-(returned_token-ret_token)); // copy all them (-1) as a new token
+                current_parsing_ptr += last_chars_len;
+            } else // No remaining chars
+                returned_token = NULL; // Return NULL
+        }
+
+        if(returned_token != NULL) // If a new token was found, update pointer to internal buffer
+            current_token_ptr = returned_token + strlen(returned_token)+1; // Next token will be stored following the current one
+    }
+    return(returned_token);
+}
+
+//-------------------------------------------------//
+
+bool FileReader::parseLine(const char *in_line, char **out_tokens, int max_tokens){
+
+    const char * const espcial_tokens[] = { TOKENS_CMD, TOKENS_BLK, TOKENS_STR };
+    enum context_t {CTX_CMD=0, CTX_BLK, CTX_STR};
+    vector<enum context_t> context;  // Depending on the parsing context we use a different set of token delimiters
+
+    int token_ind; // Index to the currently parsed token
+    bool stop_parsing;
+
+    context.push_back(CTX_CMD); // We start parsing in the action command context
+    // parse subsequent tokens
+    token_ind = 0;
+    stop_parsing=false;
+    getNextToken(NULL, NULL); // Reset line parser
+
+    // Do while there is space in buffer and available tokens continue loop
+    while(!stop_parsing && token_ind < max_tokens && (out_tokens[token_ind]=getNextToken(in_line, espcial_tokens[context.back()])) != NULL) { // get token
+    
+        // Process obtained token according to the current context:        
+        switch(context.back()){
+            
+            case CTX_CMD: // This is the outer context
+               switch(*out_tokens[token_ind]){ // Consider the first character of the token
+                   case '#': // This a comment: stop parsing from here
+                       out_tokens[token_ind] = NULL;
+                       stop_parsing=true;
+                       break;
+                   case '{': // Start of block
+                       context.push_back(CTX_BLK); // Change to block context
+                       break;
+                   case '}': // End of block
+                       cout << "Syntax error: Found a } char which is not expected" << endl;
+                       break;
+                   case '\'': // Start of string
+                       context.push_back(CTX_STR); // Change to string context
+                       break;
+                   case ' ': // Separators
+                   case '\t':
+                   case '.':
+                       out_tokens[token_ind] = NULL;
+                       token_ind--; // Discard these tokens in this context
+                       break;
+                   default: // Return the rest of tokens                       
+                       break;
+               }
+               break;
+            
+            case CTX_BLK: // This is the block context
+               switch(*out_tokens[token_ind]){
+                   case '{': // Start of block
+                       context.push_back(CTX_BLK); // Change to new block context
+                       break;
+                   case '}': // End of block
+                       if(context.size() > 1) // There is more than one previous context
+                           context.pop_back(); // Go back to previous context
+                       else
+                           cout << "Syntax error: Found a } char which is not expected" << endl;
+                       break;
+                   case '\'': // Start of string
+                       context.push_back(CTX_STR); // Change to string context
+                       break;
+                   case ' ': // Separators
+                   case '\t':
+                       out_tokens[token_ind] = NULL;
+                       token_ind--; // Discard these tokens in this context
+                       break;
+                   default: // Return the rest of tokens                       
+                       break;
+                }
+                break;
+            
+            case CTX_STR: // This is the string context
+               switch(*out_tokens[token_ind]){
+                   case '\'': // End of string
+                       if(context.size() > 1) // There is more than one previous context
+                           context.pop_back(); // Go back to previous context
+                       else
+                           cout << "Syntax error: Found a ' char which is not expected" << endl;
+                       break;
+                   default: // Return the rest of tokens                       
+                       break;
+                }
+                break;
+        }
+        token_ind++;
+    }
+
+    if(token_ind == max_tokens)
+        if(max_tokens > 0)
+            out_tokens[max_tokens-1] = NULL; // In case of implete parsing include token-list end mark
+        
+    return (token_ind < max_tokens); // Return false if there was not enough space in out_tokens
+}
+
+//-------------------------------------------------//
+
+// This method remove all the specified tokens from a token list 
+// token is a pointer to a list of pointers to string which contain the tokens to process. The
+// last pointer of the pointer list must be NULL
+// ign_tokens is a 0\-terminated string containing the tokens to discard
+void FileReader::discardTokens(char **tokens, const char *ign_tokens){
+    size_t n_token;
+    size_t num_ign_tokens;
+    
+    num_ign_tokens = strlen(ign_tokens); // Number of tokens in the ignore list
+    n_token=0;
+    while(tokens[n_token]){ // For each of the input tokens
+        size_t n_ign_token;
+        if(strlen(tokens[n_token]) == 1){ // All tokens to ignore have length 1, check if current token has length 1
+            // Search for the current input token in the token ignore list
+            for(n_ign_token=0; n_ign_token < num_ign_tokens && tokens[n_token][0] != ign_tokens[n_ign_token]; n_ign_token++); // Compare all the ignored tokens to the current token and loop while not found
+            if(n_ign_token < num_ign_tokens){ // Loop not finished, so current token has been found in the ignore list
+                size_t rem_token;
+                // Shift all the tokens in the list to remove the current token
+                for(rem_token=n_token; tokens[rem_token]; rem_token++) // After this loop the input token list now has one token less
+                    tokens[rem_token]=tokens[rem_token+1];
+            } else
+                n_token++; // Pass to he next input token
+        } else
+            n_token++;
+    }
+}
+
+
+//-------------------------------------------------//
+
+void FileReader::parseFile(Retina &retina, DisplayManager &displayMg){
+    bool verbose = false;
     int line = 0;
     int action = 0;
 
     while (!fin.eof() && CorrectFile && continueReading){
-
-        line++;
-
         // read a line into memory
-        char buf[MAX_CHARS_PER_LINE];
-        fin.getline(buf, MAX_CHARS_PER_LINE);
+        char line_buf[MAX_CHARS_PER_LINE];
+        // array to store memory addresses of the tokens in line_buf
+        char *token[MAX_TOKENS_PER_LINE];
+        
+        line++;
+        fin.getline(line_buf, MAX_CHARS_PER_LINE); // Endline char not included
 
-        // parse the line into blank-delimited tokens
-        int n = 0;
-
-        // array to store memory addresses of the tokens in buf
-        const char* token[MAX_TOKENS_PER_LINE] = {};
-
-        // parse the line
-        token[0] = strtok(buf, DELIMITER1); // first token
-        bool change_delimiter = false;
-
-        if (token[0]){ // zero if line is blank
-
-            if (*token[0] != '#'){
-                  for (n = 1; n < MAX_TOKENS_PER_LINE; n++)
-                  {
-                      if (change_delimiter == false){
-                        token[n] = strtok(0, DELIMITER1); // subsequent tokens
-                        if (!token[n]) break; // no more tokens
-                        if (strcmp(token[n], "{") == 0)
-                            change_delimiter = true;
-                      }else{
-                        token[n] = strtok(0, DELIMITER2);
-                        if (!token[n]) break; // no more tokens
-                      }
-
-                  }
-            }
-
-        }
-
+        if(parseLine(line_buf, token, MAX_TOKENS_PER_LINE))
+            discardTokens(token, "'(),"); // These tokens are not meaningfull for the script syntax
+        else
+            abort(line,"check tokens and delimiter characters");
+        
         if (continueReading && token[0]){
 
                 if(strcmp(token[0], "retina") == 0)
@@ -136,6 +311,9 @@ void FileReader::parseFile(Retina& retina, DisplayManager &displayMg){
                         }
                         else if( strcmp(token[1], "NumTrials") == 0 ){
                             action = 15;
+                        }
+                        else if( strcmp(token[1], "Output") == 0 ){
+                            action = 16;
                         }
                         else{
                             abort(line,"Unknown action command");
@@ -279,14 +457,16 @@ void FileReader::parseFile(Retina& retina, DisplayManager &displayMg){
                                     operations.push_back(1);
                                 }else
                                 {
-                                    abort(line,"Neither '+' or '-' token found");
+                                    abort(line,"Neither '+' nor '-' operator found");
+                                    continueReading=false;
                                     break;
                                 }
                                 change=true;
                             }
                             i+=1;
                             if (!token[i]){
-                                abort(line,"Expected token not found");
+                                abort(line,"Expected token not found in Connect parameter block");
+                                continueReading=false; // Syntax error: do not continue
                                 break;
                             }
                         }
@@ -303,7 +483,7 @@ void FileReader::parseFile(Retina& retina, DisplayManager &displayMg){
                             }
 
                         }else{
-                            abort(line,"Expected two module IDs");
+                            abort(line,"Expected target module ID and connection type ('Current'/'Conductante') after list of source module IDs");
                             break;
                         }
 
@@ -312,14 +492,14 @@ void FileReader::parseFile(Retina& retina, DisplayManager &displayMg){
                     else{
                         modulesID.push_back(token[2]);
                         continueReading=retina.connect(modulesID,token[3],operations,token[4]);
-                        if(verbose)cout << "Modules connected to "<< token[3] << endl;
                         if (!continueReading){
-                            abort(line,"Incorrect module IDs for connect action command");
+                            abort(line,"Incorrect module IDs for Connect action command");
                             break;
                         }
+                        if(verbose)cout << "Module " << token[2] << " connected to " << token[3] << endl;
                     }
                 }else{
-                    abort(line,"Not enough parameters");
+                    abort(line,"Not enough parameters for Connect");
                     break;
                 }
 
@@ -427,7 +607,6 @@ void FileReader::parseFile(Retina& retina, DisplayManager &displayMg){
                 break;
             // Input
             case 8:
-
                 if (token[2] && token[3] && token[4] && token[5]){
                     if (strcmp(token[3], "{") == 0 ){
                         // Input sequence
@@ -724,6 +903,83 @@ void FileReader::parseFile(Retina& retina, DisplayManager &displayMg){
                 if(verbose)cout << "Number of trials = "<< atof(token[2]) << endl;
                 action = 0;
 
+                break;
+
+            // Output
+            case 16:
+                if (token[2]){ // Check that at least we can read the output type
+                    // read module type
+                    int next_tok_idx; // Next token to parse
+                    module* newModule;
+                    vector<double> p;
+                    vector<string> pid;
+                    
+                    if (strcmp(token[2], "SpikingOutput") == 0 ){
+                        string output_filename;
+                        
+                        if (token[3] && strcmp(token[3], "{") != 0){ // the next token is not {, assume that it is the output filename
+                            output_filename=token[3]; // Replace (default) filename
+                            next_tok_idx=4; // Pass to the next token to continue reading parameters
+                        } else {
+                            output_filename=""; // Use the default filename
+                            next_tok_idx=3; // continue reading parameters from this current token
+                        }
+                        newModule = new SpikingOutput(retina.getSizeX(), retina.getSizeY(), retina.getStep(), output_filename);
+                    }
+                    else{
+                        abort(line,"Unknown retina output type");
+                        break;
+                    }
+                    
+                    
+                    // Check if we have more parameters to read
+                    if (token[next_tok_idx]){
+                        if (strcmp(token[next_tok_idx], "{") == 0 && token[next_tok_idx+1]){ // parameter block start detected, read parameters
+                            
+                            next_tok_idx++; // skip block-start token
+                            while(continueReading && token[next_tok_idx]){
+                                if(strcmp(token[next_tok_idx], "}") == 0){ // parameter block end detected, end reading parameters
+                                    break; // exit while loop
+                                }else if (token[next_tok_idx+1]){ // There should be a value following the parameter name
+                                    pid.push_back(token[next_tok_idx]);
+                                    p.push_back(atof(token[next_tok_idx+1]));
+                                    next_tok_idx+=2;
+                                    
+                                    if (!token[next_tok_idx]){ // After each parameter-value tuple we should always find a token (at least block end)
+                                        abort(line,"Incorrect parameter block format: block-end character not found (at least in a correct place)");
+                                        continueReading=false;
+                                    }
+                                }else{
+                                    abort(line,"Incorrect parameter block format: apparent parameter name without value");
+                                    continueReading=false;
+                                }
+                            }
+
+                        }else{
+                            abort(line,"Incorrect start of parameter list");
+                            break;
+                        }
+                    }
+                    // Add module to the retina
+                    if(continueReading){
+                        continueReading=newModule->setParameters(p,pid);
+
+                        if(continueReading){
+                            retina.addModule(newModule,"Output");
+                            if(verbose) cout << "Output module added to the retina" << endl;
+                        }else{
+                            abort(line,"Error setting specified parameters");
+                            break;
+                        }
+                    } else
+                        break;
+
+                }else{
+                    abort(line,"Expected a retina output type");
+                    break;
+                }
+
+                action = 0;
                 break;
 
             default:

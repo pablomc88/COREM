@@ -40,12 +40,14 @@ int main(int argc, char *argv[])
 
         if(files > 2){
             string results = "exec rm "+currentDirRoot+"results/*";
+            cout << "Deleting content of results/ directory" << endl;
             const char * todelete = (results).c_str();
             system(todelete);
         }
         closedir (dir);
     }else{
         string tocreate = "mkdir "+currentDirRoot+"results/";
+        cout << "Creating results/ directory" << endl;
         system(tocreate.c_str());
     }
 
@@ -60,8 +62,8 @@ int main(int argc, char *argv[])
     verbose_flag=false;
     help_param=false;
     got_script_file=false;
-    // read arguments or default script
-    for(arg_index=1;arg_index<argc;arg_index++){ // Parse all input arguments
+    // Parse all input arguments
+    for(arg_index=1;arg_index<argc;arg_index++){
         if(argv[arg_index][0]!='-'){ // If first character of argument is not '-', assume that it is the script filename
             if(!got_script_file){
                 retinaString = currentDirRoot + (string)argv[arg_index];
@@ -84,31 +86,35 @@ int main(int argc, char *argv[])
     }
     if(got_script_file){
         // Create interface
-        const char * retinaSim = retinaString.c_str();
-        InterfaceNEST interface;
-        interface.allocateValues(retinaSim,"output",constants::outputfactor,0);
-
-        // Read number of trials and simulation time
-        double trials = interface.getTotalNumberTrials();
-        int totalSimTime = interface.getTotalSimTime();
-        double simStep = interface.getSimStep();
-
-        if(verbose_flag){
-            cout << "Simulation time: "<< totalSimTime << endl;
-            cout << "Trials: "<< trials << endl;
-            cout << "Simulation step: "<< simStep << endl;
-        }
+        int trial_ind, totalSimTime;
+        double simStep, num_trials;
+        const char *retinaSim = retinaString.c_str();
 
         // Simulation
-        for(int i=0;i<trials;i++){
-
+        // Using a do loop we ensure that the InterfaceNEST is created at least one time, and
+        // only one time if the number of trails is 1
+        trial_ind=0;
+        do {
             // Create new retina interface for every trial (reset values)
             InterfaceNEST interface;
             interface.setVerbosity(verbose_flag);
-            interface.allocateValues(retinaSim,"output",constants::outputfactor,i);
+            interface.allocateValues(retinaSim,"output",constants::outputfactor,trial_ind);
+
+            if(trial_ind==0){ // Print info only in the first trial
+                // Get number of trials and simulation time
+                totalSimTime = interface.getTotalSimTime();
+                simStep = interface.getSimStep();
+                num_trials = interface.getTotalNumberTrials();
+
+                if(verbose_flag){
+                    cout << "Simulation time: " << totalSimTime << "ms" << endl;
+                    cout << "Trials: "<< num_trials << endl;
+                    cout << "Simulation step length: " << simStep << "ms" << endl;
+                }
+            }
 
             if(verbose_flag){
-                cout << "-- Trial "<< i << " --" << endl;
+                cout << "-- Trial "<< trial_ind << " --" << endl;
                 cout << "   AbortExecution " << interface.getAbortExecution() << endl;
             }
 
@@ -118,7 +124,7 @@ int main(int argc, char *argv[])
                 }
             }
 
-        }
+        } while(++trial_ind < num_trials); // Check the loop end condition in the end, after reading the number of trials
         
     }else{
         if(!help_param){

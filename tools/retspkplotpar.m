@@ -24,7 +24,7 @@
 %   (at your option) any later version.
 function retspkplotpar(varargin)
 
-LOG_FILE='spikes.spk'; % log file name
+LOG_FILE='../COREM/results/spikes.spk'; % log file name
 sim_slot_time=0.1e-3; % approx. simulation step length in seconds
 
 nargs=nargin;

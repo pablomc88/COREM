@@ -22,7 +22,7 @@ ShortTermPlasticity::ShortTermPlasticity(int x,int y,double temporal_step,double
     }
 }
 
-ShortTermPlasticity::ShortTermPlasticity(const ShortTermPlasticity& copy){
+ShortTermPlasticity::ShortTermPlasticity(const ShortTermPlasticity& copy):module(copy){
 
 }
 

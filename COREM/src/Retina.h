@@ -26,6 +26,7 @@
 #include "fixationalMovGrating.h"
 #include "whiteNoise.h"
 #include "impulse.h"
+#include "SpikingOutput.h"
 
 using namespace cimg_library;
 using namespace std;
@@ -40,9 +41,9 @@ protected:
 
     // Retina output and accumulator of intermediate images
     CImg <double> *output;
-    CImg <double> accumulator;
+    CImg <double> *accumulator;
     // retina input channels (for color conversion)
-    CImg<double> RGBred,RGBgreen,RGBblue,ch1,ch2,ch3,rods,X_mat,Y_mat,Z_mat;
+    CImg<double> *RGBred, *RGBgreen, *RGBblue, *ch1, *ch2, *ch3, *rods, *X_mat, *Y_mat, *Z_mat;
     // vector of retina modules
     vector <module*> modules;
     // Type of input
@@ -101,7 +102,7 @@ public:
     void update();
 
     // New module
-    void addModule(module* m, string ID);
+    bool addModule(module* m, string ID);
     // Get module
     module* getModule(int ID);
     // get number of modules

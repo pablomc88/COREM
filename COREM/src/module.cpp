@@ -38,3 +38,7 @@ module& module::set_step(double temporal_step) {
         step = temporal_step;
     }
 }
+
+bool module::isDummy() {
+    return true;
+    }

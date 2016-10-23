@@ -6,7 +6,7 @@ GaussFilter::GaussFilter(int x, int y, double ppd):module(x,y,1.0){
     pixelsPerDegree = ppd;
 }
 
-GaussFilter::GaussFilter(const GaussFilter &copy){
+GaussFilter::GaussFilter(const GaussFilter &copy):module(copy){
     (*this)=copy;
 }
 

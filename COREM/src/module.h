@@ -43,7 +43,7 @@ public:
     // Constructor, copy, destructor.
     module(int x=1,int y=1,double temporal_step=1.0);
     module(const module& copy);
-    ~module(void);
+    virtual ~module(void); // Destructor is declared virtual, so when a pointer to module class is deleted the derived class destructor is called
 
     // set protected parameters
     module& setSizeX(int x);
@@ -91,6 +91,12 @@ public:
     // set Parameters
     virtual bool setParameters(vector<double> params, vector<string> paramID){}
     virtual void clearParameters(vector<string> paramID){}
+    // This method can be called to find out if an object derived from class module performs
+    // any usefull computation or it does not (and therefore can be deleted).
+    // This method returns true if the object belongs to the base class (module). If the object
+    // belongs to any derived class (such as SpikingOutput), it returns false.
+    // Therefore this method is used to distingish objects from base class from those from a derived class.
+    virtual bool isDummy();
 };
 
 #endif // MODULE_H
