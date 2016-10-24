@@ -12,7 +12,7 @@
 %  vid.delete()
 % The input matrix of add_frame must have the same size and data type for all the calls.
 %
-%   See also INRWRITE.
+%   See also INRWRITE, AVI2INR.
 
 %   Copyright (C) 2016 by Richard R. Carrillo 
 %   $Revision: 1.0 $  $Date: 26/9/2016 $
@@ -82,7 +82,7 @@ classdef inrvideowrite<handle
             [obj.ydim,obj.xdim]=size(frame);
             obj.zdim=0; % No frames in the video so far
          end
-            if isequal(obj.data_class,class(frame)) && isequal(obj.data_size,size(frame)) %check if the specied frame properties match
+            if isequal(obj.data_class,class(frame)) && isequal(obj.data_size,size(frame)) % check if the specied frame properties match
                fwrite(obj.fh,permute(frame,[2 1 3]),obj.data_class);
                obj.zdim=obj.zdim+1;
             else

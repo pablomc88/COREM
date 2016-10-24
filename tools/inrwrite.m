@@ -8,7 +8,7 @@
 % When used to create a movie in_mat has an extra dimension whose
 % coordinates indicate the frame number
 %
-%   See also RETSPKPLOT.
+%   See also AVI2INR, INRVIDEOWRITE.
 
 %   Copyright (C) 2016 by Richard R. Carrillo 
 %   $Revision: 1.0 $  $Date: 26/9/2016 $

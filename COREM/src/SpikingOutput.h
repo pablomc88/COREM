@@ -4,8 +4,8 @@
 /* BeginDocumentation
  * Name: SpikingOutput
  *
- * Description: Special retina module in charge of managing the retina output.
- * In particular it can (instantly) convert the output into spike times and save
+ * Description: Special retina module in charge of generating action potentials as output.
+ * In particular it can (instantly) convert the retina output into spike times and save
  * them in a file.
  *
  * Author: Pablo Martinez Cañada. University of Granada. CITIC-UGR. Spain.

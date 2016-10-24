@@ -27,6 +27,7 @@
 #include "whiteNoise.h"
 #include "impulse.h"
 #include "SpikingOutput.h"
+#include "SequenceOutput.h"
 
 using namespace cimg_library;
 using namespace std;

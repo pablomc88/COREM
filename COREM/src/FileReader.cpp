@@ -914,7 +914,7 @@ void FileReader::parseFile(Retina &retina, DisplayManager &displayMg){
                     vector<double> p;
                     vector<string> pid;
                     
-                    if (strcmp(token[2], "SpikingOutput") == 0 ){
+                    if (strcmp(token[2], "SpikingOutput") == 0 ) {
                         string output_filename;
                         
                         if (token[3] && strcmp(token[3], "{") != 0){ // the next token is not {, assume that it is the output filename
@@ -926,7 +926,18 @@ void FileReader::parseFile(Retina &retina, DisplayManager &displayMg){
                         }
                         newModule = new SpikingOutput(retina.getSizeX(), retina.getSizeY(), retina.getStep(), output_filename);
                     }
-                    else{
+                    else if (strcmp(token[2], "SequenceOutput") == 0 ) {
+                        string output_filename;
+                        
+                        if (token[3] && strcmp(token[3], "{") != 0){ // the next token is not {, assume that it is the output filename
+                            output_filename=token[3]; // Replace (default) filename
+                            next_tok_idx=4; // Pass to the next token to continue reading parameters
+                        } else {
+                            output_filename=""; // Use the default filename
+                            next_tok_idx=3; // continue reading parameters from this current token
+                        }
+                        newModule = new SequenceOutput(retina.getSizeX(), retina.getSizeY(), retina.getStep(), output_filename);
+                    } else {
                         abort(line,"Unknown retina output type");
                         break;
                     }
