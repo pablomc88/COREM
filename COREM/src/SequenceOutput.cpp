@@ -7,12 +7,17 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <limits>
+
 #include "SequenceOutput.h"
 
 SequenceOutput::SequenceOutput(int x, int y, double temporal_step, string output_filename):module(x,y,temporal_step){
     // Default output parameters
     Voxel_X_size=1.0;
     Voxel_Y_size=1.0;
+    // Save all images by default
+    Start_time=0.0;
+    End_time=numeric_limits<double>::infinity();
     // Set output file name
     if(output_filename.compare("") != 0) 
         out_seq_filename=output_filename;
@@ -35,6 +40,8 @@ SequenceOutput::SequenceOutput(const SequenceOutput &copy):module(copy){
     Voxel_Y_size = copy.Voxel_Y_size;
     num_written_frames = copy.num_written_frames;
     out_seq_filename = copy.out_seq_filename;
+    Start_time=copy.Start_time;
+    End_time=copy.End_time;
     
     out_seq_file_handle.open(out_seq_filename, ios::out | ios::binary);
     if(out_seq_file_handle.is_open())
@@ -73,6 +80,19 @@ SequenceOutput& SequenceOutput::set_Voxel_Y_size(double voxel_y_size){
     return(*this);
 }
 
+SequenceOutput& SequenceOutput::set_Start_time(double start_time){
+    if (start_time>=0)
+        Start_time = start_time;
+    return(*this);
+}
+
+SequenceOutput& SequenceOutput::set_End_time(double end_time){
+    if (end_time>=0)
+        End_time = end_time;
+    return(*this);
+}
+
+
 //------------------------------------------------------------------------------//
 
 bool SequenceOutput::setParameters(vector<double> params, vector<string> paramID){
@@ -86,8 +106,11 @@ bool SequenceOutput::setParameters(vector<double> params, vector<string> paramID
             set_Voxel_X_size(params[i]);
         }else if (strcmp(s,"Voxel_Y_size")==0){
             set_Voxel_Y_size(params[i]);
-        }
-        else{
+        }else if (strcmp(s,"Start_time")==0){
+            set_Start_time(params[i]);
+        }else if (strcmp(s,"End_time")==0){
+            set_End_time(params[i]);
+        } else{
               correct = false;
         }
     }
@@ -107,7 +130,8 @@ void SequenceOutput::feedInput(double sim_time, const CImg<double>& new_input,bo
 //------------------------------------------------------------------------------//
 
 void SequenceOutput::update(){
-    WriteINRFrame(); // Save inputImage image into the file
+    if(simTime >= Start_time && simTime+step <= End_time) // Check if the user wants to record the image at current time
+        WriteINRFrame(); // Save inputImage image into the file
 }
 
 //------------------------------------------------------------------------------//

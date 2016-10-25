@@ -23,6 +23,9 @@ SpikingOutput::SpikingOutput(int x, int y, double temporal_step, string output_f
         out_spk_filename=output_filename;
     else
         out_spk_filename="results/spikes.spk";
+    // Save all input images by default
+    Start_time=0.0;
+    End_time=numeric_limits<double>::infinity();
     
     // Input buffer
     inputImage=new CImg<double> (sizeY, sizeX, 1, 1, 0);
@@ -66,13 +69,7 @@ void SpikingOutput::allocateValues(){
     inputImage->assign(sizeY, sizeX, 1, 1, 0);
     last_spk_time->assign(sizeY, sizeX, 1, 1, 0);
     next_spk_time->assign(sizeY, sizeX, 1, 1, numeric_limits<double>::infinity()); // For a 0 input the next spike time is infinity
-/*
-    cout << "Max_freq: " << Max_freq << endl;
-    cout << "Min_freq: " << Min_freq << endl;
-    cout << "Input_threshold: " << Input_threshold << endl;
-    cout << "Spk_freq_per_inp: " << Spk_freq_per_inp << endl;
-    cout << "Noise_std_dev: " << Noise_std_dev << endl;
-    cout << "output_filename: " << out_spk_filename << endl;*/
+
 }
 
 SpikingOutput& SpikingOutput::set_Max_freq(double max_spk_freq){
@@ -104,6 +101,19 @@ SpikingOutput& SpikingOutput::set_Noise_std_dev(double sigma_val){
         Noise_std_dev = sigma_val;
     return(*this);
 }
+
+SpikingOutput& SpikingOutput::set_Start_time(double start_time){
+    if (start_time>=0)
+        Start_time = start_time;
+    return(*this);
+}
+
+SpikingOutput& SpikingOutput::set_End_time(double end_time){
+    if (end_time>=0)
+        End_time = end_time;
+    return(*this);
+}
+
 //------------------------------------------------------------------------------//
 
 bool SpikingOutput::setParameters(vector<double> params, vector<string> paramID){
@@ -115,20 +125,20 @@ bool SpikingOutput::setParameters(vector<double> params, vector<string> paramID)
 
         if (strcmp(s,"Max_freq")==0){
             set_Max_freq(params[i]);
-        }else if (strcmp(s,"Min_freq")==0){
+        } else if (strcmp(s,"Min_freq")==0){
             set_Min_freq(params[i]);
-        }
-        else if (strcmp(s,"Input_threshold")==0){
+        } else if (strcmp(s,"Input_threshold")==0){
             set_Input_threshold(params[i]);
-        }
-        else if (strcmp(s,"Freq_per_inp")==0){
+        } else if (strcmp(s,"Freq_per_inp")==0){
             set_Freq_per_inp(params[i]);
-        }
-        else if (strcmp(s,"Noise_std_dev")==0){
+        } else if (strcmp(s,"Noise_std_dev")==0){
             set_Noise_std_dev(params[i]);
-        }
-        else{
-              correct = false;
+        } else if (strcmp(s,"Start_time")==0){
+            set_Start_time(params[i]);
+        } else if (strcmp(s,"End_time")==0){
+            set_End_time(params[i]);
+        } else {
+            correct = false;
         }
     }
 
@@ -139,7 +149,11 @@ bool SpikingOutput::setParameters(vector<double> params, vector<string> paramID)
 
 void SpikingOutput::feedInput(double sim_time, const CImg<double>& new_input,bool isCurrent,int port){
     // Ignore port type and copy input image
-    *inputImage = new_input;
+    if(simTime >= Start_time && simTime+step <= End_time) // Check if the user wants to record the image at current time
+        *inputImage = new_input;
+    else
+        inputImage->assign(); // Reset the input image to an empty image so that no spikes are generated during this sim. time step
+
     // Update the current simulation time
     simTime = sim_time;
 }

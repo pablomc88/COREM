@@ -37,6 +37,8 @@ protected:
     vector<spike_t> out_spks; // Vector of retina output spikes
     string out_spk_filename; // filename (including path) to the spike output file to create
     
+    double Start_time, End_time; // These recording parameters define the simulation time interval when the images must be saved
+
     // parameters for conversion from input magnitude to firing rate
     double Max_freq, Min_freq; // Max. and min. number of spikes per second that a neuron can fire
     double Input_threshold; // Minimal (sustained) input value required for a neuron to generate some output
@@ -62,6 +64,8 @@ public:
     SpikingOutput& set_Input_threshold(double input_threshold);
     SpikingOutput& set_Freq_per_inp(double freq_per_inp_unit);
     SpikingOutput& set_Noise_std_dev(double sigma_val);
+    SpikingOutput& set_Start_time(double start_time);
+    SpikingOutput& set_End_time(double end_time);
 
     // Get new input
     virtual void feedInput(double sim_time, const CImg<double> &new_input, bool isCurrent, int port);

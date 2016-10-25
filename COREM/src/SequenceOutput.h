@@ -33,6 +33,8 @@ protected:
     ofstream out_seq_file_handle; // The out_seq_filename file is created when the object is created and this handle is set
     unsigned int num_written_frames; // Number of frames currently added to out_seq_file_handle
 
+    double Start_time, End_time; // These recording parameters define the simulation time interval when the images must be saved
+    
     // parameters of output file
     double Voxel_X_size, Voxel_Y_size; // Size of a voxel (pixel) in X and Y dimensions. The size in Z (time) is always set to 1
 
@@ -47,8 +49,11 @@ public:
     virtual void setX(int x){sizeX=x;}
     virtual void setY(int y){sizeY=y;}
 
+    // These functions are mainly used by setParameters() to set object parameter properties after the object is created
     SequenceOutput& set_Voxel_X_size(double voxel_x_size);
     SequenceOutput& set_Voxel_Y_size(double voxel_y_size);
+    SequenceOutput& set_Start_time(double start_time);
+    SequenceOutput& set_End_time(double end_time);
 
     // Get new input
     virtual void feedInput(double sim_time, const CImg<double> &new_input, bool isCurrent, int port);
