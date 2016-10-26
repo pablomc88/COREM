@@ -16,11 +16,17 @@
 %   only reads a square from a specific interval of source images of a
 %   specific interval of pixel dimensions (from dim. v_ini to dim. v_end).
 %   (in case a pixel is defined by a vector).
+%   
+%   Inf can be specified as end coordinate value to indicate that we can to
+%   load up to the last coordinate in file.
+%   For example:
+%   a=inrload('sequence.inr', 0,Inf, 0,Inf, 0,99);
+%   it loads the 100 first complete images from file.
 %
 %   See also INRWRITE.
 
 %   Copyright (C) 2016 by Richard R. Carrillo 
-%   $Revision: 1.0 $  $Date: 25/10/2016 $
+%   $Revision: 1.1 $  $Date: 26/10/2016 $
 
 %   This program is free software; you can redistribute it and/or modify
 %   it under the terms of the GNU General Public License as published by
@@ -43,7 +49,8 @@ else
         
         header=inr_read_header(fid);
         if isempty(header.read_error) % Header successfully read
-            disp(['Dimensions of data in file: ' num2str(header.n_dims)])
+            % Display file data dimensions
+            disp(['Dimensions of data in file: ' num2str(header.n_dims(1)) sprintf(' x %i', header.n_dims(2:end))])
             if nargs == 1 % the whole file must be loaded
                 disp(['loading file: ' filename ' completely']);
                 voxels=fread(fid, Inf, header.matlab_data_type); % Read the whole file at once to speed up the loading process
@@ -78,10 +85,12 @@ else
                 dim_max_auto=isinf(dim_size(:,2)); % Dimensions in which the user want to load all the elements
                 dim_size(dim_max_auto,2)=header.n_dims(dim_max_auto)-1;
                 
-                disp(['Partially loading activity file ' filename ':']);
+                stat_msg=['Partially loading activity file ' filename ': '];
                 for dim_ind=1:N_dims
-                    disp([' dim. ' Dim_names(dim_ind) ': from ' num2str(dim_size(dim_ind,1)) ' to ' num2str(dim_size(dim_ind,2))])
+                    stat_msg = [stat_msg Dim_names(dim_ind) '=[' num2str(dim_size(dim_ind,1)) ', ' num2str(dim_size(dim_ind,2)) '] '];
                 end
+                disp(stat_msg);
+                disp(' 00%')
                 % Check that input argument values are compatible with
                 % dimensions of data in the specified file
                 if all(dim_size >= 0)
@@ -89,19 +98,30 @@ else
                         % Load data from file
                         % Move file pointer to the first data in V dim. to load
                         fseek(fid, dim_size(4,1) * (header.data_size/8) * prod(header.n_dims(1:3)), 'cof');
-                        for n_v_dim=1:(1+dim_size(4,2)-dim_size(4,1))
+                        n_v_dim_end=(1+dim_size(4,2)-dim_size(4,1)); % Last coordinates of output matrix
+                        n_z_dim_end=(1+dim_size(3,2)-dim_size(3,1));
+                        voxels=zeros(header.n_dims(2),header.n_dims(1),n_z_dim_end,n_v_dim_end); % Allocate matrix space (just for speed efficiency when adding values)
+                        progress_end = n_v_dim_end*n_z_dim_end; % For percentage display
+                        process_update_period = ceil(progress_end / 100);
+                        for n_v_dim=1:n_v_dim_end
                             % Move file pointer to the first required data in Z dim.
-                            fseek(fid, dim_size(3,1) * (header.data_size/8) * prod(header.n_dims(1:2)), 'cof');
-                            for n_z_dim=1:(1+dim_size(3,2)-dim_size(3,1))
+                            fseek(fid, dim_size(3,1) * (header.data_size/8) * prod(header.n_dims(1:2)), 'cof');                            
+                            for n_z_dim=1:n_z_dim_end
                                 % For the remaining dimensions (X and Y) we load all the elements
                                 % since it is probably faster than moving the file pointer many times
                                 xy_voxels=fread(fid, prod(header.n_dims(1:2)), header.matlab_data_type); % Read a whole image each time
                                 xy_voxels=reshape(xy_voxels, header.n_dims(1:2));
                                 xy_voxels=permute(xy_voxels,[2 1]);
                                 voxels(:,:,n_z_dim,n_v_dim)=xy_voxels(1+(dim_size(2,1):dim_size(2,2)), 1+(dim_size(1,1):dim_size(1,2)));
+                                % Display progress percentage
+                                current_progress = n_z_dim_end*(n_v_dim-1)+n_z_dim;
+                                % we do not want to print the percentage so many times that we slow down the loading process
+                                if mod(current_progress,process_update_period)==0 % Always true for progress_end < 100 since progress_end would be 1
+                                   fprintf(1,'\b\b\b\b% 3.f%%',100*current_progress/progress_end);
+                                end
                             end
                         end
-                        
+                        fprintf(1,'\b\b\b\b100%%\n');
                     else
                         disp('Error: all specified dimension limits must be lower than the dimensions in the specified file')
                     end
@@ -141,6 +161,8 @@ if fid ~= -1 % Valid file identifier
                     [param_name,param_name_read]=sscanf(header_line,'%[^=]=',1);
                     if param_name_read==1
                         param_value=sscanf(header_line,'%*[^=]=%[^\n]',1); % Skip param name and '=' and get param value
+                        param_name=strtrim(param_name); % Remove leading and trailing space and tab character
+                        param_value=strtrim(param_value);
                         switch param_name
                             case 'XDIM' % Length in X dimension
                                 header.n_dims(1)=str2num(param_value);
@@ -165,7 +187,9 @@ if fid ~= -1 % Valid file identifier
                             case 'CPU'
                                 header.cpu=param_value;
                             otherwise
-                                warning(['Unexpected header parameter: ' param_name '-' param_value])
+                                if ~isempty(param_name) || ~isempty(param_value) % The line has a parameter name not recognized
+                                    warning(['Unexpected header parameter: ' param_name '=' param_value])
+                                end
                         end
                     end
                 else
