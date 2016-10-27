@@ -16,10 +16,16 @@
 %   only reads a square from a specific interval of source images of a
 %   specific interval of pixel dimensions (from dim. v_ini to dim. v_end).
 %   (in case a pixel is defined by a vector).
-%   
 %   Inf can be specified as end coordinate value to indicate that we can to
 %   load up to the last coordinate in file.
-%   For example:
+%   INRLOAD return a matrix im whose dimenions are size(im)=[X Y Z V].
+%   Take into account that when plotting images matlab increases the first
+%   matrix dimension vertically. That is, the first matrix coordinate is
+%   the image height and the second one is the image width. So in order to
+%   show each image you first have to traspose it. Alternatively you can
+%   permute the dimensions of the whole INRLOAD output: permute(im,[2 1 3 4])
+%
+%   Usage example:
 %   a=inrload('sequence.inr', 0,Inf, 0,Inf, 0,99);
 %   it loads the 100 first complete images from file.
 %
@@ -35,6 +41,7 @@
 function voxels=inrload(varargin)
 
 nargs=nargin;
+voxels=[]; % Defualt return value
 
 if nargs ~= 1 && nargs ~= 3 && nargs ~= 5 && nargs ~= 7 && nargs ~= 9
       disp('You must specify 1, 3, 5, 7 or 9 arguments');
@@ -50,38 +57,40 @@ else
         header=inr_read_header(fid);
         if isempty(header.read_error) % Header successfully read
             % Display file data dimensions
-            disp(['Dimensions of data in file: ' num2str(header.n_dims(1)) sprintf(' x %i', header.n_dims(2:end))])
-            if nargs == 1 % the whole file must be loaded
+            disp(['Dimensions of data in file (X,Y,Z,V): ' num2str(header.n_dims(1)) sprintf(' x %i', header.n_dims(2:end))])
+
+            Dim_names='XYZV';
+            N_dims=length(Dim_names);
+
+            % If fn argument dimension data types are strings, convert to doubles
+            % The type may change denpending on how the fn is executed
+            for arg_ind=2:nargs
+                if isa(varargin{arg_ind},'char')
+                    vargs_num(arg_ind-1) = str2double(varargin{arg_ind});
+                else
+                    vargs_num(arg_ind-1) = varargin{arg_ind};
+                end
+            end
+
+            dim_size=[zeros(N_dims,1) ones(N_dims,1)*Inf]; % Default dimension coordinates of data to load: load all data: 0 -> Inf
+            % Replace dim_size values with the dimension limits specified by user
+            for arg_ind=1:(nargs-1)/2 % Parse input dimension coordenate intervals
+                dim_size(arg_ind,:) = [vargs_num(arg_ind*2 - 1) vargs_num(arg_ind*2)];
+            end
+            
+            % If only 1 argument has been specified or [0,Inf] interval has
+            % been specified for all dimension, load the file completelly
+            if nargs == 1 || (all(dim_size(:,1)==0) && all(isinf(dim_size(:,2))))
                 disp(['loading file: ' filename ' completely']);
                 voxels=fread(fid, Inf, header.matlab_data_type); % Read the whole file at once to speed up the loading process
                 disp(' 100%');
                 if numel(voxels)==prod(header.n_dims)
-                    voxels=reshape(voxels, header.n_dims);
-                    voxels=permute(voxels,[2 1 3 4]);
+                    voxels=reshape(voxels, header.n_dims); % convert vector obtained from fread into a matrix
+                    %voxels=permute(voxels,[2 1 3 4]); % Permute X and Y dimensions to show images correctly with matlab image(voxels(:,:,1,1))
                 else
                     disp('Error: Number of voxel values in file does not correspond with dimension sizes in header')
                 end
             else % only a part of the file must be loaded
-                Dim_names='XYZV';
-                N_dims=length(Dim_names);
-                
-                % If fn argument dimension data types are strings, convert to doubles
-                % The type may change denpending on how the fn is executed
-                for arg_ind=2:nargs
-                    if isa(varargin{arg_ind},'char')
-                        vargs_num(arg_ind-1) = str2double(varargin{arg_ind});
-                    else
-                        vargs_num(arg_ind-1) = varargin{arg_ind};
-                    end
-                end
-                
-                dim_size=[zeros(N_dims,1) ones(N_dims,1)*Inf]; % Default dimension coordinates of data to load: load all data: 0 -> Inf
-                % Replace dim_size values with the dimension limits specified by user
-                for arg_ind=1:(nargs-1)/2 % Parse input dimension coordenate intervals
-                    dim_size(arg_ind,:) = [vargs_num(arg_ind*2 - 1) vargs_num(arg_ind*2)];
-                end
-
-                
                 dim_max_auto=isinf(dim_size(:,2)); % Dimensions in which the user want to load all the elements
                 dim_size(dim_max_auto,2)=header.n_dims(dim_max_auto)-1;
                 
@@ -100,7 +109,7 @@ else
                         fseek(fid, dim_size(4,1) * (header.data_size/8) * prod(header.n_dims(1:3)), 'cof');
                         n_v_dim_end=(1+dim_size(4,2)-dim_size(4,1)); % Last coordinates of output matrix
                         n_z_dim_end=(1+dim_size(3,2)-dim_size(3,1));
-                        voxels=zeros(header.n_dims(2),header.n_dims(1),n_z_dim_end,n_v_dim_end); % Allocate matrix space (just for speed efficiency when adding values)
+                        voxels=zeros(dim_size(1,2)-dim_size(1,1)+1, dim_size(2,2)-dim_size(2,1)+1, n_z_dim_end, n_v_dim_end); % Allocate matrix space (just for speed efficiency when adding values)
                         progress_end = n_v_dim_end*n_z_dim_end; % For percentage display
                         process_update_period = ceil(progress_end / 100);
                         for n_v_dim=1:n_v_dim_end
@@ -109,10 +118,9 @@ else
                             for n_z_dim=1:n_z_dim_end
                                 % For the remaining dimensions (X and Y) we load all the elements
                                 % since it is probably faster than moving the file pointer many times
-                                xy_voxels=fread(fid, prod(header.n_dims(1:2)), header.matlab_data_type); % Read a whole image each time
-                                xy_voxels=reshape(xy_voxels, header.n_dims(1:2));
-                                xy_voxels=permute(xy_voxels,[2 1]);
-                                voxels(:,:,n_z_dim,n_v_dim)=xy_voxels(1+(dim_size(2,1):dim_size(2,2)), 1+(dim_size(1,1):dim_size(1,2)));
+                                im_voxels=fread(fid, prod(header.n_dims(1:2)), header.matlab_data_type); % Read a whole image each time
+                                im_voxels=reshape(im_voxels, header.n_dims(1:2));
+                                voxels(:,:,n_z_dim,n_v_dim) = im_voxels(1+(dim_size(1,1):dim_size(1,2)), 1+(dim_size(2,1):dim_size(2,2)));
                                 % Display progress percentage
                                 current_progress = n_z_dim_end*(n_v_dim-1)+n_z_dim;
                                 % we do not want to print the percentage so many times that we slow down the loading process
@@ -121,6 +129,7 @@ else
                                 end
                             end
                         end
+                        %voxels=permute(voxels,[2 1 3 4]); % Permute X and Y dimensions to show images correctly with matlab image(voxels(:,:,1,1))
                         fprintf(1,'\b\b\b\b100%%\n');
                     else
                         disp('Error: all specified dimension limits must be lower than the dimensions in the specified file')
@@ -139,7 +148,7 @@ else
         end
         fclose(fid);
     else
-        disp(['Cannot output spike file: ' varargin{2}]);        
+        disp(['Cannot open input file: ' varargin{2}]);
     end    
 end
 

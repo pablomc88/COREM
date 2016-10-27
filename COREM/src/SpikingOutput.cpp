@@ -196,7 +196,7 @@ bool spk_time_comp(spike_t spk1, spike_t spk2){
     if(time_diff > 0)
         comp_result=true; // spk1.time < spk2.time
     else if(time_diff < 0)
-        comp_result=false; // spk1.time > spk2.time
+        comp_result=false; // spk1.time > spk2.timeinp_pix_per
     else // This subordering it is implemented just to ease the visual inspection of the output file
         comp_result = spk1.neuron < spk2.neuron;
     
