@@ -38,7 +38,7 @@ int main(int argc, char *argv[])
             files+=1;
           }
 
-        if(files > 2){
+        if(false && files > 2){
             string results = "exec rm "+currentDirRoot+"results/*";
             cout << "Deleting content of results/ directory" << endl;
             const char * todelete = (results).c_str();

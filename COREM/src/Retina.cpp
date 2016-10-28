@@ -399,6 +399,8 @@ bool Retina::addModule(module* new_module, string ID){
                     delete curr_module; // Destroy dummy initial (should be module[0])
                     modules[module_ind] = new_module; // Use the specified module as Output module
                     correctly_added=true;
+                } else {
+                    cout << "Warning: Output module already added. Ignoring posterior ones" << endl;
                 }
                 break; // Exit for loop
             }

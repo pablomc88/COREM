@@ -20,16 +20,30 @@
 %   load up to the last coordinate in file.
 %   mode can be:
 %     mo: to play the images as a movie
-%     pl: to plot the evolution of each pixel magnitude as a graph curve
+%     pl: to plot the evolution of each pixel magnitude as a graph curve,
+%     that is, pixel magnitude versus frame number.
+%     If the number of frames is only one, it plots the pixel magnitude
+%     versus the X coordinate (or Y if we have more Y coordinates than X
+%     coordinate) of the pixel. That is, one curve per row (or column).
+%     ra: to plot a raster plot of the magnitude of specified pixels
 %
 %   For example:
-%   inrplot 'sequence.inr' mo 0 Inf 0 Inf 0 99
+%   inrplot 'sequence.inr'  mo  0 Inf  0 Inf  0 99
 %   it loads the 100 first complete frames and play them as a movie.
+%   inrplot 'sequence.inr'  pl  4 4  5 5
+%   it plots the evolution of the magnitude of pixel (4,5) through the simulation.
+%   inrplot 'sequence.inr'  pl  0 Inf  Inf Inf  100 100
+%   it plots the magnitude of pixels of last image row in frame 100
+%   inrplot 'sequence.inr'  pl  10 11  0 Inf  100 100
+%   it plots the pixel magnitudes of rows 10 and 11 of frame 100
+%   inrplot 'sequence.inr'  ra  0 Inf  10 10
+%   it plots a raster plot of pixel magnitudes of row 10. That is, it shows
+%   all pixel magnitudes versus frame number.
 %
 %   See also INRLOAD.
 
 %   Copyright (C) 2016 by Richard R. Carrillo 
-%   $Revision: 1.0 $  $Date: 26/10/2016 $
+%   $Revision: 1.1 $  $Date: 28/10/2016 $
 
 %   This program is free software; you can redistribute it and/or modify
 %   it under the terms of the GNU General Public License as published by
@@ -66,7 +80,8 @@ else
     end
 
     user_dim_size_cell = num2cell(user_dim_size(:)); % Convert array into an array of cells in order to pass these numbers as arguments to the inrload fn
-    images = inrload(filename, user_dim_size_cell{:}); % Load all required data from file
+    % Load images and specific coordinates of first and last read pixel for each matrix dimension
+    [images, read_dim_size] = inrload(filename, user_dim_size_cell{:}); % Load all required data from file
     if ~isempty(images) % File successfully read
         fprintf(1,'Dimensions of read data (X,Y,Z,V): %i x %i x %i x %i\n', arrayfun( @(dim) (size(images,dim)), 1:N_dims));
         
@@ -74,35 +89,55 @@ else
             warning('Fourth dimension (V) of data in input file should only have 1 coordinate (that is, the file should contain escalar pixels). Using only the first V coordinate.')
             images=images(:,:,:,1);
         end
-        
-        % Calculate specific coordinates of pixels in matrix, that is,
-        % replace Inf values by definite dimension coordinates
-        read_dim_size=user_dim_size;
-        for n_dim=1:N_dims
-            if isinf(read_dim_size(2,n_dim))
-                read_dim_size(2,n_dim)=size(images, n_dim)-1;
-            end
-        end
-        
+
         switch mode
             case 'mo'
-                images = permute(images,[2 1 4 3]); % image must be an M-by-N-by-1-by-K array, where K is the number of images
-                images_mov = immovie(1+images,gray(max(images(:))));
+                % normalize pixel values to interval 1 255
+                images = 1 + images/max(images(:))*255;
+                images = permute(images,[2 1 4 3]); % for immovie image must be an M-by-N-by-1-by-K array, where K is the number of images
+                images_mov = immovie(images,gray(256));
                 implay(images_mov);
             case 'pl'
+                if size(images,3) ~= 1 % If we have several frames, plot magnitudes versus frame number
+                    % Arrange each image pixel evolution as a row vector
+                    pixel_vect=reshape(images, [size(images,1)*size(images,2) size(images,3)]); % first matrix dimension (image row) traveled first
+                    plot(read_dim_size(1,3):read_dim_size(2,3), pixel_vect') % plot one curve per pixel (row of pixel_vect)
+                    title('Evolution of pixel magnitudes')
+                    xlabel('frame')
+                    ylabel('activaton level')
+                    % Calculate the label for each plot curve (image pixel evolution)
+                    x_coord=repmat((read_dim_size(1,1):read_dim_size(2,1))', 1, read_dim_size(2,2)-read_dim_size(1,2)+1); % x coord. of the labels
+                    y_coord=repmat(read_dim_size(1,2):read_dim_size(2,2), read_dim_size(2,1)-read_dim_size(1,1)+1, 1); % y coord. of the labels
+                    pixel_labels=arrayfun(@(x,y)(sprintf('(%i,%i)',x,y)), x_coord, y_coord, 'UniformOutput', false);
+                    legend(pixel_labels(:))
+                else % If we have only one frame, plot magnitudes versus pixel coordinate
+                    if size(images,1) >= size(images,2) % If we have X coordinate and y coordinates, plot magnitudes versus X coordinates
+                        plot(read_dim_size(1,1):read_dim_size(2,1), images') % plot one curve per pixel (row of pixel_vect)
+                        title(['Pixel magnitudes in frame ' num2str(read_dim_size(1,3))])
+                        xlabel('X coordinate')
+                        ylabel('activaton level')
+                        % Calculate the label for each plot curve (image row)
+                        pixel_labels=arrayfun(@(y)(sprintf('row %i',y)), read_dim_size(1,2):read_dim_size(2,2), 'UniformOutput', false);
+                        legend(pixel_labels(:))
+                    else % If we have more Y coordinate than X coordinates, plot magnitudes versus Y coordinates
+                        plot(read_dim_size(1,2):read_dim_size(2,2), images) % plot one curve per pixel (row of pixel_vect)
+                        title(['Pixel magnitudes in frame ' num2str(read_dim_size(1,3))])
+                        xlabel('Y coordinate')
+                        ylabel('activaton level')
+                        % Calculate the label for each plot curve (image row)
+                        pixel_labels=arrayfun(@(x)(sprintf('col. %i',x)), read_dim_size(1,1):read_dim_size(2,1), 'UniformOutput', false);
+                        legend(pixel_labels(:))
+                    end
+                end
+            case 'ra'
                 % Arrange image pixels as row vectors
-                pixel_vect=reshape(images, [size(images,1)*size(images,2) size(images,3)]); % first matrix dimension (image row) traveled first
-                plot(read_dim_size(1,3):read_dim_size(2,3), pixel_vect') % plot one curve per pixel (row of pixel_vect)
+                pixel_vect=reshape(images, [size(images,1)*size(images,2) size(images,3)]);
+                imagesc(read_dim_size(1,3):read_dim_size(2,3), 1:(read_dim_size(2,1)-read_dim_size(1,1)+1)*(read_dim_size(2,2)-read_dim_size(1,2)+1), pixel_vect);
+                % set(gca,'XTick', read_dim_size(1,3):read_dim_size(2,3)) % Show all frame numbers
+                colorbar
                 title('Evolution of pixel magnitudes')
                 xlabel('frame')
-                ylabel('activaton level')
-                % Calculate the label for each plot curve (iamge pixel evolution)
-                x_coord=repmat((read_dim_size(1,1):read_dim_size(2,1))', 1, read_dim_size(2,2)-read_dim_size(1,2)+1); % x coord. of the labels
-                y_coord=repmat(read_dim_size(1,2):read_dim_size(2,2), read_dim_size(2,1)-read_dim_size(1,1)+1, 1); % y coord. of the labels
-                pixel_labels=arrayfun(@(x,y)(sprintf('(%i,%i)',x,y)), x_coord, y_coord, 'UniformOutput', false);
-                legend(pixel_labels(:))
-            case 'ra'
-                
+                ylabel(sprintf('pixel index from (%i,%i) to (%i,%i)',read_dim_size(:,1:2)'))
             otherwise
                 disp('Unknown plot mode specified.')
         end
