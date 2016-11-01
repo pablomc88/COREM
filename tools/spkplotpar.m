@@ -1,57 +1,75 @@
-%RETSPKPLOTPAR plots a raster plot of the neural spike activity
+%RETSPKPLOTPAR represent graphically neural spike activity
 %   This script reads the simulation spikes generated during the retina 
 %   simulation from the activity output file and plot them.
-%   RETSPKPLOTPAR var_type t_ini t_end only reads the spikes from
+%   RETSPKPLOTPAR mode represent the spikes stored in the default spike
+%   output file of COREM (in results directory).
+%   Aditional arguments can be specified to limit the amount of spikes
+%   loaded from file:
+%   RETSPKPLOTPAR mode filename represents the spikes stored in filename
+%   using the mode mode.
+%   RETSPKPLOTPAR mode filename t_ini t_end only reads the spikes from
 %   time t_ini to t_end (in seconds)
-%   RETSPKPLOTPAR var_type t_ini t_end neu_ini neu_end only reads the spikes
-%   of neurons from neu_ini to neu_end and in time from t_ini to t_end
-%   var_type specifies how the activity will be plotted.
+%   RETSPKPLOTPAR mode filename t_ini t_end neu_ini neu_end only reads
+%   the spikes of neurons from neu_ini to neu_end and in time from t_ini
+%   to t_end.
+%   mode specifies how the activity will be plotted:
 %   var_type must be: ra
-%    ra: Displais a normal raster plot of the activity
-%        (the whole specified period of the simulation is plotted)
+%    ra: Plots a normal raster plot of the activity
+%        (the specified period of the simulation is plotted)
+%    hi: Plots a histogram of the firing periods of all the neurons
+%    specifed.
 %   example to generate a raster plot of simulation activity in the time interval 0 1:
-%      retspkplotpar ra 0 1
+%      retspkplotpar ra spikes.spk 0 1
 %
-%   See also RETSPKPLOT.
+%   See also SPKPLOT.
 
 %   Copyright (C) 2016 by Richard R. Carrillo 
-%   $Revision: 1.3 $  $Date: 26/9/2016 $
+%   $Revision: 1.4 $  $Date: 1/11/2016 $
 %   (adapted from noout2par from EDLUT repository)
 
 %   This program is free software; you can redistribute it and/or modify
 %   it under the terms of the GNU General Public License as published by
 %   the Free Software Foundation; either version 3 of the License, or
 %   (at your option) any later version.
-function retspkplotpar(varargin)
+function spkplotpar(varargin)
 
-LOG_FILE='../COREM/results/spikes.spk'; % log file name
+
 sim_slot_time=0.1e-3; % approx. simulation step length in seconds
 
-nargs=nargin;
+nargs=nargin; % Number of input arguments specified
+
+if nargs ~= 1 && nargs ~= 2 && nargs ~= 4 && nargs ~= 6
+      disp('You must specify 1, 2, 4 or 6 arguments');
+      disp('retspkplotpar plot_mode [filename [start_time end_time [first_neuron last_neuron]]]');
+      disp('type: help spkplotpar for more help');
+      error('Incorrect number of input arguments')
+end
+
 if nargin > 0
-   v=varargin{1};
-   if ~isequal(v,'ra') && ~isequal(v,'ra')
-      display('Incorrect value of the first argument');
+   plot_mode=varargin{1};
+   if ~isequal(plot_mode,'ra') && ~isequal(plot_mode,'hi')
+      display('Incorrect value of mode (first argument)');
       nargs=0;
+   end
+   if nargin > 1
+       filename=varargin{2}; % specified file name
+   else
+       filename='../COREM/results/spikes.spk'; % default log file name
    end
 end
 
-if nargs ~= 1 && nargs ~= 3 && nargs ~= 5
-      disp('You must specify 1, 3 or 5 arguments');
-      disp('retspkplotpar plot_type [start_time end_time [first_neuron last_neuron]]');
-      disp('type: help retspkplotpar for more help');
-end
 
-if nargs == 1 % the whole file must be loaded
-    disp(['loading log file: ' LOG_FILE ' completely']);
+if nargs <= 2 % the whole file must be loaded
+    disp(['loading activity file: ' filename ' completely...']);
+    activity_list=load(filename);
     disp(' 100%');
-    activity_list=load(LOG_FILE);
     tot_num_cols=size(activity_list,2);
 else % only a part of the file must be loaded
-    start_time=str2num(varargin{2});
-    end_time=str2num(varargin{3});
-    disp(['Partially loading activity file ' LOG_FILE ' from time ' num2str(start_time) ' to ' num2str(end_time)]);
-    fid = fopen(LOG_FILE,'rt');
+    % we use str2num instead of str2double because str2double does not evaluate arithmetic expreions in arguments
+    start_time=str2num(varargin{3});
+    end_time=str2num(varargin{4});
+    disp(['Partially loading activity file ' filename ' from time ' num2str(start_time) ' to ' num2str(end_time)]);
+    fid = fopen(filename,'rt');
     if fid ~= -1
         fseek(fid,-1,'eof');
         filelength=ftell(fid); % get log file size
@@ -62,20 +80,19 @@ else % only a part of the file must be loaded
         tot_num_cols=length(last_line); % total number of columns in the file
         fseek(fid,fix(filelength*(start_time/last_file_time)),'bof');
         findline_backwards(fid);
+        % load spikes in the specified time interval
         activity_list=read_file_part(fid,start_time,end_time);
         fclose(fid);
         if last_file_time < start_time
-            disp('Error: The specified start_time is no included in the file')
-            return
+            error('Error: The specified start_time is no included in the file')
         end
     else
-        disp(['Cannot output spike file: ' LOG_FILE]);
-        return
+        error(['Cannot open output spike file: ' filename]);
     end
 end
-if nargs == 5 % only some neurons must be plotted
-    first_neu=str2num(varargin{4});
-    last_neu=str2num(varargin{5});
+if nargs == 6 % only some neurons must be plotted
+    first_neu=str2num(varargin{5});
+    last_neu=str2num(varargin{6});
     activity_list=activity_list(activity_list(:,1) >= first_neu & activity_list(:,1) <= last_neu,:); % remove unwanted neurons from the list
 end
 
@@ -97,11 +114,11 @@ end
 
 disp('Creating figure...');
 
-switch(v)
+switch(plot_mode)
 case 'ra'
     tot_spks=0;
     for nneu=1:num_spk_neus
-        cur_neu_spk_times=activity_list(find(activity_list(:,1)==neu_list(nneu)),2);
+        cur_neu_spk_times=activity_list(activity_list(:,1)==neu_list(nneu),2);
         tot_spks=tot_spks+length(cur_neu_spk_times);
         line((cur_neu_spk_times*ones(1,2))',(ones(length(cur_neu_spk_times),1)*[nneu-0.25,nneu+0.25])','Color','b');
     end
@@ -124,10 +141,33 @@ case 'ra'
         end
     end
     set(gca,'YTickLabel',neu_tick_list);
-    display(['Total number of spikes: ' num2str(tot_spks)]);
-    display(['Number of spiking neurons: ' num2str(num_spk_neus)]);
-end
 
+case 'hi'
+    tot_spks=0;
+    spk_periods=[];
+    for nneu=1:num_spk_neus
+        cur_neu_spk_times=activity_list(activity_list(:,1)==neu_list(nneu),2);
+        tot_spks=tot_spks+length(cur_neu_spk_times);
+        spk_periods=[spk_periods ; diff(cur_neu_spk_times*1e3)];
+    end
+    % Determine a proper number of histogram bins according to the num. of spikes
+    if tot_spks < 1000
+        n_bins = 10;
+    else
+        if tot_spks > 100000
+            n_bins = 1000;
+        else
+            n_bins = tot_spks/200;
+        end
+    end
+    
+    hist(spk_periods, n_bins);
+    xlabel('firing periods (ms)');
+    ylabel('spike count');
+end
+display(['Total number of spikes: ' num2str(tot_spks)]);
+display(['Number of spiking neurons: ' num2str(num_spk_neus)]);
+    
 % READ_LINE_TIME gets the time of the next register from the simulation-log file.
 %    REGTIME = READ_FILE_PART(FID) advances the file position indicator in the
 %    file associated with the given FID to the beginning of the next text
@@ -189,9 +229,11 @@ end
       cur_file_time=starttime;
       tline=' ';
       while cur_file_time < endtime && ischar(tline) && ~isempty(tline)
-         tline=fgetl(fid);
-         if ischar(tline) && ~isempty(tline) && isempty(~strfind(tline,'%'))
-            vline=str2num(tline);
+         [vline, vline_vals]=fscanf(fid,'%u%*[ \t]%f%*[^\n]\n',2);
+         if vline_vals == 0 && ~feof(fid) % Assume this line is a comment: skip it
+             fscanf(fid,'%*[^\n]\n',1);
+         end
+         if vline_vals == 2 % Neuron and time stamp read
             regs_size=regs_size+1;
             regs(regs_size,:)=vline;
             cur_file_time=vline(2);

@@ -2,7 +2,7 @@
 % For large activity files consider displaying only part of the file using the script:
 %  retspkplotpar.m
 %
-%   See also RETSPKPLOTPAR.
+%   See also SPKPLOTPAR.
 
 %   Copyright (C) 2016 by Richard R. Carrillo 
 %   $Revision: 1.1 $  $Date: 26/9/2016 $

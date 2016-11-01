@@ -151,6 +151,8 @@ else
             otherwise
                 disp('Unknown plot mode specified.')
         end
+    else
+        disp('No data could be loaded.')
     end
 end
 
