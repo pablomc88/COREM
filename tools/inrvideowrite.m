@@ -23,7 +23,7 @@
 %   (at your option) any later version.
 classdef inrvideowrite<handle
    properties
-      ydim,xdim,zdim
+      ydim,xdim,zdim,vdim % INR file dimensions
       inr_type
       inr_type_len
       fh
@@ -33,7 +33,7 @@ classdef inrvideowrite<handle
          'XDIM=%d\n' ...
          'YDIM=%d\n' ...
          'ZDIM=%d\n' ...
-         'VDIM=1\n' ...
+         'VDIM=%d\n' ...
          'VX=1\n' ...
          'VY=1\n' ...
          'VZ=1\n' ...
@@ -44,7 +44,7 @@ classdef inrvideowrite<handle
       inr_header_end=sprintf('\n##}\n');
       inr_type_list={'float', 'signed fixed', 'unsigned fixed'};
       data_class
-      data_size
+      data_size % Size of input images
    end
    methods
       function obj = inrvideowrite(filename)
@@ -56,21 +56,30 @@ classdef inrvideowrite<handle
             error(['Creating file ' filename])
          end
       end
+      % Frame is saved in INRimage format, which is a raw format following
+      % the following pixel order
+      % R(0,0,0)G(0,0,0)B(0,0,0)R(1,0,0)G(1,0,0)B(1,0,0)...
+      % R(0,1,0)G(0,1,0)B(0,1,0)R(1,0,0)G(1,0,0)B(1,0,0)...
+      % ...
+      % R(0,0,1)G(0,0,1)B(0,0,1)R(1,0,1)G(1,0,1)B(1,0,1)...
+      % ...
+      % ...
+      % Where R(x,y,z) is the red component of the pixel at x,y of frame z
       function add_frame(obj, frame)
          if obj.inr_type_len == 0 % Image porperties are not stablished yet: Set image object properties
             obj.data_class=class(frame);
-            obj.data_size=size(frame);
+            obj.data_size=[size(frame,1) size(frame,2) size(frame,3)]; % always get the size of the 3 dimensions (even if some of them is 1)
             switch(obj.data_class)
                case {'single', 'double'}
                   obj.inr_type=obj.inr_type_list{1};
                case {'int8', 'int16', 'int32', 'int64'}
                   obj.inr_type=obj.inr_type_list{2};
-               case {'uint8', 'uint16', 'uint32', 'uint64'}
+               case {'char', 'uint8', 'uint16', 'uint32', 'uint64'}
                   obj.inr_type=obj.inr_type_list{3};
             end
 
             switch(obj.data_class)
-               case {'int8', 'uint8'}
+               case {'char', 'int8', 'uint8'}
                   obj.inr_type_len=8;
                case {'int16', 'uint16'}
                   obj.inr_type_len=16;
@@ -79,20 +88,23 @@ classdef inrvideowrite<handle
                case {'int64', 'uint64', 'double'}
                   obj.inr_type_len=64;
             end
-            [obj.ydim,obj.xdim]=size(frame);
+            obj.ydim=obj.data_size(1); % image height
+            obj.xdim=obj.data_size(2); % image width
+            obj.vdim=obj.data_size(3); % Number of color channels
             obj.zdim=0; % No frames in the video so far
          end
-            if isequal(obj.data_class,class(frame)) && isequal(obj.data_size,size(frame)) % check if the specied frame properties match
-               fwrite(obj.fh,permute(frame,[2 1 3]),obj.data_class);
-               obj.zdim=obj.zdim+1;
-            else
-               error('properties of specified frame does not match those of previous ones');
-            end
+         if isequal(obj.data_class,class(frame)) && isequal(obj.data_size,[size(frame,1) size(frame,2) size(frame,3)]) % check if the specied frame properties match
+            fwrite(obj.fh,permute(frame,[3 2 1]),obj.data_class); % INR stores first the color channels and then the first image pixel row: permute matrix dims to get this
+            obj.zdim=obj.zdim+1;
+         else
+            error('properties of specified frame does not match those of previous ones');
+         end
       end
       function delete(obj)
-         fseek(obj.fh,0,'bof');
-         inr_header_start=sprintf(obj.inr_header_start_temp, obj.xdim, obj.ydim, obj.zdim, obj.inr_type, obj.inr_type_len);
+         fseek(obj.fh,0,'bof'); % Move file pointer to the beginning to update the file header values
+         inr_header_start=sprintf(obj.inr_header_start_temp, obj.xdim, obj.ydim, obj.zdim, obj.vdim, obj.inr_type, obj.inr_type_len);
          fprintf(obj.fh,inr_header_start);
+         % Fill the space in header not used with \n
          fprintf(obj.fh,repmat('\n',1,obj.inr_header_len-length(inr_header_start)-length(obj.inr_header_end)));
          fprintf(obj.fh,obj.inr_header_end);
          fclose(obj.fh);

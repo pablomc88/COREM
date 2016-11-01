@@ -5,7 +5,6 @@
 %   load the whole INR filename file and plot it in mode mode.
 %   If additional arguments are specified, only a specific part of the
 %   file is loaded:
-
 %   INRPLOT filename mode x_ini x_end only reads (and plot) an interval of
 %   pixel columns from all source images (from column x_ini to column x_end).
 %   First column coordinate is number zero.
@@ -14,7 +13,10 @@
 %   to row x_end).
 %   INRPLOT filename mode x_ini x_end y_ini y_end z_ini z_end only reads a
 %   square from a specific interval of source images (from frame z_ini to
-%   frame z_end).  First frame is number zero.
+%   frame z_end). First frame is number zero.
+%   INRPLOT filename mode x_ini x_end y_ini y_end z_ini z_end v_ini v_end
+%   only reads a subset of color channels of a square from a specific
+%   interval of source frames. First channel is number zero.
 %   
 %   Inf can be specified as end coordinate value to indicate that we want to
 %   load up to the last coordinate in file.
@@ -43,7 +45,7 @@
 %   See also INRLOAD.
 
 %   Copyright (C) 2016 by Richard R. Carrillo 
-%   $Revision: 1.1 $  $Date: 28/10/2016 $
+%   $Revision: 1.2 $  $Date: 1/11/2016 $
 
 %   This program is free software; you can redistribute it and/or modify
 %   it under the terms of the GNU General Public License as published by
@@ -53,8 +55,8 @@ function inrplot(varargin)
 
 nargs=nargin;
 
-if nargs ~= 2 && nargs ~= 4 && nargs ~= 6 && nargs ~= 8
-      disp('You must specify 2, 4, 6 or 8 arguments');
+if nargs ~= 2 && nargs ~= 4 && nargs ~= 6 && nargs ~= 8 && nargs ~= 10
+      disp('You must specify 2, 4, 6, 8 or 10 arguments');
       disp('inrload filename mode [x_ini x_end [y_ini y_end [z_ini z_end]]]');
       disp('All arguments must be numeric except the first two ones')
       disp('type: help inrplot for more help');
@@ -64,7 +66,7 @@ else
     mode = varargin{2};
 
     % If fn argument dimension data types are strings, convert to doubles
-    % The type may change denpending on how the fn is called
+    % The type may change denpending on how the fn is called: as fn or script
     for arg_ind=3:nargs
         if isa(varargin{arg_ind},'char')
             vargs_num(arg_ind-2) = str2double(varargin{arg_ind});
@@ -85,17 +87,25 @@ else
     if ~isempty(images) % File successfully read
         fprintf(1,'Dimensions of read data (X,Y,Z,V): %i x %i x %i x %i\n', arrayfun( @(dim) (size(images,dim)), 1:N_dims));
         
-        if size(images,4) == 4
+        if ~strcmp(mode,'mo') && size(images,4) > 1
             warning('Fourth dimension (V) of data in input file should only have 1 coordinate (that is, the file should contain escalar pixels). Using only the first V coordinate.')
             images=images(:,:,:,1);
         end
 
         switch mode
             case 'mo'
-                % normalize pixel values to interval 1 255
-                images = 1 + images/max(images(:))*255;
                 images = permute(images,[2 1 4 3]); % for immovie image must be an M-by-N-by-1-by-K array, where K is the number of images
-                images_mov = immovie(images,gray(256));
+                if size(images,3) == 1 % grayscaled frames
+                    % normalize pixel values to interval 1 255
+                    images = 1 + double(images)/double(max(images(:)))*255;
+                    images_mov = immovie(images,gray(256));
+                else
+                    if size(images,3) == 3 % color frames
+                        images_mov = immovie(images);
+                    else
+                        error('Input frames must be grayscaled (V dim. size = 1) or true color (V dim. size = 3)')
+                    end
+                end
                 implay(images_mov);
             case 'pl'
                 if size(images,3) ~= 1 % If we have several frames, plot magnitudes versus frame number

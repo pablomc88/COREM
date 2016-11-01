@@ -18,24 +18,25 @@
 %   (in case a pixel is defined by a vector).
 %   Inf can be specified as coordinate value to designate the last
 %   coordinate in that dimension.
-%   im=INRLOAD return a matrix im whose dimenions are size(im)=[X Y Z V].
-%   Take into account that when plotting images matlab increases the first
-%   matrix dimension vertically. That is, the first matrix coordinate is
-%   the image height and the second one is the image width. So in order to
-%   show each image you first have to traspose it. Alternatively you can
-%   permute the dimensions of the whole INRLOAD output: permute(im,[2 1 3 4])
+%   im=INRLOAD returns a matrix im whose dimenions are size(im)=[X Y Z V].
+%   Take into account that when plotting images Matlab increases the first
+%   matrix dimension to plot a column. That is, the first matrix coordinate is
+%   the image height and the second one is the image width. Moreover, color
+%   channel dimension (V) is expected to be the third dimension. So, in order
+%   to show a grayscaled frame you first have to traspose it. Alternatively you can
+%   permute the dimensions of the whole INRLOAD output: permute(im,[2 1 4 3])
 %   [im,dl]=INRLOAD also returns a matrix dl of dimensions 2 x 4 in which
-%   each column represents the first and the last element loaded for each
-%   dimension.
+%   each column represents the coordinate of the first and the last element
+%   loaded for each dimension.
 %
 %   Usage example:
 %   a=inrload('sequence.inr', 0,Inf, 0,Inf, 0,99);
-%   it loads the first 100 complete images from file sequence.inr.
+%   it loads the first 100 complete frames from file sequence.inr.
 %
 %   See also INRWRITE.
 
 %   Copyright (C) 2016 by Richard R. Carrillo 
-%   $Revision: 1.2 $  $Date: 28/10/2016 $
+%   $Revision: 1.3 $  $Date: 1/11/2016 $
 
 %   This program is free software; you can redistribute it and/or modify
 %   it under the terms of the GNU General Public License as published by
@@ -56,8 +57,7 @@ else
     filename = varargin{1};
 
     fid = fopen(filename,'rb');
-    if fid ~= -1
-        
+    if fid ~= -1 % Successfully opened
         header=inr_read_header(fid);
         if isempty(header.read_error) % Header successfully read
             % Display file data dimensions
@@ -86,10 +86,16 @@ else
             % been specified for all dimension, load the file completelly
             if nargs == 1 || (all(user_dim_size(:,1)==0) && all(isinf(user_dim_size(:,2))))
                 disp(['loading file: ' filename ' completely']);
-                voxels=fread(fid, Inf, header.matlab_data_type); % Read the whole file at once to speed up the loading process
+                % Read the whole file at once to speed up the loading process
+                % Use the pixel data type specified in file header to read
+                % data from file and create voxels matrix with the same
+                % format (*)
+                voxels=fread(fid, Inf, ['*' header.matlab_data_type]);
                 disp(' 100%');
                 if numel(voxels)==prod(header.n_dims)
-                    voxels=reshape(voxels, header.n_dims); % convert vector obtained from fread into a matrix
+                    inr_dim_encoding=[header.n_dims(4) header.n_dims(1:3)]; % color hannels (V dim.) are encoded together
+                    voxels=reshape(voxels, inr_dim_encoding); % convert vector obtained from fread into a matrix
+                    voxels=permute(voxels,[2 3 4 1]); % Place the color channel dimension in the end as in CImg and INR header
                     %voxels=permute(voxels,[2 1 3 4]); % Permute X and Y dimensions to show images correctly with matlab image(voxels(:,:,1,1))
                     dim_limits = [zeros(1,N_dims) ; header.n_dims-1];
                 else
@@ -111,33 +117,47 @@ else
                 % dimensions of data in the specified file
                 if all(user_dim_size >= 0)
                     if all(user_dim_size(:,1) < header.n_dims') && all(user_dim_size(:,2) < header.n_dims')
-                        % Load data from file
-                        % Move file pointer to the first data in V dim. to load
-                        fseek(fid, user_dim_size(4,1) * (header.data_size/8) * prod(header.n_dims(1:3)), 'cof');
-                        n_v_dim_end=(1+user_dim_size(4,2)-user_dim_size(4,1)); % Last coordinates of output matrix
+                        % Load binary (pixel) data from file
+
                         n_z_dim_end=(1+user_dim_size(3,2)-user_dim_size(3,1));
-                        voxels=zeros(user_dim_size(1,2)-user_dim_size(1,1)+1, user_dim_size(2,2)-user_dim_size(2,1)+1, n_z_dim_end, n_v_dim_end); % Allocate matrix space (just for speed efficiency when adding values)
-                        progress_end = n_v_dim_end*n_z_dim_end; % For percentage display
+                        % Allocate matrix space (just for speed efficiency when adding values).
+                        % Output matrix will has dimensions X,Y,Z,V (accoring to INR header field order and Cimg coordinates),
+                        % that is voxels(width, height, frames, color_channels), however this is not the standard Matlab
+                        % represetation for images/videos. Matlab expexts voxels(height, width, color_channels, frames),
+                        % So, a matrix dimension permutation will be required after using this fn in order to use
+                        % Matlab functions to show, play, etc the loaded data.
+                        % But firstly we load frames as they are stored in file that is: V,X,Y,Z, so we allocate a matrix
+                        % with these dimensions. Before exiting this fn we will permute dimensions to obtain CImg
+                        % coordinates ordering in voxels matrix.
+                        voxels=zeros(user_dim_size(4,2)-user_dim_size(4,1)+1, user_dim_size(1,2)-user_dim_size(1,1)+1, 1+user_dim_size(2,2)-user_dim_size(2,1), n_z_dim_end, header.matlab_data_type);
+                        progress_end = n_z_dim_end; % For percentage display
                         process_update_period = ceil(progress_end / 100);
-                        for n_v_dim=1:n_v_dim_end
-                            % Move file pointer to the first required data in Z dim.
-                            fseek(fid, user_dim_size(3,1) * (header.data_size/8) * prod(header.n_dims(1:2)), 'cof');                            
-                            for n_z_dim=1:n_z_dim_end
-                                % For the remaining dimensions (X and Y) we load all the elements
-                                % since it is probably faster than moving the file pointer many times
-                                im_voxels=fread(fid, prod(header.n_dims(1:2)), header.matlab_data_type); % Read a whole image each time
-                                im_voxels=reshape(im_voxels, header.n_dims(1:2));
-                                voxels(:,:,n_z_dim,n_v_dim) = im_voxels(1+(user_dim_size(1,1):user_dim_size(1,2)), 1+(user_dim_size(2,1):user_dim_size(2,2)));
-                                % Display progress percentage
-                                current_progress = n_z_dim_end*(n_v_dim-1)+n_z_dim;
-                                % we do not want to print the percentage so many times that we slow down the loading process
-                                if mod(current_progress,process_update_period)==0 % Always true for progress_end < 100 since progress_end would be 1
-                                   fprintf(1,'\b\b\b\b% 3.f%%',100*current_progress/progress_end);
-                                end
+
+                        % Move file pointer to the first required data
+                        % in Z dim, that is, to the first frame to
+                        % load, which size is X*Y*V: prod(header.n_dims([1:2 4])) 
+                        fseek(fid, user_dim_size(3,1) * (header.data_size/8) * prod(header.n_dims([1:2 4])), 'cof');                            
+                        for n_z_dim=1:n_z_dim_end
+                            % For the remaining dimensions (X, Y and V) we load all the elements
+                            % since it is normally faster than moving the file pointer many times
+                            im_voxels=fread(fid, prod(header.n_dims([1:2 4])), ['*' header.matlab_data_type]); % Read a whole frame each time
+                            % In an INR file color channels of the first
+                            % pixel are stored first, then pixel of the
+                            % first row and then the first frame, so
+                            % dimensions: 4, 1, 2 and 3
+                            im_voxels=reshape(im_voxels, header.n_dims([4 1:2]));
+                            % Store the required part of the read frame in output matrix
+                            voxels(:,:,:,n_z_dim) = im_voxels(1+(user_dim_size(4,1):user_dim_size(4,2)), 1+(user_dim_size(1,1):user_dim_size(1,2)), 1+(user_dim_size(2,1):user_dim_size(2,2)));
+                            % Display progress percentage
+                            current_progress = n_z_dim;
+                            % we do not want to print the percentage so many times that we slow down the loading process
+                            if mod(current_progress,process_update_period)==0 % Always true for progress_end < 100 since progress_end would be 1
+                               fprintf(1,'\b\b\b\b% 3.f%%',100*current_progress/progress_end);
                             end
                         end
+                        voxels=permute(voxels,[2 3 4 1]); % Set color channel as the last matrix dimension as in CImg and INR header
                         %voxels=permute(voxels,[2 1 3 4]); % Permute X and Y dimensions to show images correctly with matlab image(voxels(:,:,1,1))
-                        dim_limits = user_dim_size';
+                        dim_limits = user_dim_size'; % Return first and last coord. of loaded data
                         fprintf(1,'\b\b\b\b100%%\n');
                     else
                         disp('Error: all specified dimension limits must be lower than the dimensions in the specified file')
@@ -156,7 +176,7 @@ else
         end
         fclose(fid);
     else
-        disp(['Cannot open input file: ' varargin{2}]);
+        disp(['Cannot open input file: ' varargin{1}]);
     end    
 end
 

@@ -317,6 +317,13 @@ CImg<double> *Retina::feedInput(int step){
                     *accumulator = *ch1;
             }else if(strcmp(cellName,"rods")==0){
                     *accumulator = *rods;
+            // Inputs mainly used for testing
+            }else if(strcmp(cellName,"red_channel")==0){
+                    *accumulator = *RGBred;
+            }else if(strcmp(cellName,"green_channel")==0){
+                    *accumulator = *RGBgreen;
+            }else if(strcmp(cellName,"blue_channel")==0){
+                    *accumulator = *RGBblue;
             }else{
 
             // other inputs rather than cones or rods
@@ -380,10 +387,7 @@ void Retina::update(){
 
 bool Retina::addModule(module* new_module, string ID){
     bool correctly_added;
- /*   if (dynamic_cast<D2*>(x) == NULL)
-  {
-    std::cout << "NOT A D2" << std::endl;
-  }*/
+
     new_module->setModuleID(ID);
     if(ID.compare("Output") == 0){ // The Output module is being added
         correctly_added=false; // Default return value
@@ -528,7 +532,7 @@ bool Retina::connect(vector <string> from, const char *to,vector <int> operation
             for (int j=0;j< from.size();j++){
                 int k;
                 const char * ff = from[j].c_str();
-                if (strcmp(ff,"rods")!=0 && strcmp(ff,"L_cones")!=0 && strcmp(ff,"M_cones")!=0 && strcmp(ff,"S_cones")!=0){
+                if (strcmp(ff,"rods")!=0 && strcmp(ff,"L_cones")!=0 && strcmp(ff,"M_cones")!=0 && strcmp(ff,"S_cones")!=0 && strcmp(ff,"red_channel")!=0 && strcmp(ff,"green_channel")!=0 && strcmp(ff,"blue_channel")!=0){
                     // Search in the list of all modules (excluding Output module) for the current module (ff) of the specified source module list (from)
                     for (k=1;k<modules.size();k++){
                         module* neuronfrom = modules[k];
