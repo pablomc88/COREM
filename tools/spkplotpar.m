@@ -24,7 +24,7 @@
 %   See also SPKPLOT.
 
 %   Copyright (C) 2016 by Richard R. Carrillo 
-%   $Revision: 1.4 $  $Date: 1/11/2016 $
+%   $Revision: 1.5 $  $Date: 2/11/2016 $
 %   (adapted from noout2par from EDLUT repository)
 
 %   This program is free software; you can redistribute it and/or modify
@@ -66,8 +66,16 @@ if nargs <= 2 % the whole file must be loaded
     tot_num_cols=size(activity_list,2);
 else % only a part of the file must be loaded
     % we use str2num instead of str2double because str2double does not evaluate arithmetic expreions in arguments
-    start_time=str2num(varargin{3});
-    end_time=str2num(varargin{4});
+    if ischar(varargin{3})
+        start_time=str2num(varargin{3});
+    else
+        start_time=varargin{3};
+    end
+    if ischar(varargin{4})
+        end_time=str2num(varargin{4});
+    else
+        end_time=varargin{4};
+    end
     disp(['Partially loading activity file ' filename ' from time ' num2str(start_time) ' to ' num2str(end_time)]);
     fid = fopen(filename,'rt');
     if fid ~= -1
@@ -91,49 +99,68 @@ else % only a part of the file must be loaded
     end
 end
 if nargs == 6 % only some neurons must be plotted
-    first_neu=str2num(varargin{5});
-    last_neu=str2num(varargin{6});
+    if ischar(varargin{5})
+        first_neu=str2num(varargin{5});
+    else
+        first_neu=varargin{5};
+    end
+    if ischar(varargin{6})
+        last_neu=str2num(varargin{6});
+    else
+        last_neu=varargin{6};
+    end
+    
     activity_list=activity_list(activity_list(:,1) >= first_neu & activity_list(:,1) <= last_neu,:); % remove unwanted neurons from the list
 end
 
-neu_list_rep=sort(activity_list(:,1)');
+disp('Sorting spikes...');
+disp(' 00%')
 
-neu_list=[];
-if ~isempty(neu_list_rep)
-    num_spk_neus=1;
-    neu_list(1)=neu_list_rep(1);
-else
-    num_spk_neus=0;
-end
-for nneu=2:length(neu_list_rep),
-    if neu_list_rep(nneu-1) ~= neu_list_rep(nneu)
-        num_spk_neus=num_spk_neus+1;
-        neu_list(num_spk_neus)=neu_list_rep(nneu);
+% Create an array of cells. Each cell containing the activity of a
+% particular neuron and a list of different neuron number
+% These variables will be used by the following code
+tot_spks=size(activity_list,1); % Total number of spikes
+neu_list=zeros(numel(unique(activity_list(:,1))),1); % Allocate space for neuron numbers
+neu_spk=num2cell(neu_list); % Allocate space for spike times
+
+[neu_sort, neu_sort_ind] = sort(activity_list(:,1)); % Sort neuron numbers
+nneu=1; % Index of current (differnt) neuron
+diff_neus=0; % Total number of different neuron numbers
+neu_sort=[neu_sort;Inf]; % Add an extra neuron number so that find always find a next (different) neuron number in the loop
+while nneu <= length(neu_sort_ind)
+    diff_neus = diff_neus+1;
+    curr_neu = neu_sort(nneu); % Current neuron number
+    neu_list(diff_neus) = curr_neu; % Add new neuron number to the list
+    next_neu_ind = find(neu_sort((nneu+1):end) ~= curr_neu,1) + nneu; % Find index of the next (differnt) neuron in neu_sort
+    neu_spk{diff_neus} = activity_list(neu_sort_ind(nneu:(next_neu_ind-1)),2); % Store all spike times of this neuron in the cell
+    nneu=next_neu_ind; % Pass to the next neuron number
+    if mod(diff_neus,fix(length(neu_spk)/100)) == 0
+        fprintf(1,'\b\b\b\b% 3.f%%',diff_neus*100/length(neu_spk));
     end
 end
+fprintf(1,'\b\b\b\b\b100%%\n');
 
 disp('Creating figure...');
 
 switch(plot_mode)
 case 'ra'
-    tot_spks=0;
-    for nneu=1:num_spk_neus
-        cur_neu_spk_times=activity_list(activity_list(:,1)==neu_list(nneu),2);
-        tot_spks=tot_spks+length(cur_neu_spk_times);
+    
+    for nneu=1:diff_neus
+        cur_neu_spk_times=neu_spk{nneu};
         line((cur_neu_spk_times*ones(1,2))',(ones(length(cur_neu_spk_times),1)*[nneu-0.25,nneu+0.25])','Color','b');
     end
     axis tight
     xlabel('time');
     ylabel('neuron number');
-    set(gca,'YTick',1:num_spk_neus);
+    set(gca,'YTick',1:diff_neus);
     
     % find out what ticksthin out y-axis tick labels
     neu_tick_list={neu_list(1)};
     last_included_neu=1;
     max_number_of_yticks=30; % in order not to overlap them
-    max_intertick_interval=num_spk_neus/max_number_of_yticks;
-    for nneu=2:num_spk_neus,
-        if neu_list(nneu-1) ~= neu_list(nneu)-1 || (nneu-last_included_neu) > max_intertick_interval || nneu==num_spk_neus
+    max_intertick_interval=diff_neus/max_number_of_yticks;
+    for nneu=2:diff_neus,
+        if neu_list(nneu-1) ~= neu_list(nneu)-1 || (nneu-last_included_neu) > max_intertick_interval || nneu==diff_neus
             neu_tick_list{nneu}=neu_list(nneu); % include nonconsecutive neuron ticks or spaced-enough ones
             last_included_neu=nneu;
         else
@@ -143,11 +170,9 @@ case 'ra'
     set(gca,'YTickLabel',neu_tick_list);
 
 case 'hi'
-    tot_spks=0;
     spk_periods=[];
-    for nneu=1:num_spk_neus
-        cur_neu_spk_times=activity_list(activity_list(:,1)==neu_list(nneu),2);
-        tot_spks=tot_spks+length(cur_neu_spk_times);
+    for nneu=1:diff_neus
+        cur_neu_spk_times=neu_spk{nneu};
         spk_periods=[spk_periods ; diff(cur_neu_spk_times*1e3)];
     end
     % Determine a proper number of histogram bins according to the num. of spikes
@@ -166,7 +191,7 @@ case 'hi'
     ylabel('spike count');
 end
 display(['Total number of spikes: ' num2str(tot_spks)]);
-display(['Number of spiking neurons: ' num2str(num_spk_neus)]);
+display(['Number of spiking neurons: ' num2str(diff_neus)]);
     
 % READ_LINE_TIME gets the time of the next register from the simulation-log file.
 %    REGTIME = READ_FILE_PART(FID) advances the file position indicator in the

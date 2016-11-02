@@ -45,7 +45,7 @@
 %   See also INRLOAD.
 
 %   Copyright (C) 2016 by Richard R. Carrillo 
-%   $Revision: 1.2 $  $Date: 1/11/2016 $
+%   $Revision: 1.3 $  $Date: 2/11/2016 $
 
 %   This program is free software; you can redistribute it and/or modify
 %   it under the terms of the GNU General Public License as published by
@@ -60,6 +60,7 @@ if nargs ~= 2 && nargs ~= 4 && nargs ~= 6 && nargs ~= 8 && nargs ~= 10
       disp('inrload filename mode [x_ini x_end [y_ini y_end [z_ini z_end]]]');
       disp('All arguments must be numeric except the first two ones')
       disp('type: help inrplot for more help');
+      error('Incorrect number of input arguments')
 else
     N_dims=4;
     filename = varargin{1};
@@ -148,11 +149,28 @@ else
                 title('Evolution of pixel magnitudes')
                 xlabel('frame')
                 ylabel(sprintf('pixel index from (%i,%i) to (%i,%i)',read_dim_size(:,1:2)'))
+
+            case 'hi'
+                tot_pixels=numel(images);
+                % Determine a proper number of histogram bins according to the num. of pixels
+                if tot_pixels < 1000
+                    n_bins = 10;
+                else
+                    if tot_pixels > 100000
+                        n_bins = 1000;
+                    else
+                        n_bins = tot_pixels/200;
+                    end
+                end
+
+                hist(double(images(:)), n_bins);
+                xlabel('pixel magnitude');
+                ylabel('pixel count');
             otherwise
-                disp('Unknown plot mode specified.')
+                error('Unknown plot mode specified.')
         end
     else
-        disp('No data could be loaded.')
+        error('No data could be loaded.')
     end
 end
 
