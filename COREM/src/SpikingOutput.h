@@ -17,6 +17,7 @@
 
 #include <vector>
 #include <string>
+#include <random>
 #include "module.h"
 
 using namespace cimg_library;
@@ -29,24 +30,31 @@ struct spike_t {
 };
 
 class SpikingOutput:public module{
+    // External (parameters) variables are in millisecond. Internal class variables are in seconds.
 protected:
     // image buffers
     CImg<double> *inputImage; // Buffer used to temporally store the input values which will be converted to spikes
-    default_random_engine rand_gen; // For generating neuron noise
 
     vector<spike_t> out_spks; // Vector of retina output spikes
     string out_spk_filename; // filename (including path) to the spike output file to create
     
-    double Start_time, End_time; // These recording parameters define the simulation time interval when the images must be saved
+    double Start_time, End_time; // These recording parameters define the simulation time interval when the images must be saved (in milliseconds)
 
     // parameters for conversion from input magnitude to firing rate
-    double Max_freq, Min_freq; // Max. and min. number of spikes per second that a neuron can fire
+    double Max_period, Min_period; // Max. and min. time allowed to elape between two consecutive spikes of a neuron
     double Input_threshold; // Minimal (sustained) input value required for a neuron to generate some output
     double Spk_freq_per_inp; // Conversion factor from input value to output spike frequency (Hz)
-    double Noise_std_dev; // Sigma parameter of the Gaussian distribution from which random values are drawn to generate additive firing rate noise
+    double Spike_std_dev; // Standard deviation of spike times. When this value is <>0, they are randomly drawn from a gamma distribution
+    double Limit_std_dev; // Standard deviation of a normal distribition. When this value is <>0, from values are drawn from this distribution and added to the specified limit period
+    bool Random_init; // true if the initial state of must be initialized randomly, so that the starting firing phase is uniformly random
+
+    default_random_engine rand_gen; // For generating random numbers: neuron random noise and random states
+    normal_distribution<double> norm_dist; // For introducing noise in neuron random firing rate limits
+    gamma_distribution<double> gam_dist; // For generating random spike times
+    uniform_real_distribution<double> unif_dist; // For generating neuron random init states
     
-    // Last firing time and predicted firing time for each output neuron
-    CImg<double> *last_spk_time, *next_spk_time;
+    // Last firing period and predicted firing time for each output neuron (in seconds)
+    CImg<double> *last_firing_period, *next_spk_time;
 
 public:
     // Constructor, copy, destructor.
@@ -59,13 +67,15 @@ public:
     virtual void setX(int x){sizeX=x;}
     virtual void setY(int y){sizeY=y;}
 
-    SpikingOutput& set_Max_freq(double max_spk_freq);
-    SpikingOutput& set_Min_freq(double min_spk_freq);
+    SpikingOutput& set_Max_period(double max_spk_per);
+    SpikingOutput& set_Min_period(double min_spk_per);
     SpikingOutput& set_Input_threshold(double input_threshold);
     SpikingOutput& set_Freq_per_inp(double freq_per_inp_unit);
-    SpikingOutput& set_Noise_std_dev(double sigma_val);
+    SpikingOutput& set_Spike_std_dev(double sigma_val);
+    SpikingOutput& set_Limit_std_dev(double sigma_val);
     SpikingOutput& set_Start_time(double start_time);
     SpikingOutput& set_End_time(double end_time);
+    SpikingOutput& set_Random_init(bool rnd_init);
 
     // Get new input
     virtual void feedInput(double sim_time, const CImg<double> &new_input, bool isCurrent, int port);
@@ -77,7 +87,11 @@ public:
     // This method uses the user parameter (Max_freq, Min_freq, Input_threshold and
     // Spks_per_inp) to convert the magnitude of an input pixel into an instant
     // spike firing rate.
-    double inp_pixel_to_freq(double pixel_value); // TODO: static implementation
+    double inp_pixel_to_period(double pixel_value);
+    
+    // This method initializes randomly the state of the spike generator for all the outputs so that
+    // each neuron will start firing at random times (from 0 to the initial firing period)
+    void randomize_state();
 
     // Save the accumulated spike activity into a file
     bool SaveFile(string spk_filename);

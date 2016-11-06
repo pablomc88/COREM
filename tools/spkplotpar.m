@@ -116,6 +116,10 @@ end
 disp('Sorting spikes...');
 disp(' 00%')
 
+if isempty(activity_list)
+    activity_list=zeros(0,2); % To avoid errors when file constains no activity
+end
+
 % Create an array of cells. Each cell containing the activity of a
 % particular neuron and a list of different neuron number
 % These variables will be used by the following code
@@ -132,7 +136,7 @@ while nneu <= length(neu_sort_ind)
     curr_neu = neu_sort(nneu); % Current neuron number
     neu_list(diff_neus) = curr_neu; % Add new neuron number to the list
     next_neu_ind = find(neu_sort((nneu+1):end) ~= curr_neu,1) + nneu; % Find index of the next (differnt) neuron in neu_sort
-    neu_spk{diff_neus} = activity_list(neu_sort_ind(nneu:(next_neu_ind-1)),2); % Store all spike times of this neuron in the cell
+    neu_spk{diff_neus} = sort(activity_list(neu_sort_ind(nneu:(next_neu_ind-1)),2)); % Store all spike times of this neuron in the cell
     nneu=next_neu_ind; % Pass to the next neuron number
     if mod(diff_neus,fix(length(neu_spk)/100)) == 0
         fprintf(1,'\b\b\b\b% 3.f%%',diff_neus*100/length(neu_spk));
@@ -143,7 +147,7 @@ fprintf(1,'\b\b\b\b\b100%%\n');
 disp('Creating figure...');
 
 switch(plot_mode)
-case 'ra'
+case 'ra' % Raster plot
     
     for nneu=1:diff_neus
         cur_neu_spk_times=neu_spk{nneu};
@@ -155,7 +159,11 @@ case 'ra'
     set(gca,'YTick',1:diff_neus);
     
     % find out what ticksthin out y-axis tick labels
-    neu_tick_list={neu_list(1)};
+    if ~isempty(neu_list) % Check to avoid errors when no spiking neurons
+        neu_tick_list={neu_list(1)};
+    else
+        neu_tick_list={};
+    end
     last_included_neu=1;
     max_number_of_yticks=30; % in order not to overlap them
     max_intertick_interval=diff_neus/max_number_of_yticks;
@@ -169,7 +177,7 @@ case 'ra'
     end
     set(gca,'YTickLabel',neu_tick_list);
 
-case 'hi'
+case 'hi' % Histogram plot
     spk_periods=[];
     for nneu=1:diff_neus
         cur_neu_spk_times=neu_spk{nneu};
@@ -189,6 +197,33 @@ case 'hi'
     hist(spk_periods, n_bins);
     xlabel('firing periods (ms)');
     ylabel('spike count');
+    
+    display(['Mean interspike interval: ' num2str(mean(spk_periods))]);
+    display(['Std. dev. of interspike interval: ' num2str(std(spk_periods))]);
+    display(['Gamma dist. param. fit of interspike interval (k, theta): ' num2str(gamfit(spk_periods))]);
+
+
+case 'ph' % PHase plot
+    spk_phases=[];
+    for nneu=1:diff_neus
+        cur_neu_spk_times=neu_spk{nneu};
+        spk_phases=[spk_phases ; cur_neu_spk_times(1)*1e3];
+    end
+    % Determine a proper number of histogram bins according to the num. of spikes
+    if diff_neus < 1000
+        n_bins = 10;
+    else
+        if diff_neus > 100000
+            n_bins = 1000;
+        else
+            n_bins = diff_neus/200;
+        end
+    end
+    
+    hist(spk_phases, n_bins);
+    xlabel('firing phase (ms)');
+    ylabel('spike count');
+    
 end
 display(['Total number of spikes: ' num2str(tot_spks)]);
 display(['Number of spiking neurons: ' num2str(diff_neus)]);
