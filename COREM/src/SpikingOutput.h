@@ -64,8 +64,6 @@ public:
 
     // Allocate values and set protected parameters
     virtual bool allocateValues();
-    virtual bool setX(int x);
-    virtual bool setY(int y);
 
     bool set_Max_period(double max_spk_per);
     bool set_Min_period(double min_spk_per);

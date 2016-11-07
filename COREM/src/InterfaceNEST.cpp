@@ -79,8 +79,8 @@ void InterfaceNEST::allocateValues(const char *retinaPath, const char * outputFi
         step=retina.getStep();
 
         // Display manager
-        displayMg.setX(sizeX);
-        displayMg.setY(sizeY);
+        displayMg.setSizeX(sizeX);
+        displayMg.setSizeY(sizeY);
 
         // LN parameters
         displayMg.setLNFile(outputFile,outputfactor);

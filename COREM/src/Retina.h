@@ -80,23 +80,23 @@ public:
     void reset(int x=1,int y=1,double temporal_step=1.0);
 
     // Allocate values and set protected parameters
-    void allocateValues();
-    Retina& setSizeX(int x);
-    Retina& setSizeY(int y);
-    Retina& set_step(double temporal_step);
+    bool allocateValues();
+    bool setSizeX(int x);
+    bool setSizeY(int y);
+    bool set_step(double temporal_step);
     int getSizeX();
     int getSizeY();
     double getStep();
-    void setVerbosity(bool verbose_flag);
-    void setSimCurrentRep(double r);
-    void setSimTotalRep(double r);
-    void setTotalSimTime(int t);
+    bool setVerbosity(bool verbose_flag);
+    bool setSimCurrentRep(double r);
+    bool setSimTotalRep(double r);
+    bool setTotalSimTime(int t);
     double getSimCurrentRep();
     double getSimTotalRep();
     int getTotalSimTime();
 
     // set and get pixelsPerDegree
-    Retina& setPixelsPerDegree(double ppd);
+    bool setPixelsPerDegree(double ppd);
     double getPixelsPerDegree();
     // New input and update of equations
     CImg<double> *feedInput(int step);
@@ -129,7 +129,7 @@ public:
     // get number of images
     int getNumberImages();
     // Set repetitions
-    void setRepetitions(int r);
+    bool setRepetitions(int r);
 
 
 };

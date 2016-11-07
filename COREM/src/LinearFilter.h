@@ -47,8 +47,6 @@ public:
 
     // Allocate values and set protected parameters
     virtual bool allocateValues();
-    virtual bool setX(int x);
-    virtual bool setY(int y);
 
     // Exponential and gamma filter
     LinearFilter& Exp(double tau);

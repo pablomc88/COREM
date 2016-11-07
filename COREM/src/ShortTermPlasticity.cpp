@@ -90,26 +90,6 @@ bool ShortTermPlasticity::allocateValues(){
     return(true);
 }
 
-bool ShortTermPlasticity::setX(int x){
-    bool ret_correct;
-    if (x>0){
-        sizeX = x;
-        ret_correct=true;
-    } else
-        ret_correct=false;
-    return(ret_correct);
-}
-
-bool ShortTermPlasticity::setY(int y){
-    bool ret_correct;    
-    if (y>0){
-        sizeY = y;
-        ret_correct=true;
-    } else
-        ret_correct=false;
-    return(ret_correct);
-}
-
 void ShortTermPlasticity::feedInput(double sim_time, const CImg<double>& new_input, bool isCurrent, int port){
     // copy input image
     *inputImage[0] = new_input;

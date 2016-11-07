@@ -117,26 +117,44 @@ void Retina::reset(int x,int y,double temporal_step){
 
 //------------------------------------------------------------------------------//
 
-Retina& Retina::setSizeX(int x){
+bool Retina::setSizeX(int x){
+    bool ret_correct;    
     if (x>0){
         sizeX = x;
-    }
+        ret_correct=true;
+    } else
+        ret_correct=false;
+    return(ret_correct);
 }
 
-Retina& Retina::setSizeY(int y){
+bool Retina::setSizeY(int y){
+    bool ret_correct;
     if (y>0){
         sizeY = y;
-    }
+        ret_correct=true;
+    } else
+        ret_correct=false;
+    return(ret_correct);
 }
 
-Retina& Retina::set_step(double temporal_step) {
+bool Retina::set_step(double temporal_step) {
+    bool ret_correct;
     if (temporal_step>0){
         step = temporal_step;
-    }
+        ret_correct=true;
+    } else
+        ret_correct=false;
+    return(ret_correct);
 }
 
-Retina& Retina::setPixelsPerDegree(double ppd){
-    pixelsPerDegree = ppd;
+bool Retina::setPixelsPerDegree(double ppd){
+    bool ret_correct;
+    if(ppd>0) {
+        pixelsPerDegree = ppd;
+        ret_correct=true;
+    } else
+        ret_correct=false;
+    return(ret_correct);
 }
 
 double Retina::getPixelsPerDegree(){
@@ -155,20 +173,39 @@ double Retina::getStep(){
     return step;
 }
 
-void Retina::setVerbosity(bool verbose_flag){
+bool Retina::setVerbosity(bool verbose_flag){
     verbose = verbose_flag;
+    return(true);
 }
 
-void Retina::setSimTotalRep(double r){
-    totalNumberTrials = r;
+bool Retina::setSimTotalRep(double r){
+    bool ret_correct;
+    if(r >= 0) {
+        totalNumberTrials = r;
+        ret_correct=true;
+    } else
+        ret_correct=false;
+    return(ret_correct);
 }
 
-void Retina::setSimCurrentRep(double r){
-    CurrentTrial = r;
+bool Retina::setSimCurrentRep(double r){
+    bool ret_correct;
+    if(r >= 0) {
+        CurrentTrial = r;
+        ret_correct=true;
+    } else
+        ret_correct=false;
+    return(ret_correct);
 }
 
-void Retina::setTotalSimTime(int t){
-    totalSimTime = t;
+bool Retina::setTotalSimTime(int t){
+    bool ret_correct;
+    if(t >= 0) {
+        totalSimTime = t;
+        ret_correct=true;
+    } else
+        ret_correct=false;
+    return(ret_correct);
 }
 
 double Retina::getSimCurrentRep(){
@@ -185,14 +222,21 @@ int Retina::getTotalSimTime(){
 
 //------------------------------------------------------------------------------//
 
-void Retina::setRepetitions(int r){
-    repetitions = r;
+bool Retina::setRepetitions(int r){
+    bool ret_correct;
+    if(r >= 0) {
+        repetitions = r;
+        ret_correct=true;
+    } else
+        ret_correct=false;
+    return(ret_correct);
 }
 
 //------------------------------------------------------------------------------//
 
 
-void Retina::allocateValues(){
+bool Retina::allocateValues(){
+    bool ret_correct;
     // Since Retina-class internal images are allocated in the constructor (and freed in the destructor)
     // they are not allocated here, just resized to match the last specified sizeX and sizeY
     if(verbose) {
@@ -220,10 +264,12 @@ void Retina::allocateValues(){
     Y_mat->assign(sizeY, sizeX, 1, 1, 0.0);
     Z_mat->assign(sizeY, sizeX, 1, 1, 0.0);
     
+    ret_correct = true;
     for (int i=0;i<modules.size();i++){
         module* m = modules[i];
-        m->allocateValues();
+        ret_correct = ret_correct && m->allocateValues();
     }
+    return(ret_correct);
 }
 
 

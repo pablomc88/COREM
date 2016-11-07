@@ -60,27 +60,6 @@ bool LinearFilter::allocateValues(){
     return(true);
 }
 
-bool LinearFilter::setX(int x){
-    bool ret_correct;    
-    if (x>0){
-        sizeX = x;
-        ret_correct=true;
-    } else
-        ret_correct=false;
-    return(ret_correct);
-}
-
-bool LinearFilter::setY(int y){
-    bool ret_correct;    
-    if (y>0){
-        sizeY = y;
-        ret_correct=true;
-    } else
-        ret_correct=false;
-    return(ret_correct);
-}
-
-
 //------------------------------------------------------------------------------//
 
 LinearFilter& LinearFilter::Exp(double tau){

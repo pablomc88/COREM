@@ -134,27 +134,6 @@ bool SequenceOutput::setParameters(vector<double> params, vector<string> paramID
     return correct;
 }
 
-bool SequenceOutput::setX(int x){
-    bool ret_correct;    
-    if (x>0){
-        sizeX = x;
-        ret_correct=true;
-    } else
-        ret_correct=false;
-    return(ret_correct);
-}
-
-bool SequenceOutput::setY(int y){
-    bool ret_correct;    
-    if (y>0){
-        sizeY = y;
-        ret_correct=true;
-    } else
-        ret_correct=false;
-    return(ret_correct);
-}
-
-
 //------------------------------------------------------------------------------//
 
 void SequenceOutput::feedInput(double sim_time, const CImg<double>& new_input,bool isCurrent,int port){

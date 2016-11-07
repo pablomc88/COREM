@@ -59,8 +59,6 @@ public:
 
     // Allocate values and set protected parameters
     virtual bool allocateValues();
-    virtual bool setX(int x);
-    virtual bool setY(int y);
     GaussFilter& setSigma(double sigm);
 
     // Fast filtering with constant sigma

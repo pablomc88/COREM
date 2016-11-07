@@ -46,8 +46,6 @@ public:
 
     // Allocate values and set protected parameters
     virtual bool allocateValues();
-    virtual bool setX(int x);
-    virtual bool setY(int y);
 
     // These functions are mainly used by setParameters() to set object parameter properties after the object is created
     bool set_Voxel_X_size(double voxel_x_size);

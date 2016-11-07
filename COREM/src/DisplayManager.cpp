@@ -45,7 +45,7 @@ void DisplayManager::reset(){
 
 //------------------------------------------------------------------------------//
 
-void DisplayManager::allocateValues(int number, double tstep){
+bool DisplayManager::allocateValues(int number, double tstep){
 
     if(valuesAllocated == false){
 
@@ -68,19 +68,30 @@ void DisplayManager::allocateValues(int number, double tstep){
 
         valuesAllocated = true;
     }
-
+    return(true);
 }
 
 //------------------------------------------------------------------------------//
 
 
-void DisplayManager::setX(int x){
-    sizeX = x;
+bool DisplayManager::setSizeX(int x){
+    bool ret_correct;
+    if (x>0){
+        sizeX = x;
+        ret_correct=true;
+    } else
+        ret_correct=false;
+    return(ret_correct);
 }
 
-void DisplayManager::setY(int y){
-    sizeY = y;
-
+bool DisplayManager::setSizeY(int y){
+    bool ret_correct;    
+    if (y>0){
+        sizeY = y;
+        ret_correct=true;
+    } else
+        ret_correct=false;
+    return(ret_correct);
 }
 
 void DisplayManager::setZoom(double zoom){
@@ -106,10 +117,15 @@ void DisplayManager::setMargin(double m, int pos){
 }
 
 
-void DisplayManager::setSimStep(double value){
-    simStep = value;
-
-    cout << "Display simStep = "<< simStep << endl;
+bool DisplayManager::setSimStep(double step_value){
+    bool ret_correct;
+    if(step_value > 0){
+        simStep = step_value;
+        cout << "Display simStep = "<< simStep << endl;
+        ret_correct=true;
+    } else
+        ret_correct=false;
+    return(ret_correct);
 }
 
 //------------------------------------------------------------------------------//

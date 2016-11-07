@@ -117,27 +117,6 @@ bool GaussFilter::allocateValues(){
     return(true);
 }
 
-bool GaussFilter::setX(int x){
-    bool ret_correct;    
-    if (x>0){
-        sizeX = x;
-        ret_correct=true;
-    } else
-        ret_correct=false;
-    return(ret_correct);
-}
-
-bool GaussFilter::setY(int y){
-    bool ret_correct;    
-    if (y>0){
-        sizeY = y;
-        ret_correct=true;
-    } else
-        ret_correct=false;
-    return(ret_correct);
-}
-
-
 //------------------------------------------------------------------------------//
 
 GaussFilter& GaussFilter::setSigma(double sigm){

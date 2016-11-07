@@ -58,8 +58,6 @@ public:
 
     // Allocate values
     virtual bool allocateValues();
-    virtual bool setX(int x);
-    virtual bool setY(int y);
     // New input and update of equations
     virtual void feedInput(double sim_time, const CImg<double> &new_input, bool isCurrent, int port);
     virtual void update();

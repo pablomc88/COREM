@@ -45,8 +45,6 @@ public:
 
     // Allocate values and set protected parameters
     virtual bool allocateValues();
-    virtual bool setX(int x);
-    virtual bool setY(int y);
 
     bool set_Cm(double capacitance);
     bool set_Rm(double resistance);
