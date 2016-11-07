@@ -44,18 +44,18 @@ public:
     ~SingleCompartment(void);
 
     // Allocate values and set protected parameters
-    virtual void allocateValues();
-    virtual void setX(int x){sizeX=x;}
-    virtual void setY(int y){sizeY=y;}
+    virtual bool allocateValues();
+    virtual bool setX(int x);
+    virtual bool setY(int y);
 
-    SingleCompartment& set_Cm(double capacitance);
-    SingleCompartment& set_Rm(double resistance);
-    SingleCompartment& set_taum(double temporal_constant);
-    SingleCompartment& set_El(double Nerst_l);
+    bool set_Cm(double capacitance);
+    bool set_Rm(double resistance);
+    bool set_taum(double temporal_constant);
+    bool set_El(double Nerst_l);
 
-    SingleCompartment& set_E(double NernstPotential, int port);
-    SingleCompartment& set_number_current_ports(int number);
-    SingleCompartment& set_number_conductance_ports(int number);
+    bool set_E(double NernstPotential, int port);
+    bool set_number_current_ports(int number);
+    bool set_number_conductance_ports(int number);
 
     // New input and update of equations
     virtual void feedInput(double sim_time, const CImg<double> &new_input, bool isCurrent, int port);

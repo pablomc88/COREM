@@ -46,9 +46,9 @@ public:
     ~LinearFilter(void);
 
     // Allocate values and set protected parameters
-    virtual void allocateValues();
-    virtual void setX(int x){sizeX=x;}
-    virtual void setY(int y){sizeY=y;}
+    virtual bool allocateValues();
+    virtual bool setX(int x);
+    virtual bool setY(int y);
 
     // Exponential and gamma filter
     LinearFilter& Exp(double tau);

@@ -57,9 +57,9 @@ public:
     void setType(int t);
 
     // Allocate values
-    virtual void allocateValues();
-    virtual void setX(int x){sizeX=x;}
-    virtual void setY(int y){sizeY=y;}
+    virtual bool allocateValues();
+    virtual bool setX(int x);
+    virtual bool setY(int y);
     // New input and update of equations
     virtual void feedInput(double sim_time, const CImg<double> &new_input, bool isCurrent, int port);
     virtual void update();

@@ -45,15 +45,15 @@ public:
     ~SequenceOutput(void);
 
     // Allocate values and set protected parameters
-    virtual void allocateValues();
-    virtual void setX(int x){sizeX=x;}
-    virtual void setY(int y){sizeY=y;}
+    virtual bool allocateValues();
+    virtual bool setX(int x);
+    virtual bool setY(int y);
 
     // These functions are mainly used by setParameters() to set object parameter properties after the object is created
-    SequenceOutput& set_Voxel_X_size(double voxel_x_size);
-    SequenceOutput& set_Voxel_Y_size(double voxel_y_size);
-    SequenceOutput& set_Start_time(double start_time);
-    SequenceOutput& set_End_time(double end_time);
+    bool set_Voxel_X_size(double voxel_x_size);
+    bool set_Voxel_Y_size(double voxel_y_size);
+    bool set_Start_time(double start_time);
+    bool set_End_time(double end_time);
 
     // Get new input
     virtual void feedInput(double sim_time, const CImg<double> &new_input, bool isCurrent, int port);

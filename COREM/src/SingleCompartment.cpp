@@ -60,7 +60,7 @@ SingleCompartment::~SingleCompartment(){
 //------------------------------------------------------------------------------//
 
 
-void SingleCompartment::allocateValues(){
+bool SingleCompartment::allocateValues(){
     conductances = new CImg<double>*[number_conductance_ports];
     currents = new CImg<double>*[number_current_ports];
 
@@ -70,47 +70,102 @@ void SingleCompartment::allocateValues(){
     for (int j=0;j<number_current_ports;j++)
       currents[j]=new CImg<double> (sizeY,sizeX,1,1,0.0);
 
+    return(true);
+}
 
+bool SingleCompartment::setX(int x){
+    bool ret_correct;
+    if (x>0){
+        sizeX = x;
+        ret_correct=true;
+    } else
+        ret_correct=false;
+    return(ret_correct);
+}
+
+bool SingleCompartment::setY(int y){
+    bool ret_correct;    
+    if (y>0){
+        sizeY = y;
+        ret_correct=true;
+    } else
+        ret_correct=false;
+    return(ret_correct);
 }
 
 
-SingleCompartment& SingleCompartment::set_Cm(double capacitance){
-    if (capacitance>0)
+bool SingleCompartment::set_Cm(double capacitance){
+    bool ret_correct;
+    if (capacitance>0) {
         Cm = capacitance;
+        ret_correct=true;
+    } else
+        ret_correct=false;
+    return(ret_correct);
 }
 
-SingleCompartment& SingleCompartment::set_Rm(double resistance){
-    if (resistance>0)
+bool SingleCompartment::set_Rm(double resistance){
+    bool ret_correct;
+    if (resistance>0) {
         Rm = resistance;
+        ret_correct=true;
+    } else
+        ret_correct=false;
+    return(ret_correct);
 }
 
-SingleCompartment& SingleCompartment::set_taum(double temporal_constant){
-    if (temporal_constant>0)
+bool SingleCompartment::set_taum(double temporal_constant){
+    bool ret_correct;
+    if (temporal_constant>0) {
         taum = temporal_constant;
+        ret_correct=true;
+    } else
+        ret_correct=false;
+    return(ret_correct);
 }
 
-SingleCompartment& SingleCompartment::set_El(double Nerst_l){
-    if (Nerst_l>=0)
+bool SingleCompartment::set_El(double Nerst_l){
+    bool ret_correct;
+    if (Nerst_l>=0) {
         El = Nerst_l;
+        ret_correct=true;
+    } else
+        ret_correct=false;
+    return(ret_correct);
 }
 
-SingleCompartment& SingleCompartment::set_E(double NernstPotential, int port){
-    if (port>=0 && number_conductance_ports>0)
+bool SingleCompartment::set_E(double NernstPotential, int port){
+    bool ret_correct;
+    if (port>=0 && number_conductance_ports>0) {
         E[port]=NernstPotential;
+        ret_correct=true;
+    } else
+        ret_correct=false;
+    return(ret_correct);
 }
 
-SingleCompartment& SingleCompartment::set_number_current_ports(int number){
-    if (number>0)
+bool SingleCompartment::set_number_current_ports(int number){
+    bool ret_correct;
+    if (number>0) {
         number_current_ports = number;
+        ret_correct=true;
+    } else
+        ret_correct=false;
+    return(ret_correct);
 }
 
-SingleCompartment& SingleCompartment::set_number_conductance_ports(int number){
-    if (number>0)
+bool SingleCompartment::set_number_conductance_ports(int number){
+    bool ret_correct;
+    if (number>0) {
         number_conductance_ports = number;
 
-    for (int i=0;i<number_conductance_ports;i++){
-      E.push_back(0.0);
+        for (int i=0;i<number_conductance_ports;i++){
+            E.push_back(0.0);
     }
+        ret_correct=true;
+    } else
+        ret_correct=false;
+    return(ret_correct);
 }
 
 //------------------------------------------------------------------------------//
@@ -124,19 +179,19 @@ bool SingleCompartment::setParameters(vector<double> params, vector<string> para
         const char * s = paramID[i].c_str();
 
         if (strcmp(s,"number_current_ports")==0){
-            set_number_current_ports((int)params[i]);
+            correct = set_number_current_ports((int)params[i]);
         }else if (strcmp(s,"number_conductance_ports")==0){
-            set_number_conductance_ports((int)params[i]);
+            correct = set_number_conductance_ports((int)params[i]);
         }else if (strcmp(s,"Rm")==0){
-            set_Rm(params[i]);
+            correct = set_Rm(params[i]);
         }else if (strcmp(s,"tau")==0){
-            set_taum(params[i]);
+            correct = set_taum(params[i]);
         }
         else if (strcmp(s,"Cm")==0){
-            set_Cm(params[i]);
+            correct = set_Cm(params[i]);
         }
         else if (strcmp(s,"E")==0){
-            set_El(params[i]);
+            correct = set_El(params[i]);
             for(int j=0;j<E.size();j++)
                 set_E(params[i],j);
         }

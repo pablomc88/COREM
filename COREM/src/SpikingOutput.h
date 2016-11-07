@@ -63,19 +63,19 @@ public:
     ~SpikingOutput(void);
 
     // Allocate values and set protected parameters
-    virtual void allocateValues();
-    virtual void setX(int x){sizeX=x;}
-    virtual void setY(int y){sizeY=y;}
+    virtual bool allocateValues();
+    virtual bool setX(int x);
+    virtual bool setY(int y);
 
-    SpikingOutput& set_Max_period(double max_spk_per);
-    SpikingOutput& set_Min_period(double min_spk_per);
-    SpikingOutput& set_Input_threshold(double input_threshold);
-    SpikingOutput& set_Freq_per_inp(double freq_per_inp_unit);
-    SpikingOutput& set_Spike_std_dev(double sigma_val);
-    SpikingOutput& set_Limit_std_dev(double sigma_val);
-    SpikingOutput& set_Start_time(double start_time);
-    SpikingOutput& set_End_time(double end_time);
-    SpikingOutput& set_Random_init(bool rnd_init);
+    bool set_Max_period(double max_spk_per);
+    bool set_Min_period(double min_spk_per);
+    bool set_Input_threshold(double input_threshold);
+    bool set_Freq_per_inp(double freq_per_inp_unit);
+    bool set_Spike_std_dev(double sigma_val);
+    bool set_Limit_std_dev(double sigma_val);
+    bool set_Start_time(double start_time);
+    bool set_End_time(double end_time);
+    bool set_Random_init(bool rnd_init);
 
     // Get new input
     virtual void feedInput(double sim_time, const CImg<double> &new_input, bool isCurrent, int port);

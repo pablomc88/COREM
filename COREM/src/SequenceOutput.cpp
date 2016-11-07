@@ -61,35 +61,52 @@ SequenceOutput::~SequenceOutput(){
 
 //------------------------------------------------------------------------------//
 
-void SequenceOutput::allocateValues(){
+bool SequenceOutput::allocateValues(){
     module::allocateValues(); // Use the allocateValues() method of the base class
     
     // Resize initial value
     inputImage->assign(sizeY, sizeX, 1, 1, 0);
+    return(true);
 }
 
-SequenceOutput& SequenceOutput::set_Voxel_X_size(double voxel_x_size){
-    if (voxel_x_size>=0)
+bool SequenceOutput::set_Voxel_X_size(double voxel_x_size){
+    bool ret_correct;
+    if (voxel_x_size>=0) {
         Voxel_X_size = voxel_x_size;
-    return(*this); // Return value is really not used but we return it to avoid warnings
+        ret_correct=true;
+    } else
+        ret_correct=false;
+    return(ret_correct);
 }
 
-SequenceOutput& SequenceOutput::set_Voxel_Y_size(double voxel_y_size){
-    if (voxel_y_size>=0)
+bool SequenceOutput::set_Voxel_Y_size(double voxel_y_size){
+    bool ret_correct;
+    if (voxel_y_size>=0) {
         Voxel_Y_size = voxel_y_size;
-    return(*this);
+        ret_correct=true;
+    } else
+        ret_correct=false;
+    return(ret_correct);
 }
 
-SequenceOutput& SequenceOutput::set_Start_time(double start_time){
-    if (start_time>=0)
+bool SequenceOutput::set_Start_time(double start_time){
+    bool ret_correct;
+    if (start_time>=0) {
         Start_time = start_time;
-    return(*this);
+        ret_correct=true;
+    } else
+        ret_correct=false;
+    return(ret_correct);
 }
 
-SequenceOutput& SequenceOutput::set_End_time(double end_time){
-    if (end_time>=0)
+bool SequenceOutput::set_End_time(double end_time){
+    bool ret_correct;
+    if (end_time>=0) {
         End_time = end_time;
-    return(*this);
+        ret_correct=true;
+    } else
+        ret_correct=false;
+    return(ret_correct);
 }
 
 
@@ -103,19 +120,40 @@ bool SequenceOutput::setParameters(vector<double> params, vector<string> paramID
         const char * s = paramID[i].c_str();
 
         if (strcmp(s,"Voxel_X_size")==0){
-            set_Voxel_X_size(params[i]);
+            correct = set_Voxel_X_size(params[i]);
         }else if (strcmp(s,"Voxel_Y_size")==0){
-            set_Voxel_Y_size(params[i]);
+            correct = set_Voxel_Y_size(params[i]);
         }else if (strcmp(s,"Start_time")==0){
-            set_Start_time(params[i]);
+            correct = set_Start_time(params[i]);
         }else if (strcmp(s,"End_time")==0){
-            set_End_time(params[i]);
+            correct = set_End_time(params[i]);
         } else{
               correct = false;
         }
     }
     return correct;
 }
+
+bool SequenceOutput::setX(int x){
+    bool ret_correct;    
+    if (x>0){
+        sizeX = x;
+        ret_correct=true;
+    } else
+        ret_correct=false;
+    return(ret_correct);
+}
+
+bool SequenceOutput::setY(int y){
+    bool ret_correct;    
+    if (y>0){
+        sizeY = y;
+        ret_correct=true;
+    } else
+        ret_correct=false;
+    return(ret_correct);
+}
+
 
 //------------------------------------------------------------------------------//
 

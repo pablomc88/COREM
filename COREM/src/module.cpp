@@ -17,26 +17,39 @@ module::~module(void){
 }
 
 //------------------------------------------------------------------------------//
-void module::allocateValues(){
+bool module::allocateValues(){
     simTime=0;
+    return(true);
     }
 
-module& module::setSizeX(int x){
+bool module::setSizeX(int x){
+    bool ret_correct;    
     if (x>0){
         sizeX = x;
-    }
+        ret_correct=true;
+    } else
+        ret_correct=false;
+    return(ret_correct);
 }
 
-module& module::setSizeY(int y){
+bool module::setSizeY(int y){
+    bool ret_correct;    
     if (y>0){
         sizeY = y;
-    }
+        ret_correct=true;
+    } else
+        ret_correct=false;
+    return(ret_correct);
 }
 
-module& module::set_step(double temporal_step) {
+bool module::set_step(double temporal_step) {
+    bool ret_correct;    
     if (temporal_step>0){
         step = temporal_step;
-    }
+        ret_correct=true;
+    } else
+        ret_correct=false;
+    return(ret_correct);
 }
 
 bool module::isDummy() {

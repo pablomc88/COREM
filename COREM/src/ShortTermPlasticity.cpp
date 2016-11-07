@@ -35,39 +35,46 @@ ShortTermPlasticity::~ShortTermPlasticity(void){
 
 // Set functions
 
-void ShortTermPlasticity::setSlope(double s){
+bool ShortTermPlasticity::setSlope(double s){
     slope = s;
+    return(true);
 }
 
-void ShortTermPlasticity::setOffset(double o){
+bool ShortTermPlasticity::setOffset(double o){
     offset = o;
+    return(true);
 }
 
-void ShortTermPlasticity::setExponent(double e){
+bool ShortTermPlasticity::setExponent(double e){
     exponent = e;
+    return(true);
 }
 
-void ShortTermPlasticity::setThreshold(double t){
+bool ShortTermPlasticity::setThreshold(double t){
     threshold = t;
     isThreshold = true;
+    return(true);
 }
 
-void ShortTermPlasticity::setkf(double p1){
+bool ShortTermPlasticity::setkf(double p1){
     kf = p1;
+    return(true);
 }
 
-void ShortTermPlasticity::setkd(double p2){
+bool ShortTermPlasticity::setkd(double p2){
     kd = p2;
+    return(true);
 }
 
-void ShortTermPlasticity::setTau(double p3){
+bool ShortTermPlasticity::setTau(double p3){
     tau = p3;
+    return(true);
 }
 
 
 //------------------------------------------------------------------------------//
 
-void ShortTermPlasticity::allocateValues(){
+bool ShortTermPlasticity::allocateValues(){
     inputImage = new CImg<double>*[7];
 
     for (int i=0;i<7;i++)
@@ -80,6 +87,27 @@ void ShortTermPlasticity::allocateValues(){
 
     outputImage=new CImg<double> (sizeY,sizeX,1,1,0.0);
 
+    return(true);
+}
+
+bool ShortTermPlasticity::setX(int x){
+    bool ret_correct;
+    if (x>0){
+        sizeX = x;
+        ret_correct=true;
+    } else
+        ret_correct=false;
+    return(ret_correct);
+}
+
+bool ShortTermPlasticity::setY(int y){
+    bool ret_correct;    
+    if (y>0){
+        sizeY = y;
+        ret_correct=true;
+    } else
+        ret_correct=false;
+    return(ret_correct);
 }
 
 void ShortTermPlasticity::feedInput(double sim_time, const CImg<double>& new_input, bool isCurrent, int port){
@@ -164,16 +192,16 @@ bool ShortTermPlasticity::setParameters(vector<double> params, vector<string> pa
             exponent = params[i];
         }
         else if (strcmp(s,"threshold")==0){
-            setThreshold(params[i]);
+            correct = setThreshold(params[i]);
         }
         else if (strcmp(s,"kf")==0){
-            setkf(params[i]);
+            correct = setkf(params[i]);
         }
         else if (strcmp(s,"kd")==0){
-            setkd(params[i]);
+            correct = setkd(params[i]);
         }
         else if (strcmp(s,"tau")==0){
-            setTau(params[i]);
+            correct = setTau(params[i]);
         }
         else{
               correct = false;

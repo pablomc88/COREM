@@ -98,7 +98,7 @@ void SpikingOutput::randomize_state(){
 
 //------------------------------------------------------------------------------//
 
-void SpikingOutput::allocateValues(){
+bool SpikingOutput::allocateValues(){
     module::allocateValues(); // Use the allocateValues() method of the base class
 
     // Set parameters of distributions for random number generation
@@ -112,59 +112,112 @@ void SpikingOutput::allocateValues(){
 
     if(Random_init) // If parameter Random_init is set to true, init the state of outputs randomly
         randomize_state();
+    return(true);
 }
 
-SpikingOutput& SpikingOutput::set_Max_period(double max_spk_per){
-    if (max_spk_per>=0)
+bool SpikingOutput::setX(int x){
+    bool ret_correct;
+    if (x>0){
+        sizeX = x;
+        ret_correct=true;
+    } else
+        ret_correct=false;
+    return(ret_correct);
+}
+
+bool SpikingOutput::setY(int y){
+    bool ret_correct;    
+    if (y>0){
+        sizeY = y;
+        ret_correct=true;
+    } else
+        ret_correct=false;
+    return(ret_correct);
+}
+
+bool SpikingOutput::set_Max_period(double max_spk_per){
+    bool ret_correct;
+    if (max_spk_per>=0) {
         Max_period = max_spk_per;
-    return(*this); // Return value is really not used but we return it to avoid warnings
+        ret_correct=true;
+    } else
+        ret_correct=false;
+    return(ret_correct); // Return value is used to inform the caller function if value has been set
 }
 
-SpikingOutput& SpikingOutput::set_Min_period(double min_spk_per){
-    if (min_spk_per>=0)
+bool SpikingOutput::set_Min_period(double min_spk_per){
+    bool ret_correct;
+    if (min_spk_per>=0) {
         Min_period = min_spk_per;
-    return(*this);
+        ret_correct=true;
+    } else
+        ret_correct=false;
+    return(ret_correct);
 }
 
-SpikingOutput& SpikingOutput::set_Input_threshold(double input_threshold){
-    if (input_threshold>=0)
+bool SpikingOutput::set_Input_threshold(double input_threshold){
+    bool ret_correct;
+    if (input_threshold>=0) {
         Input_threshold = input_threshold;
-    return(*this);
+        ret_correct=true;
+    } else
+        ret_correct=false;
+    return(ret_correct);
 }
 
-SpikingOutput& SpikingOutput::set_Freq_per_inp(double freq_per_inp_unit){
-    if (freq_per_inp_unit>=0)
+bool SpikingOutput::set_Freq_per_inp(double freq_per_inp_unit){
+    bool ret_correct;
+    if (freq_per_inp_unit>=0) {
         Spk_freq_per_inp = freq_per_inp_unit;
-    return(*this);
+        ret_correct=true;
+    } else
+        ret_correct=false;
+    return(ret_correct);
 }
 
-SpikingOutput& SpikingOutput::set_Spike_std_dev(double std_dev_val){
-    if (std_dev_val>=0)
+bool SpikingOutput::set_Spike_std_dev(double std_dev_val){
+    bool ret_correct;
+    if (std_dev_val>=0) {
         Spike_std_dev = std_dev_val;
-    return(*this);
+        ret_correct=true;
+    } else
+        ret_correct=false;
+    return(ret_correct);
 }
 
-SpikingOutput& SpikingOutput::set_Limit_std_dev(double std_dev_val){
-    if (std_dev_val>=0)
+bool SpikingOutput::set_Limit_std_dev(double std_dev_val){
+    bool ret_correct;
+    if (std_dev_val>=0) {
         Limit_std_dev = std_dev_val;
-    return(*this);
+        ret_correct=true;
+    } else
+        ret_correct=false;
+    return(ret_correct);
 }
 
-SpikingOutput& SpikingOutput::set_Start_time(double start_time){
-    if (start_time>=0)
+bool SpikingOutput::set_Start_time(double start_time){
+    bool ret_correct;
+    if (start_time>=0) {
         Start_time = start_time;
-    return(*this);
+        ret_correct=true;
+    } else
+        ret_correct=false;
+    return(ret_correct);
 }
 
-SpikingOutput& SpikingOutput::set_End_time(double end_time){
-    if (end_time>=0)
+bool SpikingOutput::set_End_time(double end_time){
+    bool ret_correct;
+    if (end_time>=0) {
         End_time = end_time;
-    return(*this);
+        ret_correct=true;
+    } else
+        ret_correct=false;
+    return(ret_correct);
 }
 
-SpikingOutput& SpikingOutput::set_Random_init(bool rnd_init){
+bool SpikingOutput::set_Random_init(bool rnd_init){
     Random_init = rnd_init;
-    return(*this);
+    return(true);
 }
 
 //------------------------------------------------------------------------------//
@@ -177,23 +230,23 @@ bool SpikingOutput::setParameters(vector<double> params, vector<string> paramID)
         const char * s = paramID[i].c_str();
 
         if (strcmp(s,"Max_period")==0){
-            set_Max_period(params[i]);
+            correct = set_Max_period(params[i]);
         } else if (strcmp(s,"Min_period")==0){
-            set_Min_period(params[i]);
+            correct = set_Min_period(params[i]);
         } else if (strcmp(s,"Input_threshold")==0){
-            set_Input_threshold(params[i]);
+            correct = set_Input_threshold(params[i]);
         } else if (strcmp(s,"Freq_per_inp")==0){
-            set_Freq_per_inp(params[i]);
+            correct = set_Freq_per_inp(params[i]);
         } else if (strcmp(s,"Spike_std_dev")==0){
-            set_Spike_std_dev(params[i]);
+            correct = set_Spike_std_dev(params[i]);
         } else if (strcmp(s,"Limit_std_dev")==0){
-            set_Limit_std_dev(params[i]);
+            correct = set_Limit_std_dev(params[i]);
         } else if (strcmp(s,"Start_time")==0){
-            set_Start_time(params[i]);
+            correct = set_Start_time(params[i]);
         } else if (strcmp(s,"End_time")==0){
-            set_End_time(params[i]);
+            correct = set_End_time(params[i]);
         } else if (strcmp(s,"Random_init")==0){
-            set_Random_init(params[i] > 0.0);
+            correct = set_Random_init(params[i] > 0.0);
         } else {
             correct = false;
         }

@@ -46,9 +46,9 @@ public:
     virtual ~module(void); // Destructor is declared virtual, so when a pointer to module class is deleted the derived class destructor is called
 
     // set protected parameters
-    module& setSizeX(int x);
-    module& setSizeY(int y);
-    module& set_step(double temporal_step); // Set the duration of a simulation time step (slot) in milliseconds
+    bool setSizeX(int x);
+    bool setSizeY(int y);
+    bool set_step(double temporal_step); // Set the duration of a simulation time step (slot) in milliseconds
 
     // add operations or ID of input modules
     void addOperation(vector <int> ops){portArith.push_back(ops);}
@@ -80,9 +80,9 @@ public:
 
     // virtual functions //
     // Allocate values
-    virtual void allocateValues();
-    virtual void setX(int x){}
-    virtual void setY(int y){}
+    virtual bool allocateValues();
+    virtual bool setX(int x){}
+    virtual bool setY(int y){}
     // New input and update of equations
     virtual void feedInput(double sim_time, const CImg<double>& new_input, bool isCurrent, int port){}
     virtual void update(){}

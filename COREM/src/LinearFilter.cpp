@@ -48,7 +48,7 @@ LinearFilter::~LinearFilter(){
 //------------------------------------------------------------------------------//
 
 
-void LinearFilter::allocateValues(){
+bool LinearFilter::allocateValues(){
     last_inputs = new CImg<double>*[M];
     last_values = new CImg<double>*[N+1];
 
@@ -57,7 +57,27 @@ void LinearFilter::allocateValues(){
       last_inputs[i]=new CImg<double> (sizeY,sizeX,1,1,initial_input_value);
     for (int j=0;j<N+1;j++)
       last_values[j]=new CImg<double> (sizeY,sizeX,1,1,0.0);
+    return(true);
+}
 
+bool LinearFilter::setX(int x){
+    bool ret_correct;    
+    if (x>0){
+        sizeX = x;
+        ret_correct=true;
+    } else
+        ret_correct=false;
+    return(ret_correct);
+}
+
+bool LinearFilter::setY(int y){
+    bool ret_correct;    
+    if (y>0){
+        sizeY = y;
+        ret_correct=true;
+    } else
+        ret_correct=false;
+    return(ret_correct);
 }
 
 

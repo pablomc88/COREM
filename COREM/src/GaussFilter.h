@@ -58,9 +58,9 @@ public:
     ~GaussFilter(void);
 
     // Allocate values and set protected parameters
-    virtual void allocateValues();
-    virtual void setX(int x){sizeX=x;}
-    virtual void setY(int y){sizeY=y;}
+    virtual bool allocateValues();
+    virtual bool setX(int x);
+    virtual bool setY(int y);
     GaussFilter& setSigma(double sigm);
 
     // Fast filtering with constant sigma

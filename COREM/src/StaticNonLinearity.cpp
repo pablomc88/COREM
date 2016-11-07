@@ -44,12 +44,33 @@ void StaticNonLinearity::setType(int t){
 
 //------------------------------------------------------------------------------//
 
-void StaticNonLinearity::allocateValues(){
+bool StaticNonLinearity::allocateValues(){
     inputImage=new CImg<double> (sizeY,sizeX,1,1,0.0);
     outputImage=new CImg<double> (sizeY,sizeX,1,1,0.0);
     markers=new CImg<double> (sizeY,sizeX,1,1,0.0);
-
+    return(true);
 }
+
+bool StaticNonLinearity::setX(int x){
+    bool ret_correct;
+    if (x>0){
+        sizeX = x;
+        ret_correct=true;
+    } else
+        ret_correct=false;
+    return(ret_correct);
+}
+
+bool StaticNonLinearity::setY(int y){
+    bool ret_correct;    
+    if (y>0){
+        sizeY = y;
+        ret_correct=true;
+    } else
+        ret_correct=false;
+    return(ret_correct);
+}
+
 
 void StaticNonLinearity::feedInput(double sim_time, const CImg<double>& new_input, bool isCurrent, int port){
     // copy input image

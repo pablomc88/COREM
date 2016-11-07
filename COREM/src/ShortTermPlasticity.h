@@ -43,20 +43,20 @@ public:
     ~ShortTermPlasticity(void);
 
     // Set functions
-    void setSlope(double s);
-    void setOffset(double o);
-    void setExponent(double e);
-    void setThreshold(double t);
+    bool setSlope(double s);
+    bool setOffset(double o);
+    bool setExponent(double e);
+    bool setThreshold(double t);
 
-    void setkf(double p1);
-    void setkd(double p2);
-    void setTau(double p3);
-    void setVInf(double p4);
+    bool setkf(double p1);
+    bool setkd(double p2);
+    bool setTau(double p3);
+    bool setVInf(double p4);
 
     // Allocate values
-    virtual void allocateValues();
-    virtual void setX(int x){sizeX=x;}
-    virtual void setY(int y){sizeY=y;}
+    virtual bool allocateValues();
+    virtual bool setX(int x);
+    virtual bool setY(int y);
     // New input and update of equations
     virtual void feedInput(double sim_time, const CImg<double> &new_input, bool isCurrent, int port);
     virtual void update();
