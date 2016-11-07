@@ -51,7 +51,7 @@ public:
     //set directory
     void setDir(const char* s);
     // allocate values
-    void allocateValues();
+    bool allocateValues();
 
     // This method copies a number of characters from the beginning of source string into destination buffer
     // plus the \0 termination character at the end of the copied chars (\0 is always copied if dest_size > 0).

@@ -98,7 +98,10 @@ int main(int argc, char *argv[])
             // Create new retina interface for every trial (reset values)
             InterfaceNEST interface;
             interface.setVerbosity(verbose_flag);
-            interface.allocateValues(retinaSim,"output",constants::outputfactor,trial_ind);
+            if(!interface.allocateValues(retinaSim,"output",constants::outputfactor,trial_ind)) {
+                cout << "Incorrect parameter value specified or resorce allocation. Aborting" << endl;
+                break;
+            }
 
             if(trial_ind==0){ // Print info only in the first trial
                 // Get number of trials and simulation time

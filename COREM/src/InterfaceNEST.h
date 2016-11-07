@@ -58,7 +58,7 @@ public:
     int getTotalSimTime();
 
     void reset(int X, int Y, double tstep,int rep);
-    void allocateValues(const char * retinaPath, const char * outputFile, double outputfactor, double currentRep);
+    bool allocateValues(const char * retinaPath, const char * outputFile, double outputfactor, double currentRep);
     void update();
     double getValue(double cell);
     bool getAbortExecution(){return abortExecution;}

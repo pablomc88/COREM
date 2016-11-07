@@ -52,8 +52,8 @@ void  InterfaceNEST::setVerbosity(bool verbose_flag){
     retina.setVerbosity(verbose_flag);
 }
 
-void InterfaceNEST::allocateValues(const char *retinaPath, const char * outputFile,double outputfactor,double currentRep){
-
+bool InterfaceNEST::allocateValues(const char *retinaPath, const char * outputFile,double outputfactor,double currentRep){
+    bool ret_correct;
 
     // Set input directory and parse the retina file
     FileReaderObject.setDir(retinaPath);
@@ -86,7 +86,7 @@ void InterfaceNEST::allocateValues(const char *retinaPath, const char * outputFi
         displayMg.setLNFile(outputFile,outputfactor);
 
         // Allocate retina object
-        retina.allocateValues();
+        ret_correct = retina.allocateValues();
 
 
         // Display manager
@@ -95,10 +95,11 @@ void InterfaceNEST::allocateValues(const char *retinaPath, const char * outputFi
         }
 
 
-    }else
+    }else {
         abortExecution=true;
-
-
+        ret_correct=false;
+    }
+    return(ret_correct);
 }
 
 

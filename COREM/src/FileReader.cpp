@@ -30,15 +30,18 @@ void FileReader::setDir(const char *s){
 
 //-------------------------------------------------//
 
-void FileReader::allocateValues(){
-
+bool FileReader::allocateValues(){
+    bool ret_correct;
     fin.open(fileName);
 
-      if (!fin.good()) {
-          cout << "Wrong retina file path." << endl;
-          CorrectFile = false;
-          continueReading = false;
-      }
+    if (!fin.good()) {
+        cout << "Could not open retina script file: " << fileName << ". Wrong retina file path?" << endl;
+        CorrectFile = false;
+        continueReading = false;
+        ret_correct = false;
+    } else
+        ret_correct = true;
+    return(ret_correct);
 }
 
 //-------------------------------------------------//
