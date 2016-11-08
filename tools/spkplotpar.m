@@ -47,8 +47,8 @@ end
 
 if nargin > 0
    plot_mode=varargin{1};
-   if ~isequal(plot_mode,'ra') && ~isequal(plot_mode,'hi')
-      display('Incorrect value of mode (first argument)');
+   if ~isequal(plot_mode,'ra') && ~isequal(plot_mode,'hi') && ~isequal(plot_mode,'ph')
+      error('Incorrect value of mode (first argument)');
       nargs=0;
    end
    if nargin > 1
@@ -190,7 +190,7 @@ case 'hi' % Histogram plot
         if tot_spks > 100000
             n_bins = 1000;
         else
-            n_bins = tot_spks/200;
+            n_bins = tot_spks/100;
         end
     end
     
@@ -216,7 +216,7 @@ case 'ph' % PHase plot
         if diff_neus > 100000
             n_bins = 1000;
         else
-            n_bins = diff_neus/200;
+            n_bins = diff_neus/100;
         end
     end
     

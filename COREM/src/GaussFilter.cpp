@@ -313,7 +313,7 @@ bool GaussFilter::setParameters(vector<double> params, vector<string> paramID){
 
     bool correct = true;
 
-    for (int i = 0;i<params.size();i++){
+    for (vector<double>::size_type i = 0;i<params.size() && correct;i++){
         const char * s = paramID[i].c_str();
 
         if (strcmp(s,"sigma")==0){

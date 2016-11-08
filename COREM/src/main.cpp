@@ -99,7 +99,7 @@ int main(int argc, char *argv[])
             InterfaceNEST interface;
             interface.setVerbosity(verbose_flag);
             if(!interface.allocateValues(retinaSim,"output",constants::outputfactor,trial_ind)) {
-                cout << "Incorrect parameter value specified or resorce allocation. Aborting" << endl;
+                cout << "Incorrect parameter/value specified or resorce allocation. Aborting." << endl;
                 break;
             }
 

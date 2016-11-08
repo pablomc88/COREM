@@ -982,7 +982,7 @@ void FileReader::parseFile(Retina &retina, DisplayManager &displayMg){
                             retina.addModule(newModule,"Output");
                             if(verbose) cout << "Output module added to the retina" << endl;
                         }else{
-                            abort(line,"Error setting specified parameters output (incorrect name or value)");
+                            abort(line,"Error setting specified output-module parameters (incorrect parameter name or invalid value)");
                             break;
                         }
                     } else

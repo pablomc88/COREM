@@ -116,7 +116,7 @@ bool SequenceOutput::setParameters(vector<double> params, vector<string> paramID
 
     bool correct = true;
 
-    for (vector<double>::size_type i = 0;i<params.size();i++){
+    for (vector<double>::size_type i = 0;i < params.size() && correct;i++){
         const char * s = paramID[i].c_str();
 
         if (strcmp(s,"Voxel_X_size")==0){

@@ -5,8 +5,8 @@
  * Name: SpikingOutput
  *
  * Description: Special retina module in charge of generating action potentials as output.
- * In particular it can (instantly) convert the retina output into spike times and save
- * them in a file.
+ * In particular it can instantly (without delay) convert the retina output into spike times and
+ * finally save them in a file.
  *
  * Author: Pablo Martinez Cañada. University of Granada. CITIC-UGR. Spain.
  * <pablomc@ugr.es>
@@ -30,7 +30,7 @@ struct spike_t {
 };
 
 class SpikingOutput:public module{
-    // External (parameters) variables are in millisecond. Internal class variables are in seconds.
+    // External (parameters) variables are in millisecond. Internal class calculations are done in whole units (seconds).
 protected:
     // image buffers
     CImg<double> *inputImage; // Buffer used to temporally store the input values which will be converted to spikes
@@ -41,15 +41,18 @@ protected:
     double Start_time, End_time; // These recording parameters define the simulation time interval when the images must be saved (in milliseconds)
 
     // parameters for conversion from input magnitude to firing rate
-    double Max_period, Min_period; // Max. and min. time allowed to elape between two consecutive spikes of a neuron
-    double Input_threshold; // Minimal (sustained) input value required for a neuron to generate some output
-    double Spk_freq_per_inp; // Conversion factor from input value to output spike frequency (Hz)
-    double Spike_std_dev; // Standard deviation of spike times. When this value is <>0, they are randomly drawn from a gamma distribution
-    double Limit_std_dev; // Standard deviation of a normal distribition. When this value is <>0, from values are drawn from this distribution and added to the specified limit period
-    bool Random_init; // true if the initial state of must be initialized randomly, so that the starting firing phase is uniformly random
-
-    default_random_engine rand_gen; // For generating random numbers: neuron random noise and random states
-    normal_distribution<double> norm_dist; // For introducing noise in neuron random firing rate limits
+    double Min_period; // Minimum time in milliseconds allowed to elape between two consecutive spikes of a neuron (min. ISI or refractory period)
+    double Longest_sustained_period; // Firing period in milliseconds when the input is equal to the input threshold (offset firing frequency)
+    double Input_threshold; // Minimal (sustained) input value required for a neuron to generate sustained output
+    double Spk_freq_per_inp; // Conversion factor from input value to output spike frequency (Hz):
+    // firing_period_ms = 1 / (pixel_value - Input_threshold)*(Spk_freq_per_inp/1000) + Lower_sustained_period_ms
+    double Spike_std_dev; // Standard deviation in milliseconds of spike times. When this value is <>0, they are randomly drawn from a gamma distribution. If <0, is set to be equual to distribution mean (firing period)
+    double Min_period_std_dev; // Standard deviation in milliseconds of a normal distribition with mean Min_period from which min. firing periods are drawn. When this value is equal to 0, min. firing periods are fixed
+    bool Random_init; // true (differnt from 0) if the initial state of must be initialized randomly, so that the starting firing phase is uniformly random
+    // Since the spike time generation is not impemented as a real non-homogeneous random process, Spike_std_dev is not exactly
+    // the standard deviation of the generated spike times, but the standar deviation of the distribution used to generate these spikes.
+    default_random_engine rand_gen; // For generating random numbers: neuron output random noise, random states and refractory period
+    normal_distribution<double> norm_dist; // For introducing noise in neuron random max. firing rate
     gamma_distribution<double> gam_dist; // For generating random spike times
     uniform_real_distribution<double> unif_dist; // For generating neuron random init states
     
@@ -65,12 +68,12 @@ public:
     // Allocate values and set protected parameters
     virtual bool allocateValues();
 
-    bool set_Max_period(double max_spk_per);
     bool set_Min_period(double min_spk_per);
+    bool set_Longest_sustained_period(double max_spk_per);
     bool set_Input_threshold(double input_threshold);
     bool set_Freq_per_inp(double freq_per_inp_unit);
     bool set_Spike_std_dev(double sigma_val);
-    bool set_Limit_std_dev(double sigma_val);
+    bool set_Min_period_std_dev(double sigma_val);
     bool set_Start_time(double start_time);
     bool set_End_time(double end_time);
     bool set_Random_init(bool rnd_init);

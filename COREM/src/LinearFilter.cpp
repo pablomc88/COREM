@@ -103,7 +103,7 @@ bool LinearFilter::setParameters(vector<double> params, vector<string> paramID){
     int n = 0;
     int type = 0;
 
-    for (int i = 0;i<params.size();i++){
+    for (vector<double>::size_type i = 0;i < params.size() && correct;i++){
         const char * s = paramID[i].c_str();
 
         if (strcmp(s,"tau")==0){

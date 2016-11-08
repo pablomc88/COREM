@@ -154,7 +154,7 @@ bool SingleCompartment::setParameters(vector<double> params, vector<string> para
     bool correct = true;
     int port = 0;
 
-    for (int i = 0;i<params.size();i++){
+    for (vector<double>::size_type i = 0;i < params.size() && correct;i++){
         const char * s = paramID[i].c_str();
 
         if (strcmp(s,"number_current_ports")==0){

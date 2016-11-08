@@ -121,7 +121,7 @@ bool StaticNonLinearity::setParameters(vector<double> params, vector<string> par
 
     bool correct = true;
 
-    for (int i = 0;i<params.size();i++){
+    for (vector<double>::size_type i = 0;i < params.size() && correct;i++){
         const char * s = paramID[i].c_str();
 
         if (strcmp(s,"slope")==0){
