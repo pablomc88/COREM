@@ -15,7 +15,7 @@
  * StaticNonLinearity
  */
 
-#include <iostream>
+#include <string>
 #include <vector>
 #include "../CImg-1.6.0_rolling141127/CImg.h"
 
@@ -51,44 +51,36 @@ public:
     bool set_step(double temporal_step); // Set the duration of a simulation time step (slot) in milliseconds
 
     // add operations or ID of input modules
-    void addOperation(vector <int> ops){portArith.push_back(ops);}
-    void addID(vector <string> ID){modulesID.push_back(ID);}
+    void addOperation(vector <int> ops);
+    void addID(vector <string> ID);
     // get operations or ID of input modules
-    vector <int> getOperation(int op){return portArith[op];}
-    vector <string> getID(int ID){return modulesID[ID];}
+    vector <int> getOperation(int op);
+    vector <string> getID(int ID);
     // get size of vectors
-    int getSizeID(){return modulesID.size();}
-    int getSizeArith(){return portArith.size();}
+    int getSizeID();
+    int getSizeArith();
 
     // Set and get the name of the module
-    void setModuleID(string s){ID=s;}
-    string getModuleID(){return ID;}
+    void setModuleID(string s);
+    string getModuleID();
 
     // Set and get synapse type
-    void addTypeSynapse(int type){typeSynapse.push_back(type);}
-    int getTypeSynapse(int port){return typeSynapse[port];}
+    void addTypeSynapse(int type);
+    int getTypeSynapse(int port);
 
-    bool checkID(const char* name){
-        const char * charID = ID.c_str();
-
-        if (strcmp(name,charID) == 0){
-            return true;
-        }else{
-            return false;
-        }
-    }
+    bool checkID(const char* name);
 
     // virtual functions //
     // Allocate values
     virtual bool allocateValues();
     // New input and update of equations
-    virtual void feedInput(double sim_time, const CImg<double>& new_input, bool isCurrent, int port){}
-    virtual void update(){}
+    virtual void feedInput(double sim_time, const CImg<double>& new_input, bool isCurrent, int port);
+    virtual void update();
     // Get output image (y(k))
-    virtual CImg<double>* getOutput(){}
+    virtual CImg<double>* getOutput();
     // set Parameters
-    virtual bool setParameters(vector<double> params, vector<string> paramID){}
-    virtual void clearParameters(vector<string> paramID){}
+    virtual bool setParameters(vector<double> params, vector<string> paramID);
+    virtual void clearParameters(vector<string> paramID);
     // This method can be called to find out if an object derived from class module performs
     // any usefull computation or it does not (and therefore can be deleted).
     // This method returns true if the object belongs to the base class (module). If the object
@@ -98,3 +90,4 @@ public:
 };
 
 #endif // MODULE_H
+

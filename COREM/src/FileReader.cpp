@@ -123,7 +123,7 @@ bool FileReader::parseLine(const char *in_line, char **out_tokens, int max_token
 
     const char * const espcial_tokens[] = { TOKENS_CMD, TOKENS_BLK, TOKENS_STR };
     enum context_t {CTX_CMD=0, CTX_BLK, CTX_STR};
-    vector<enum context_t> context;  // Depending on the parsing context we use a different set of token delimiters
+    vector<enum context_t> context; // The status of the parser is a stack of contexts. Depending on the top context we use a different set of token delimiters
 
     int token_ind; // Index to the currently parsed token
     bool stop_parsing;
@@ -336,6 +336,10 @@ void FileReader::parseFile(Retina &retina, DisplayManager &displayMg){
 
         // retina configuration
         if(continueReading){
+            
+            if(action==11 || action==13) // If Action is Show or multimeter prepare Display Manager
+                displayMg.allocateValues(retina.getNumberModules(),retina.getStep()); // allocate values of Display Manager even if no Connect command is used
+                
             switch(action){
             // Create
             case 1:
@@ -436,9 +440,6 @@ void FileReader::parseFile(Retina &retina, DisplayManager &displayMg){
             case 2:
 
                 if (token[2] && token[3] && token[4]){
-
-                    // Display Manager
-                    displayMg.allocateValues(retina.getNumberModules(),retina.getStep());
 
                     vector <int> operations;
                     vector <string> modulesID;
@@ -657,6 +658,10 @@ void FileReader::parseFile(Retina &retina, DisplayManager &displayMg){
                                 abort(line,"Expected parameter list of impulse: 'start','stop','amplitude','offset','sizeX','sizeY'");
                                 break;
                             }
+                        }
+                        else if(strcmp(token[2], "streaming") == 0 ){
+                            continueReading=retina.setStreamingInput(token[4]);
+                            if(verbose)cout << "Input configured as streaming video." << endl;
                         }
                         else{
                             abort(line,"Unknown input type");

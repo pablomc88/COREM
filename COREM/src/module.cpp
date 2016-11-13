@@ -1,3 +1,5 @@
+#include <vector>
+#include <string.h>
 #include "module.h"
 
 module::module(int x, int y, double temporal_step){
@@ -52,6 +54,77 @@ bool module::set_step(double temporal_step) {
     return(ret_correct);
 }
 
+void module::addOperation(vector <int> ops){
+    portArith.push_back(ops);
+    }
+
+void module::addID(vector <string> ID){
+    modulesID.push_back(ID);
+    }
+
+vector<int> module::getOperation(int op){
+    return portArith[op];
+    }
+    
+vector<string> module::getID(int ID){
+    return modulesID[ID];
+    }
+
+int module::getSizeID(){
+    return modulesID.size();
+    }
+    
+int module::getSizeArith(){
+    return portArith.size();
+    }
+
+void module::setModuleID(string s){
+    ID=s;
+    }
+    
+string module::getModuleID(){
+    return ID;
+    }
+
+// Set and get synapse type
+void module::addTypeSynapse(int type){
+    typeSynapse.push_back(type);
+    }
+    
+int module::getTypeSynapse(int port){
+    return typeSynapse[port];
+    }
+
+bool module::checkID(const char* name){
+    const char * charID = ID.c_str();
+
+    if (strcmp(name,charID) == 0){
+        return true;
+    }else{
+        return false;
+    }
+}
+
 bool module::isDummy() {
     return true;
     }
+
+// Fn definitions just to avoid errors/warnings
+void module::feedInput(double sim_time, const CImg<double>& new_input, bool isCurrent, int port){
+    }
+    
+void module::update(){
+    }
+    
+CImg<double>* module::getOutput(){
+    return(NULL);
+    }
+    
+bool module::setParameters(vector<double> params, vector<string> paramID){
+    return(true);
+    }
+    
+void module::clearParameters(vector<string> paramID){
+    }
+    
+    

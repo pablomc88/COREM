@@ -40,6 +40,8 @@
     <File Name="src/SpikingOutput.h"/>
     <File Name="src/SequenceOutput.h"/>
     <File Name="src/SequenceOutput.cpp"/>
+    <File Name="src/StreamingInput.h"/>
+    <File Name="src/StreamingInput.cpp"/>
   </VirtualDirectory>
   <Settings Type="Dynamic Library">
     <GlobalSettings>

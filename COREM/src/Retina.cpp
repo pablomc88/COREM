@@ -16,7 +16,7 @@ Retina::Retina(int x, int y, double temporal_step){
     verbose = false;
 
     modules.push_back((new module()));
-    modules.back()->setModuleID("Output"); // Dummy output module used in case a particular output is not specified in script
+    modules.back()->setModuleID("Output"); // Dummy output module used in case a particular output is not specified in script (otherwise it is replaced)
 
     output = new CImg <double>(sizeY, sizeX,1,1,0.0);
     accumulator = new CImg <double>(sizeY, sizeX,1,1,0.0);
@@ -557,6 +557,12 @@ bool Retina::setInputSeq(string s){
 
 //------------------------------------------------------------------------------//
 
+bool Retina::setStreamingInput(string connect_url){
+    bool ret_ok;
+    
+    ret_ok=true;
+    return(ret_ok);
+}
 
 int Retina::getNumberImages(){
     return numberImages;

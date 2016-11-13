@@ -13,10 +13,8 @@
  * SeeAlso: module, GratingGenerator, fixationalMovGrating, impulse, whiteNoise
  */
 
-
 #include <dirent.h>
 #include <algorithm>
-
 
 #include "module.h"
 #include "LinearFilter.h"
@@ -28,6 +26,7 @@
 #include "impulse.h"
 #include "SpikingOutput.h"
 #include "SequenceOutput.h"
+#include "StreamingInput.h"
 
 using namespace cimg_library;
 using namespace std;
@@ -52,6 +51,7 @@ protected:
 
     // Inputs
     vector < CImg<double> > sequence;
+    StreamingInput *video_stream;
     GratingGenerator *g;
     fixationalMovGrating *fg;
     whiteNoise *WN;
@@ -126,6 +126,8 @@ public:
     CImg<double> *updateImpulse(double t);
     // Input Sequence
     bool setInputSeq(string s);
+    // Video streaming input
+    bool setStreamingInput(string connect_url);
     // get number of images
     int getNumberImages();
     // Set repetitions

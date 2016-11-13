@@ -20,40 +20,48 @@
 using namespace cimg_library;
 using namespace std;
 
-
+#define LN_OUT_FILENAME_TAIL "_output_LN.txt"
 // main
 int main(int argc, char *argv[])
 {
     string currentDirRoot = constants::getPath();
 
-    // delete files in results folder (if any)
+    // delete old LN analysis files in results folder (if any)
     DIR *dir;
     struct dirent *ent;
+    
     string resdir = currentDirRoot+"results/";
     const char * charesdir = (resdir).c_str();
 
-    if ((dir = opendir (charesdir)) != NULL) {
-        int files = 0;
-        while ((ent = readdir (dir)) != NULL) {
-            files+=1;
-          }
-
-        if(false && files > 2){
-            string results = "exec rm "+currentDirRoot+"results/*";
-            cout << "Deleting content of results/ directory" << endl;
-            const char * todelete = (results).c_str();
-            system(todelete);
+    if ((dir = opendir(charesdir)) != NULL) {
+        size_t fn_tail_len;
+        bool files_deleted=false;
+        fn_tail_len = strlen(LN_OUT_FILENAME_TAIL);
+        
+        while((ent = readdir (dir)) != NULL) {
+            size_t d_name_len;
+            d_name_len=strlen(ent->d_name);
+            
+            if(d_name_len >= fn_tail_len && strcmp(ent->d_name+d_name_len-fn_tail_len, LN_OUT_FILENAME_TAIL)==0) {
+                string removed_fn_path = resdir + ent->d_name;
+                if(remove(removed_fn_path.c_str()) == -1)
+                    perror("Error while deleting old LN files");
+                files_deleted=true;                
+            }
+        
         }
         closedir (dir);
+        if(files_deleted)
+            cout << "Deleted previous *" LN_OUT_FILENAME_TAIL " LN files of ./results/ directory." << endl;
     }else{
-        string tocreate = "mkdir "+currentDirRoot+"results/";
+        string tocreate = currentDirRoot+"results";
         cout << "Creating results/ directory" << endl;
-        system(tocreate.c_str());
+        if(mkdir(tocreate.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) == -1)
+            perror("Error while creating results directory");
     }
 
     // Create retina interface
     string retinaString;
-    const char * outID;
     int arg_index;
     bool got_script_file;
     bool verbose_flag, help_param;
@@ -98,7 +106,7 @@ int main(int argc, char *argv[])
             // Create new retina interface for every trial (reset values)
             InterfaceNEST interface;
             interface.setVerbosity(verbose_flag);
-            if(!interface.allocateValues(retinaSim,"output",constants::outputfactor,trial_ind)) {
+            if(!interface.allocateValues(retinaSim, LN_OUT_FILENAME_TAIL, constants::outputfactor, trial_ind)) {
                 cout << "Incorrect parameter/value specified or resorce allocation. Aborting." << endl;
                 break;
             }

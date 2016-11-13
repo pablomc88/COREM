@@ -1,3 +1,4 @@
+#include <cstddef> // for size_t type (used as loop index instead of int to avoid compile warnings)
 #include "DisplayManager.h"
 
 DisplayManager::DisplayManager(int x, int y){
@@ -11,6 +12,7 @@ DisplayManager::DisplayManager(int x, int y){
     delay = 0;
     imagesPerRow=4;
 
+    numberModules = 0;
     valuesAllocated = false;
 
 }
@@ -186,10 +188,10 @@ void DisplayManager::addMultimeterLN(string multimeterID, string moduleID, int x
 
 void DisplayManager::modifyLN(string moduleID, double start, double stop){
 
-    int pos = 0;
+    size_t pos = 0;
     const char * str1 = moduleID.c_str();
 
-    for(int k=0;k<multimeterIDs.size();k++){
+    for(size_t k=0;k<multimeterIDs.size();k++){
         const char * str2 = (multimeterIDs[k]).c_str();
         if(strcmp(str1,str2)==0){
             pos = k;
@@ -232,49 +234,46 @@ void DisplayManager::addModule(int pos,string ID){
 
     }
 
-    if(isShown[pos]){
+    if(pos>0) { // display for pos==0 (Input) is create above
+        if(isShown[pos]){
 
-        // black image
-        double newX = (double)sizeX * displayZoom;
-        double newY = (double)sizeY * displayZoom;
-        CImg <double> *image = new CImg <double>((int)newY,(int)newX,1,1,0.0);
+            // black image
+            double newX = (double)sizeX * displayZoom;
+            double newY = (double)sizeY * displayZoom;
+            CImg <double> *image = new CImg <double>((int)newY,(int)newX,1,1,0.0);
 
-        // Color Bar
-        CImg <double> *bar = new CImg <double>(50,(int)newX, 1, 1);
-        cimg_forXY(*(bar),x,y) {
-            (*bar)(x,(int)newX-y-1,0,0)=255*((double)y/newX);
-        }
-        bar->map(CImg<double>::jet_LUT256());
+            // Color Bar
+            CImg <double> *bar = new CImg <double>(50,(int)newX, 1, 1);
+            cimg_forXY(*(bar),x,y) {
+                (*bar)(x,(int)newX-y-1,0,0)=255*((double)y/newX);
+            }
+            bar->map(CImg<double>::jet_LUT256());
 
-        // Create window
-        const char * WindowName = (ID).c_str();
-        CImgDisplay *disp = new CImgDisplay((*image,*bar),WindowName,0);
-        // Display
-        (*image,*bar).display(*disp);
+            // Create window
+            const char * WindowName = (ID).c_str();
+            CImgDisplay *disp = new CImgDisplay((*image,*bar),WindowName,0);
+            // Display
+            (*image,*bar).display(*disp);
 
-        // new row of the display
-        int capacity = int((CImgDisplay::screen_width()-newY-100) / (newY+50));
+            // new row of the display
+            int capacity = int((CImgDisplay::screen_width()-newY-100) / (newY+50));
 
-        if (last_col<capacity && last_col < imagesPerRow){
-            last_col++;
-        }else{
-            last_col = 1;
-            last_row++;
-        }
+            if (last_col<capacity && last_col < imagesPerRow){
+                last_col++;
+            }else{
+                last_col = 1;
+                last_row++;
+            }
 
-        // move display
-        disp->move((int)last_col*(newY+80.0),(int)last_row*(newX+80.0));
+            // move display
+            disp->move((int)last_col*(newY+80.0),(int)last_row*(newX+80.0));
 
-        // Save display
-        displays.push_back(disp);
+            // Save display
+            displays.push_back(disp);
 
-    }else{
-        displays.push_back(new CImgDisplay());
+        }else
+            displays.push_back(new CImgDisplay());
     }
-
-
-
-
 }
 
 //------------------------------------------------------------------------------//
@@ -290,7 +289,7 @@ void DisplayManager::updateDisplay(CImg <double> *input, Retina &retina, int ste
 
 
     // Display input
-    if(isShown[0]){
+    if(isShown.size() > 0 && isShown[0]){
 
         CImgDisplay *d0 = displays[0];
         *inputImage = *input;
@@ -306,7 +305,7 @@ void DisplayManager::updateDisplay(CImg <double> *input, Retina &retina, int ste
 
 
     // Update windows
-    if (step==0){
+    if (numberModules>0 && step==0){
         bars = new CImg<double>*[numberModules-1];
         templateBar = new CImg <double>(50,(int)newX, 1, 1);
         for(int i=0;i<numberModules-1;i++){
@@ -366,14 +365,12 @@ void DisplayManager::updateDisplay(CImg <double> *input, Retina &retina, int ste
             // show image
             intermediateImages[k]->crop(margin[k+1],margin[k+1],0,0,sizeY-margin[k+1]-1,sizeX-margin[k+1]-1,0,0,false);
             (((255*(*intermediateImages[k] - min)/(max-min))).map(CImg<double>::jet_LUT256()).resize((int)newY,(int)newX),*bars[k]).display(*d);
-
-
         }
     }
 
 
     // update multimeters
-    for(int i=0;i<multimeters.size();i++){
+    for(size_t i=0;i<multimeters.size();i++){
         multimeter *m = multimeters[i];
         module *n;
         const char * moduleID = (moduleIDs[i]).c_str();
@@ -435,8 +432,6 @@ void DisplayManager::updateDisplay(CImg <double> *input, Retina &retina, int ste
                 }
             }
         }
-
-
     }
 
 
@@ -444,7 +439,7 @@ void DisplayManager::updateDisplay(CImg <double> *input, Retina &retina, int ste
     if(step==totalSimTime-simStep){
 
         int LNMultimeters = 0;
-        for(int i=0;i<multimeters.size();i++){
+        for(size_t i=0;i<multimeters.size();i++){
             multimeter *m = multimeters[i];
 
             // set position
@@ -507,7 +502,7 @@ void DisplayManager::updateDisplay(CImg <double> *input, Retina &retina, int ste
     }
 
     // Show displays if there's an input display
-        if(isShown[0])
+        if(isShown.size() > 0 && isShown[0])
             displays[0]->wait(delay);
 
 }

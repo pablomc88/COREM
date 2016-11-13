@@ -112,7 +112,6 @@ public:
     // Set Sim step
     bool setSimStep(double value);
 
-
 };
 
 #endif // DISPLAYMANAGER_H

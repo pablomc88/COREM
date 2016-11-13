@@ -90,7 +90,7 @@ bool InterfaceNEST::allocateValues(const char *retinaPath, const char * outputFi
 
 
         // Display manager
-        for(int k=1;k<retina.getNumberModules();k++){
+        for(int k=0;k<retina.getNumberModules();k++){ // we call addModule() even if retina ony has one module in order to always initialize Displays of Display Manager
             displayMg.addModule(k,(retina.getModule(k))->getModuleID());
         }
 
