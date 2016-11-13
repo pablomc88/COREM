@@ -15,8 +15,14 @@ Retina::Retina(int x, int y, double temporal_step){
 
     verbose = false;
 
-    modules.push_back((new module()));
-    modules.back()->setModuleID("Output"); // Dummy output module used in case a particular output is not specified in script (otherwise it is replaced)
+    // The fist element of modules (modules[0]) is a dummy Input module used in case a particular Input action is not
+    // specified in the script (in this case if a new Input module is inserted the first one is replaced)
+    modules.push_back(new module());
+    modules.back()->setModuleID("Input");
+    // The same for Output. InterfaceNEST expect that there is at least one Output module in the second
+    // position (1) of vector modules.
+    modules.push_back(new module());
+    modules.back()->setModuleID("Output");
 
     output = new CImg <double>(sizeY, sizeX,1,1,0.0);
     accumulator = new CImg <double>(sizeY, sizeX,1,1,0.0);
@@ -97,7 +103,9 @@ void Retina::reset(int x,int y,double temporal_step){
         delete modules.back();
         modules.pop_back();
     }
-    modules.push_back((new module()));
+    modules.push_back(new module());
+    modules.back()->setModuleID("Input");
+    modules.push_back(new module());
     modules.back()->setModuleID("Output");
     
     output->fill(0.0);
@@ -265,7 +273,7 @@ bool Retina::allocateValues(){
     Z_mat->assign(sizeY, sizeX, 1, 1, 0.0);
     
     ret_correct = true;
-    for (int i=0;i<modules.size();i++){
+    for (size_t i=0;i<modules.size();i++){
         module* m = modules[i];
         ret_correct = ret_correct && m->allocateValues();
     }
@@ -311,7 +319,7 @@ CImg<double> *Retina::feedInput(int step){
         break;
     }
 
-    if (input->size()==sizeX*sizeY){
+    if (input->size() == (size_t)sizeX*(size_t)sizeY){
         // Separate color channels
         // cimg_forXY(img,x,y) is equivalent to cimg_forY(img,y) cimg_forX(img,x).
         // cimg_forX(img,x) is equivalent to for(int x=0;x<img.width();++x)
@@ -341,19 +349,18 @@ CImg<double> *Retina::feedInput(int step){
 
     *rods = (*ch1 + *ch2 + *ch3)/3;
 
-    for (int i=0;i<modules.size();i++){ // Feed the input of all modules (including Output module)
+    for (size_t i=0;i<modules.size();i++){ // Feed the input of all modules (including Input module although it is not necessart)
 
         module* neuron = modules[i];
-        int number_of_ports = neuron->getSizeID();
 
         // port search
-        for (int o=0;o<number_of_ports;o++){
+        for (int o=0;o<neuron->getSizeID();o++){ // For all the module input connections:
 
             vector <string> l = neuron->getID(o);
             vector <int> p = neuron->getOperation(o);
 
             //image input
-            const char * cellName = l[0].c_str();
+            const char * cellName = l[0].c_str(); // ID of the first port of current connection
 
             if(strcmp(cellName,"L_cones")==0){
                     *accumulator = *ch3;
@@ -375,8 +382,8 @@ CImg<double> *Retina::feedInput(int step){
             // other inputs rather than cones or rods
 
                 //search for the first image
-                for (int m=1;m<modules.size();m++){ // Start from module 1: Do not consider output module as possible source
-                    module* n = modules[m];
+                for (size_t m=0;m<modules.size();m++){ // Start from module 0: We consider Input module as possible source here although it it not necessary
+                    module *n = modules[m];
                     string cellName1 = l[0];
                     string cellName2 = n->getModuleID();
                     if (cellName1.compare(cellName2)==0){
@@ -384,35 +391,31 @@ CImg<double> *Retina::feedInput(int step){
                         break;
                     }
                 }
+            }
 
+            // Accumulate input from other ports (perform other operations), even if the first port is a predefined input
+            for (size_t k=1;k<l.size();k++){
 
-                //other operations
-                for (int k=1;k<l.size();k++){
+                for (size_t m=0;m<modules.size();m++){ // Search for source in all modules
+                    module* n = modules[m];
+                    string cellName1 = l[k];
+                    string cellName2 = n->getModuleID();
+                    if (cellName1.compare(cellName2)==0){
 
-                    for (int m=1;m<modules.size();m++){ // Start searching from module 1
-                        module* n = modules[m];
-                        string cellName1 = l[k];
-                        string cellName2 = n->getModuleID();
-                        if (cellName1.compare(cellName2)==0){
-
-                           if (p[k-1]==0){
-                                *accumulator += *(n->getOutput());
-                            }else{
-                                *accumulator -= *(n->getOutput());
-                            }
-                           break;
+                       if (p[k-1]==0){
+                            *accumulator += *(n->getOutput());
+                        }else{
+                            *accumulator -= *(n->getOutput());
                         }
+                       break;
                     }
-
                 }
-
             }
 
             if (neuron->getTypeSynapse(o)==0)
                 neuron->feedInput(step, *accumulator, true, o);
             else
                 neuron->feedInput(step, *accumulator, false, o);
-
         }
     }
 
@@ -423,7 +426,7 @@ CImg<double> *Retina::feedInput(int step){
 //------------------------------------------------------------------------------//
 
 void Retina::update(){
-    for (int i=0;i<modules.size();i++){ // Update all modules, including output module
+    for (size_t i=0;i<modules.size();i++){ // Update all modules, including Output and Input modules
         module* m = modules[i];
         m->update();
     }
@@ -431,35 +434,44 @@ void Retina::update(){
 
 //------------------------------------------------------------------------------//
 
-bool Retina::addModule(module* new_module, string ID){
+bool Retina::addModule(module *new_module, string new_mod_ID){
     bool correctly_added;
 
-    new_module->setModuleID(ID);
-    if(ID.compare("Output") == 0){ // The Output module is being added
-        correctly_added=false; // Default return value
-        // Search for the Output module in list of modules already added to the retina object
-        for (int module_ind=0; module_ind < modules.size(); module_ind++){
+    new_module->setModuleID(new_mod_ID);
+    // If Input or a Output module is being added, first try to find the corresponding
+    // dummy module and replace it with the currently being added module.
+    // If no corresponding dummy module is found, insert it anyway (if it is Outout) or
+    // warn and ignore it (if is Input).
+    if(new_mod_ID.compare("Input") == 0 || new_mod_ID.compare("Output") == 0){
+        correctly_added=false; // Default fn return value
+        // Search for the Input module in list of modules already added to the retina object
+        for(size_t module_ind=0; module_ind < modules.size() && !correctly_added; module_ind++){
             module *curr_module;
             curr_module = modules[module_ind];
-            if (curr_module->checkID("Output")){ // Output module found
-                // check if the Output module found is the expected default Output module (dummy)
-                // Otherwise, output module has been already added and has been found 
+            if (curr_module->checkID(new_mod_ID.c_str())){ // Input/Output module found
+                // check if the module found is the expected default module (dummy)
+                // Otherwise, Input/Output module has already been added (and has been found)
                 if(curr_module->isDummy()){ 
-                    // Replace dummy output with Retina output module specified in the script file
-                    delete curr_module; // Destroy dummy initial (should be module[0])
-                    modules[module_ind] = new_module; // Use the specified module as Output module
-                    correctly_added=true;
+                    // Replace dummy module with new module specified (in the script file)
+                    delete curr_module; // Destroy dummy initial module (should be module[0]:Input or module[1]:Output)
+                    modules[module_ind] = new_module; // Use the specified module as Input module
+                    correctly_added=true; // Exit for loop
                 } else {
-                    cout << "Warning: Output module already added. Ignoring posterior ones" << endl;
+                    if(new_mod_ID.compare("Input") == 0) {
+                        cout << "Warning: Retina Input has alredy been specified. Ignoring posterior ones." << endl; // Ignore insertion (and return false)
+                        break; // Exit for loop
+                    } else { // We can have more than one Output module, so insert it anyway
+                        modules.push_back(new_module);
+                        correctly_added=true; // Exit for loop
+                    }
                 }
-                break; // Exit for loop
             }
         }
-    } else {
+    } else { // For any other module, just insert it in the end of the modules vector
         modules.push_back(new_module);
         correctly_added=true;
     }
-    if(verbose)cout << "Module "<< new_module->getModuleID() << " added to the retina structure. success: " << correctly_added << endl;
+    if(verbose && correctly_added) cout << "Module "<< new_module->getModuleID() << " added to the retina." << endl;
     
     return(correctly_added);
 }
@@ -572,41 +584,36 @@ int Retina::getNumberImages(){
 
 
 bool Retina::connect(vector <string> from, const char *to,vector <int> operations,const char *type_synapse){
-    bool valueToReturn = false;
+    bool valueToReturn = false; // default return value
     module* neuronto;
 
-    // Search in the list of all modules (including Output module) for the specified target module
-    for (int i=0;i<modules.size();i++){
+    // Search in the list of all modules (although Input module (i=0) could be excluded) for the specified target module
+    for(size_t i=0;i<modules.size();i++){
         neuronto = modules[i];
-        if (neuronto->checkID(to)){
+        if(neuronto->checkID(to)){
+            const char *ff=NULL;
 
-            // check from
-            for (int j=0;j< from.size();j++){
-                int k;
-                const char * ff = from[j].c_str();
-                if (strcmp(ff,"rods")!=0 && strcmp(ff,"L_cones")!=0 && strcmp(ff,"M_cones")!=0 && strcmp(ff,"S_cones")!=0 && strcmp(ff,"red_channel")!=0 && strcmp(ff,"green_channel")!=0 && strcmp(ff,"blue_channel")!=0){
-                    // Search in the list of all modules (excluding Output module) for the current module (ff) of the specified source module list (from)
-                    for (k=1;k<modules.size();k++){
+            // connection target found. Let us search for all the sources (ports)
+            // If any of them is not found, we set valueToReturn to false
+            valueToReturn = true;
+            // check that the modules in the 'from' list exist
+            for(size_t j=0;j < from.size() && valueToReturn;j++){
+                size_t k;
+
+                ff = from[j].c_str();
+                if(strcmp(ff,"rods")!=0 && strcmp(ff,"L_cones")!=0 && strcmp(ff,"M_cones")!=0 && strcmp(ff,"S_cones")!=0 && strcmp(ff,"red_channel")!=0 && strcmp(ff,"green_channel")!=0 && strcmp(ff,"blue_channel")!=0){ // Internal input type specified
+                    // Search in the list of all modules (including Intput module, although it is not necessary) for the current module (ff) of the specified source module list (from)
+                    for(k=0;k<modules.size();k++){
                         module* neuronfrom = modules[k];
-                        if (neuronfrom->checkID(ff)){
-                            valueToReturn = true;
-                            if(verbose)cout << neuronfrom->getModuleID() << " has been conected to "<< neuronto->getModuleID() << endl;
+                        if(neuronfrom->checkID(ff)) // Connection source found: exit the loop to make false the next if condition
                             break;
-                        }
-
                     }
-                    if (k==modules.size()){
+                    if(k==modules.size()) // Connection source not found
                         valueToReturn=false;
-                        break;
-                    }
-                }else{
-                    valueToReturn = true; // Internal input type specified
-                    break;
                 }
             }
 
-
-            if (valueToReturn){
+            if(valueToReturn){ // Shouldn't be inside the inner loop?
                 neuronto->addID(from);
                 neuronto->addOperation(operations);
 
@@ -621,11 +628,10 @@ bool Retina::connect(vector <string> from, const char *to,vector <int> operation
                 }
 
                 neuronto->addTypeSynapse(typeSyn);
+                if(verbose) cout << from.size() << " sources (..." << ((ff!=NULL)?ff:"") << ") have been conected to " << neuronto->getModuleID() << " module." << endl;
             }
-            break;
-        }
+        } // May have more modules (Output modules) with the same ID, so continue looping
     }
-
     return valueToReturn;
 }
 

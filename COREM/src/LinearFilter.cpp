@@ -62,35 +62,39 @@ bool LinearFilter::allocateValues(){
 
 //------------------------------------------------------------------------------//
 
-LinearFilter& LinearFilter::Exp(double tau){
-
+bool LinearFilter::Exp(double tau){
+    bool val_correct;
     if(tau>0)
     {
-      M=1;
-      N=1;
-      a=new double[N+1];
-      b=new double[M];
-      a[0]=1; a[1]=-exp(-step/tau);
-      b[0]=1-exp(-step/tau);
-    }
-
+        M=1;
+        N=1;
+        a=new double[N+1];
+        b=new double[M];
+        a[0]=1; a[1]=-exp(-step/tau);
+        b[0]=1-exp(-step/tau);
+        val_correct=true;
+    } else
+        val_correct=false;
+    return(val_correct);
 }
 
-LinearFilter& LinearFilter::Gamma(double tau,int n){
-
+bool LinearFilter::Gamma(double tau,int n){
+    bool val_correct;
     if(tau>0 && n>=0)
     {
-       M=1; N=n+1;
-       double tauC=n? tau/n : tau;
-       double c=exp(-step/tauC);
+        M=1; N=n+1;
+        double tauC=n? tau/n : tau;
+        double c=exp(-step/tauC);
 
-       b=new double[1]; b[0]=pow(1-c,N);
-       a=new double[N+1];
+        b=new double[1]; b[0]=pow(1-c,N);
+        a=new double[N+1];
 
-       for(int i=0;i<=N;++i)
-           a[i]=pow(-c,i)*combination(N,i);
-    }
-
+        for(int i=0;i<=N;++i)
+            a[i]=pow(-c,i)*combination(N,i);
+        val_correct=true;
+    } else
+        val_correct=false;
+    return(val_correct);
 }
 
 

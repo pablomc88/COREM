@@ -4,6 +4,10 @@ GaussFilter::GaussFilter(int x, int y, double ppd):module(x,y,1.0){
     sizeX = x;
     sizeY = y;
     pixelsPerDegree = ppd;
+
+    inputImage=NULL;
+    outputImage=NULL;
+    buffer=NULL;
 }
 
 GaussFilter::GaussFilter(const GaussFilter &copy):module(copy){
@@ -12,6 +16,8 @@ GaussFilter::GaussFilter(const GaussFilter &copy):module(copy){
 
 GaussFilter::~GaussFilter(){
     delete buffer;
+    delete outputImage;
+    delete inputImage;
 }
 //------------------------------------------------------------------------------//
 
@@ -62,7 +68,8 @@ bool GaussFilter::allocateValues(){
 
 
         double new_sigma = 0.0;
-        double r,rmax;
+        double r;
+        //double rmax;
 
         // initialize matrices
         q_m = CImg <double>(sizeY,sizeX,1,1,0.0);
@@ -119,10 +126,14 @@ bool GaussFilter::allocateValues(){
 
 //------------------------------------------------------------------------------//
 
-GaussFilter& GaussFilter::setSigma(double sigm){
+bool GaussFilter::setSigma(double sigm){
+    bool ret_correct;
     if (sigm>= 0){
         sigma = sigm;
-    }
+        ret_correct=true;
+    } else
+        ret_correct=false;
+    return(ret_correct);
 }
 
 //------------------------------------------------------------------------------//

@@ -700,7 +700,7 @@ void FileReader::parseFile(Retina &retina, DisplayManager &displayMg){
                     // Search for the module ID
                     module_id_found=false;
                     continueReading=false;
-                    for(int l=1;l<retina.getNumberModules();l++){
+                    for(int l=1;l<retina.getNumberModules();l++){ // For all retina modules except 0 (Input) with specified ID set isShown
                         module *m = retina.getModule(l);
                         string ID = m->getModuleID();
                         if(ID.compare(token[2])==0){
@@ -729,23 +729,23 @@ void FileReader::parseFile(Retina &retina, DisplayManager &displayMg){
                     }
                     // Check for input
                     if(strcmp(token[2],"Input")==0){
-                            continueReading=true;
-                            if(strcmp(token[3],"True")==0){
-                                displayMg.setIsShown(true,0);
-                                if(verbose)cout << "Module "<<  token[2] <<" is displayed." << endl;
-                            }
-                            else if(strcmp(token[3],"False")==0){
-                                displayMg.setIsShown(false,0);
-                                if(verbose)cout << "Module "<<  token[2] <<" is not displayed." << endl;
-                            }
-                            else{
-                                abort(line,"Expected 'True' or 'False' value for Input");
-                                break;
-                            }
+                        continueReading=true;
+                        if(strcmp(token[3],"True")==0){
+                            displayMg.setIsShown(true,0);
+                            if(verbose)cout << "Module "<<  token[2] <<" is displayed." << endl;
+                        }
+                        else if(strcmp(token[3],"False")==0){
+                            displayMg.setIsShown(false,0);
+                            if(verbose)cout << "Module "<<  token[2] <<" is not displayed." << endl;
+                        }
+                        else{
+                            abort(line,"Expected 'True' or 'False' value for Input");
+                            break;
+                        }
 
-                            if(atof(token[5])>=0){
-                                displayMg.setMargin(atof(token[5]),0);
-                            }
+                        if(atof(token[5])>=0){
+                            displayMg.setMargin(atof(token[5]),0);
+                        }
 
                     }
                     else

@@ -231,7 +231,6 @@ void DisplayManager::addModule(int pos,string ID){
         for (int i=0;i<numberModules-1;i++){
           intermediateImages[i]=new CImg<double> (sizeY,sizeX,1,1,0.0);
         }
-
     }
 
     if(pos>0) { // display for pos==0 (Input) is create above
@@ -300,9 +299,7 @@ void DisplayManager::updateDisplay(CImg <double> *input, Retina &retina, int ste
 
         inputImage->crop(margin[0],margin[0],0,0,sizeY-margin[0]-1,sizeX-margin[0]-1,0,0,false);
         (((255*(*inputImage - min)/(max-min))).resize((int)newY,(int)newX)).display(*d0);
-
     }
-
 
     // Update windows
     if (numberModules>0 && step==0){
@@ -313,11 +310,12 @@ void DisplayManager::updateDisplay(CImg <double> *input, Retina &retina, int ste
         }
     }
 
-
-    //  copy interm. images
+    // copy interm. images
     for(int i=0;i<numberModules-1;i++){
         module* m = retina.getModule(i+1);
-        *intermediateImages[i]= (*m->getOutput());
+        CImg<double> *module_output = m->getOutput();
+        if(module_output != NULL)
+            *intermediateImages[i] = *module_output;
     }
 
     // show modules
@@ -393,7 +391,9 @@ void DisplayManager::updateDisplay(CImg <double> *input, Retina &retina, int ste
             if(strcmp(moduleID, "Input") == 0){
                 m->recordValue((*input)(aux[0],aux[1],0,0));
             }else{
-                m->recordValue((*n->getOutput())(aux[0],aux[1],0,0));
+                CImg<double> *module_output = n->getOutput();
+                if(module_output != NULL)
+                    m->recordValue((*module_output)(aux[0],aux[1],0,0));
             }
 
             m->recordInput((*input)(aux[0],aux[1],0,0));
@@ -418,16 +418,17 @@ void DisplayManager::updateDisplay(CImg <double> *input, Retina &retina, int ste
                     if(strcmp(moduleID, "Input") == 0){
 
                         if(aux[0]>0)
-                            m->showSpatialProfile((*input),true,aux[0],multimeterIDs[i],(int)last_col*(newY+80.0),(int)last_row*(newX+80.0),-1);
+                            m->showSpatialProfile(input,true,aux[0],multimeterIDs[i],(int)last_col*(newY+80.0),(int)last_row*(newX+80.0),-1);
                         else
-                            m->showSpatialProfile((*input),false,-aux[0],multimeterIDs[i],(int)last_col*(newY+80.0),(int)last_row*(newX+80.0),-1);
-
+                            m->showSpatialProfile(input,false,-aux[0],multimeterIDs[i],(int)last_col*(newY+80.0),(int)last_row*(newX+80.0),-1);
                     }else{
-                        if(aux[0]>0)
-                            m->showSpatialProfile((*n->getOutput()),true,aux[0],multimeterIDs[i],(int)last_col*(newY+80.0),(int)last_row*(newX+80.0),-1);
-                        else
-                            m->showSpatialProfile((*n->getOutput()),false,-aux[0],multimeterIDs[i],(int)last_col*(newY+80.0),(int)last_row*(newX+80.0),-1);
-
+                        CImg<double> *module_output = n->getOutput();
+                        if(module_output != NULL) {
+                            if(aux[0]>0)
+                                m->showSpatialProfile(module_output,true,aux[0],multimeterIDs[i],(int)last_col*(newY+80.0),(int)last_row*(newX+80.0),-1);
+                            else
+                                m->showSpatialProfile(module_output,false,-aux[0],multimeterIDs[i],(int)last_col*(newY+80.0),(int)last_row*(newX+80.0),-1);
+                        }
                     }
                 }
             }

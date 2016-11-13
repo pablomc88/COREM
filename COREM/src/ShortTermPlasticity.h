@@ -17,7 +17,7 @@
 
 #include "module.h"
 
-#define DBL_EPSILON 1.0e-2
+#define DBL_EPSILON_STP 1.0e-2
 
 using namespace cimg_library;
 using namespace std;

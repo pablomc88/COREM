@@ -59,7 +59,7 @@ public:
 
     // Allocate values and set protected parameters
     virtual bool allocateValues();
-    GaussFilter& setSigma(double sigm);
+    bool setSigma(double sigm);
 
     // Fast filtering with constant sigma
     void gaussHorizontal(CImg<double> &src);

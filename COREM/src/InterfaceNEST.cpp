@@ -125,7 +125,7 @@ double InterfaceNEST::getValue(double cell){
     int select_image = int(cell)/(sizeX*sizeY);
     int pos_im = int(cell) - select_image*(sizeX*sizeY);
 
-    module* aux = retina.getModule(0);
+    module* aux = retina.getModule(1);
     module* neuron;
 
     vector <string> layersID;
@@ -134,7 +134,7 @@ double InterfaceNEST::getValue(double cell){
     const char * charIDO = (layersID[0]).c_str();
     int neuron_to_display = 0;
 
-    for(int k=1;k<retina.getNumberModules();k++){
+    for(int k=0;k<retina.getNumberModules();k++){
         neuron = retina.getModule(k);
         string charID = neuron->getModuleID();
         if (charID.compare(charIDO)==0){

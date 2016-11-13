@@ -152,7 +152,6 @@ bool SingleCompartment::set_number_conductance_ports(int number){
 bool SingleCompartment::setParameters(vector<double> params, vector<string> paramID){
 
     bool correct = true;
-    int port = 0;
 
     for (vector<double>::size_type i = 0;i < params.size() && correct;i++){
         const char * s = paramID[i].c_str();
@@ -171,7 +170,7 @@ bool SingleCompartment::setParameters(vector<double> params, vector<string> para
         }
         else if (strcmp(s,"E")==0){
             correct = set_El(params[i]);
-            for(int j=0;j<E.size();j++)
+            for(size_t j=0;j<E.size();j++)
                 set_E(params[i],j);
         }
         else{
@@ -192,15 +191,15 @@ void SingleCompartment::feedInput(double sim_time, const CImg<double>& new_input
     // Next piece of code adapts port to its correct range.
     int number_of_currents = 0;
     int number_of_conductances = 0;
-    for(int k=0;k<typeSynapse.size();k++){
+    for(size_t k=0;k<typeSynapse.size();k++){
 
-        if (k<port){ // For each synapse (input module) of this module, count the number of previous synpses in the list 
+        if ((int)k<port){ // For each synapse (input module) of this module, count the number of previous synpses in the list 
             if (typeSynapse[k]==0)
                 number_of_currents+=1; // Accumulate the number of previous current port in the list
             else
                 number_of_conductances+=1;
 
-        }else if(k==port){ // Subtract the number of synspses of the type different from the current one to get the relative position
+        }else if((int)k==port){ // Subtract the number of synspses of the type different from the current one to get the relative position
             if (isCurrent)
                 port = port - number_of_conductances;
             else

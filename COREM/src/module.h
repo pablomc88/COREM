@@ -33,7 +33,7 @@ protected:
     // module ID
     string ID;
 
-    // input modules and arithmetic operations among them
+    // input modules and arithmetic operations for them
     vector <vector <int> > portArith;
     vector <vector <string> > modulesID;
     // types of input synapses

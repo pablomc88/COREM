@@ -23,14 +23,14 @@ void multimeter::setSimStep(double value){
 
 //------------------------------------------------------------------------------//
 
-void multimeter::showSpatialProfile(CImg<double> img,bool rowCol,int number,string title,int col,int row,double waitTime){
+void multimeter::showSpatialProfile(CImg<double> *img,bool rowCol,int number,string title,int col,int row,double waitTime){
 
     double dim = 0.0;
 
     if(rowCol == true){
-        dim = img.width();
+        dim = img->width();
     }else{
-        dim = img.height();
+        dim = img->height();
     }
 
     CImg <double> *SpatialProfile1 = new CImg <double>(dim,1,1,1,0);
@@ -40,9 +40,9 @@ void multimeter::showSpatialProfile(CImg<double> img,bool rowCol,int number,stri
 
     for(int k=0;k<dim;k++){
         if(rowCol == true){
-            (*SpatialProfile1)(k,0,0,0)=img(k,number,0,0);
+            (*SpatialProfile1)(k,0,0,0)=(*img)(k,number,0,0);
         }else{
-            (*SpatialProfile1)(k,0,0,0)=img(number,k,0,0);
+            (*SpatialProfile1)(k,0,0,0)=(*img)(number,k,0,0);
         }
 
         if ((*SpatialProfile1)(k,0,0,0)>max_value1)

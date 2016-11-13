@@ -77,7 +77,7 @@ void StaticNonLinearity::update(){
     // piecewise function
     else if(type==1){
             markers->fill(0.0);
-            for(int k=0;k<slope.size();k++){
+            for(size_t k=0;k<slope.size();k++){
                 cimg_forXY((*inputImage),x,y) {
                     if((*inputImage)(x,y,0,0) >= start[k] && (*inputImage)(x,y,0,0) < end[k] && (*markers)(x,y,0,0)==0.0){
                         (*inputImage)(x,y,0,0)*=slope[k];
@@ -154,7 +154,7 @@ bool StaticNonLinearity::setParameters(vector<double> params, vector<string> par
 
 void StaticNonLinearity::clearParameters(vector<string> paramID){
 
-    for (int i = 0;i<paramID.size();i++){
+    for (size_t i = 0;i<paramID.size();i++){
         const char * s = paramID[i].c_str();
 
         if (strcmp(s,"slope")==0){

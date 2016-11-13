@@ -116,7 +116,7 @@ void ShortTermPlasticity::update(){
     // abs(input)
     *inputImage[1] = *inputImage[0];
     (inputImage[1])->abs();
-    (*inputImage[1])+= DBL_EPSILON;
+    (*inputImage[1])+= DBL_EPSILON_STP;
 
     // kmInf
     (inputImage[4])->fill(kd);

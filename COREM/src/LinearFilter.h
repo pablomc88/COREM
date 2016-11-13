@@ -49,8 +49,8 @@ public:
     virtual bool allocateValues();
 
     // Exponential and gamma filter
-    LinearFilter& Exp(double tau);
-    LinearFilter& Gamma(double tau,int n);
+    bool Exp(double tau);
+    bool Gamma(double tau,int n);
 
     // New input and update of equations
     virtual void feedInput(double sim_time, const CImg<double> &new_input, bool isCurrent, int port);

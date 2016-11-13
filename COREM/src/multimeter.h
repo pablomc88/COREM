@@ -59,7 +59,7 @@ public:
     ~multimeter(void);
 
     // Spatial multimeter
-    void showSpatialProfile(CImg<double> img,bool rowCol,int number,string title,int col,int row,double waitTime);
+    void showSpatialProfile(CImg<double> *img,bool rowCol,int number,string title,int col,int row,double waitTime);
 
     // Temporal multimeter
     void recordValue(double value);
