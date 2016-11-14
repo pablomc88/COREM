@@ -90,6 +90,13 @@ public:
     // The method returns true if the whole line could be correctly parsed nd the tokens stored in out_tokens,
     // otherwise it returns false.
     bool parseLine(const char *in_line, char **out_tokens, int max_tokens);
+    
+    // This method parses the parameter block which can be found in the end of a Create, Input or Output action command.
+    // block_tokens must points to a pointer array where the pointers to block tokens are stored. The last
+    // pointer must be NULL. new_module is a pointer to a created module. If a parameter block if found in 
+    // block_tokens, this module will receive the parsed parameters.
+    void parseParameterBlock(char **block_tokens, module *new_module, int file_line);
+    
     // parsing of retina script and initialization of retina modules
     void parseFile(Retina &retina,DisplayManager &displayMg);
     bool getContReading(){return continueReading;}

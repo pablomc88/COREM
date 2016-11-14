@@ -18,16 +18,28 @@
 
 #include "StreamingInput.h"
 
-StreamingInput::StreamingInput(int x, int y, double temporal_step, string conn_url, unsigned int n_img_reps):module(x,y,temporal_step){
+StreamingInput::StreamingInput(int x, int y, double temporal_step, string conn_url):module(x,y,temporal_step){
+    pthread_mutexattr_t mutex_attrib;
+    
     // Default input parameters
     connection_url = conn_url;    
-    frame_repetitons = n_img_reps;
     
-    // Input buffer
+    // Allocate image buffers buffer
     outputImage = new CImg<double> (sizeY, sizeX, 1, 1, 0);
+    receiver_vars.buffer_img = new CImg<double> (sizeY, sizeX, 1, 1, 0);
 
     socket_fd = -1; // Socket is not created yet
+    receiver_vars.exit_reception = false; // Exit has not been signaled
     
+    // Set specific mutex attributes: If a thread attempts to unlock an unlocked the fn just returns an error
+    // If the a thread attemps to relock a mutex just an error is returned (no deadlock occurs).
+    pthread_mutexattr_init(&mutex_attrib);
+    pthread_mutexattr_settype(&mutex_attrib, PTHREAD_MUTEX_NORMAL); // No mutex owner checking
+    pthread_mutex_init(&receiver_vars.buffer_mutex, &mutex_attrib); // Initialize buffer mutex
+    pthread_mutex_init(&receiver_vars.reception_mutex, &mutex_attrib); // Initialize reception mutex
+    pthread_mutexattr_destroy(&mutex_attrib); // We do not need the attributes: destroy them
+
+    pthread_mutex_lock(&receiver_vars.buffer_mutex); // buffer_img is not ready until unlocked by the receiver thread
     // Receiver thread has not been created yet, so set its ID to an invalid value
     // For this class an invalid receiver thread value is the ID of the caller thread
     Receiver_thread_id = pthread_self(); 
@@ -38,18 +50,25 @@ StreamingInput::StreamingInput(const StreamingInput &copy):module(copy){
 
     connection_url = copy.connection_url;
     socket_fd = copy.socket_fd;
-    frame_repetitons = copy.frame_repetitons;
     Receiver_thread_id = copy.Receiver_thread_id;
+    receiver_vars = copy.receiver_vars;
     Par = copy.Par;
 
     outputImage=new CImg<double>(*copy.outputImage);
+    receiver_vars.buffer_img=new CImg<double>(*copy.receiver_vars.buffer_img);
 }
 
 StreamingInput::~StreamingInput(){
 
-    StopImageReception();
-    CloseConnection();
+    stopImageReception();
+    closeConnection();
+
+    pthread_mutex_unlock(&receiver_vars.reception_mutex); // Attempting to destroy a locked mutex results in undefined behaviour
+    pthread_mutex_unlock(&receiver_vars.buffer_mutex);
+    pthread_mutex_destroy(&receiver_vars.reception_mutex);
+    pthread_mutex_destroy(&receiver_vars.buffer_mutex);
     
+    delete receiver_vars.buffer_img;
     delete outputImage;
 }
 
@@ -62,9 +81,9 @@ bool StreamingInput::allocateValues(){
     // Resize initial value
     outputImage->assign(sizeY, sizeX, 1, 1, 0);
     
-    ret_correct = OpenConnetionPort(); // Set socket to listen
+    ret_correct = openConnetionPort(); // Set socket to listen
     if(ret_correct)
-        ReceiveImages();
+        receiveImages();
 
     return(ret_correct);
 }
@@ -111,8 +130,10 @@ void StreamingInput::feedInput(double sim_time, const CImg<double>& new_input,bo
 //------------------------------------------------------------------------------//
 
 void StreamingInput::update(){
-    // Signal the receiver thread that it can update the value of outputImage buffer
-    
+    pthread_mutex_lock(&receiver_vars.buffer_mutex); // Waits until a new frame is ready
+    *outputImage = *receiver_vars.buffer_img; // Get output from buffer
+    cout << "copying"<<endl;
+    pthread_mutex_unlock(&receiver_vars.reception_mutex); // Signal the receiver thread that it can update the value of buffer_img buffer with a new frame
 }
 
 //------------------------------------------------------------------------------//
@@ -120,12 +141,12 @@ void StreamingInput::update(){
 #define LAST_IP_PORT 65535
 
 // This method creates a socket and waits for a connection
-bool StreamingInput::OpenConnetionPort(){
+bool StreamingInput::openConnetionPort(){
     bool ret_correct;
-    string url_format = "tcp://localhost:";
+    string url_format = "tcp://passive:";
     size_t url_format_len = url_format.size();
-    
-    // Check whether the beginning of the specified connection_url is equal to url_format 
+
+    // Check whether the beginning of the specified connection_url is equal to url_format
     if(connection_url.compare(0, url_format_len, url_format) == 0) {
         string port_str = connection_url.substr(url_format_len);
         int port_number = stoi(port_str);
@@ -140,7 +161,7 @@ bool StreamingInput::OpenConnetionPort(){
                 serv_addr.sin_port = htons(port_number);
                 serv_addr.sin_addr.s_addr = INADDR_ANY;
                 if(bind(socket_fd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) != -1) {
-                    if(listen(socket_fd,1) != -1) {
+                    if(listen(socket_fd, 1) != -1) {
                         ret_correct=true;
                     } else {
                         cout << "Connection socket could not set to passive socket in port " << port_number << ". errno: " << errno << "." << endl;
@@ -165,34 +186,42 @@ bool StreamingInput::OpenConnetionPort(){
     return(ret_correct);
 }
 
-void *image_receiver_thread(void *new_socket_fd)
+void *image_receiver_thread(struct receiver_params *params)
 {
-    int socket_fd = (int)(intptr_t)new_socket_fd;
-    int read_err;
+    int error_code;
     
-    read_err=0;
+    cout << "socket: " << params->accept_socket_fd << endl;
+    error_code=0;
 
-    close(socket_fd);
+    while(!params->exit_reception && error_code==0) {
+        error_code=pthread_mutex_lock(&(params->reception_mutex)); // Waits until reception is allowed (buffer has been consumed)
+        if(error_code==0){
+            cout << "Receiving" << endl;
+            error_code=pthread_mutex_unlock(&(params->buffer_mutex)); // New frame available, unblock update()
+        }
+    }
+    cout << "eeror code: " << error_code << endl;
+    close(params->accept_socket_fd);
     // The thread will return the error code or 0 if success.
     // we do not know the sizeof(void *) in principle, so cast to intptr_t which has the same sizer to avoid warning
-    return((void *)(intptr_t)read_err);
+    return((void *)(intptr_t)error_code);
 }
 
-bool StreamingInput::ReceiveImages(){
+bool StreamingInput::receiveImages(){
     bool ret_correct;
     struct sockaddr_in cli_addr;
-    int new_socket_fd;
     socklen_t cli_addr_len;
 
+    cout << "Waiting for incomming connection..." << endl;
     cli_addr_len = sizeof(cli_addr);
-    new_socket_fd = accept(socket_fd, (struct sockaddr *)&cli_addr, &cli_addr_len);
-    if(new_socket_fd != -1){
+    receiver_vars.accept_socket_fd = accept(socket_fd, (struct sockaddr *)&cli_addr, &cli_addr_len);
+    if(receiver_vars.accept_socket_fd != -1){
         int thread_error;
         cout << "Connection from " <<  inet_ntoa(cli_addr.sin_addr) << " accepted!" << endl;
         // Create joinable thread. The thread fn argument will be the socket fd
-        thread_error = pthread_create(&Receiver_thread_id, NULL, (void *(*)(void *))&image_receiver_thread, (void *)(intptr_t)new_socket_fd);
-        if(thread_error == 0) {// If success
-               
+        thread_error = pthread_create(&Receiver_thread_id, NULL, (void *(*)(void *))&image_receiver_thread, (void *)&receiver_vars);
+        if(thread_error == 0) { // If success
+            
         } else {
             cout << "Failed to create image receiver thread. return error code: " << thread_error << "." << endl;
             ret_correct = false;
@@ -205,13 +234,14 @@ bool StreamingInput::ReceiveImages(){
     return(ret_correct);
 }
 
-bool StreamingInput::StopImageReception(){
+bool StreamingInput::stopImageReception(){
     bool ret_correct;
 
     if(pthread_equal(Receiver_thread_id,pthread_self()) == 0) {// Receiver_thread_id <> pthread_self(), so receiver thread was created
         void *thread_ret_ptr;
         int join_err, thread_ret;
-        
+        receiver_vars.exit_reception = true; // Signal the receiver thread to terminate
+        pthread_mutex_unlock(&receiver_vars.reception_mutex); // Unlock reception (just in case)
         join_err = pthread_join(Receiver_thread_id, &thread_ret_ptr);
         if(join_err == 0) {// If success joining
             thread_ret = (int)(intptr_t)thread_ret_ptr;
@@ -229,7 +259,7 @@ bool StreamingInput::StopImageReception(){
     return(ret_correct);
 }
 
-bool StreamingInput::CloseConnection(){
+bool StreamingInput::closeConnection(){
     bool ret_correct;
 
     if(socket_fd != -1){ // Check if the socket was created

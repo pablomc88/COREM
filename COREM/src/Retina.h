@@ -124,6 +124,11 @@ public:
     // Impulse
     bool generateImpulse(double start, double stop, double amplitude, double offset, int X, int Y);
     CImg<double> *updateImpulse(double t);
+    // Use streaming video as retina input
+    // A valid (non-dummy) Input module must be inserted in the retina to use streaming input
+    // We need this method to distingish the different retina input types since not all of them
+    // are implemented as modules. Returns true on success.
+    bool setStreamingInput();
     // Input Sequence
     bool setInputSeq(string s);
     // Video streaming input

@@ -4,14 +4,14 @@
 
 module::module(int x, int y, double temporal_step){
     step = temporal_step;
-    sizeX=x;
-    sizeY=y;
+    sizeX = x;
+    sizeY = y;
 }
 
 module::module(const module& copy){
     step = copy.step;
-    sizeX=copy.sizeX;
-    sizeY=copy.sizeY;
+    sizeX = copy.sizeX;
+    sizeY = copy.sizeY;
 }
 
 module::~module(void){
@@ -19,7 +19,7 @@ module::~module(void){
 
 //------------------------------------------------------------------------------//
 bool module::allocateValues(){
-    simTime=0;
+    simTime = 0;
     return(true);
     }
 

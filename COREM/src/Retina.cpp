@@ -9,7 +9,7 @@ Retina::Retina(int x, int y, double temporal_step){
     sizeX=x;
     sizeY=y;
     pixelsPerDegree = 1.0;
-    inputType = 0;
+    inputType = -1; // Invalid retina input type
     numberImages = 0;
     repetitions = 0;
 
@@ -314,8 +314,14 @@ CImg<double> *Retina::feedInput(int step){
         input = updateFixGrating(step);
         break;
 
+    case 5: // streaming input
+        input = modules[0]->getOutput();
+        modules[0]->update();
+        break;
+
     default:
-        cout << "Wrong input type!" << endl;
+        cout << "Wrong retina input type! Specify a correct retina input." << endl;
+        exit(1); // Panic error
         break;
     }
 
@@ -482,6 +488,13 @@ module* Retina::getModule(int ID){
 
 int Retina::getNumberModules(){
     return modules.size();
+}
+
+//------------------------------------------------------------------------------//
+
+bool Retina::setStreamingInput(){
+    inputType = 5;
+    return(true);
 }
 
 //------------------------------------------------------------------------------//

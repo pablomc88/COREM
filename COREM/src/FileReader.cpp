@@ -242,6 +242,42 @@ void FileReader::discardTokens(char **tokens, const char *ign_tokens){
     }
 }
 
+void FileReader::parseParameterBlock(char **block_tokens, module *new_module, int file_line) {
+    vector<double> param_values;
+    vector<string> param_ids;
+    
+    size_t next_tok_idx; // Next token to parse in the received 
+
+    next_tok_idx = 0;
+    // Check if we have more parameters to read
+    if(continueReading && block_tokens[next_tok_idx]){
+        if (strcmp(block_tokens[next_tok_idx], "{") == 0 && block_tokens[next_tok_idx+1]){ // parameter block start detected, read parameters
+            
+            next_tok_idx++; // skip block-start token
+            while(continueReading && block_tokens[next_tok_idx]){
+                if(strcmp(block_tokens[next_tok_idx], "}") == 0){ // parameter block end detected, end reading parameters
+                    break; // exit while loop
+                }else if (block_tokens[next_tok_idx+1]){ // There should be a value following the parameter name
+                    param_ids.push_back(block_tokens[next_tok_idx]);
+                    param_values.push_back(atof(block_tokens[next_tok_idx+1]));
+                    next_tok_idx+=2;
+                    
+                    if (!block_tokens[next_tok_idx]) // After each parameter-value tuple we should always find a token (at least block end)
+                        abort(file_line,"Incorrect parameter block format: block-end character not found (at least in a correct place)");
+                }else
+                    abort(file_line,"Incorrect parameter block format: apparent parameter name without value"); // abort() sets continueReading to false
+            }
+        } else
+            abort(file_line,"Incorrect start of parameter list");
+    }
+    // Set parsed module parameters
+    if(continueReading) {
+        continueReading = new_module->setParameters(param_values, param_ids);
+        if(!continueReading)
+            abort(file_line,"Error setting specified module parameters (incorrect parameter name or invalid value)");
+    }
+}
+
 
 //-------------------------------------------------//
 
@@ -262,7 +298,7 @@ void FileReader::parseFile(Retina &retina, DisplayManager &displayMg){
         if(parseLine(line_buf, token, MAX_TOKENS_PER_LINE))
             discardTokens(token, "'(),"); // These tokens are not meaningfull for the script syntax
         else
-            abort(line,"check tokens and delimiter characters");
+            abort(line,"Check tokens and delimiter characters");
         
         if (continueReading && token[0]){
 
@@ -378,7 +414,6 @@ void FileReader::parseFile(Retina &retina, DisplayManager &displayMg){
                     }
 
                     // read parameters
-
                     if (token[4]){
                         if (strcmp(token[4], "{") == 0 && token[5]){
 
@@ -407,8 +442,6 @@ void FileReader::parseFile(Retina &retina, DisplayManager &displayMg){
                                     break;
                                 }
                             }
-
-
                             // Add module to the retina
                             if(continueReading){
                                 continueReading=newModule->setParameters(p,pid);
@@ -420,7 +453,6 @@ void FileReader::parseFile(Retina &retina, DisplayManager &displayMg){
                                     break;
                                 }
                             }
-
 
                         }else{
                             abort(line,"Incorrect start of parameter list");
@@ -611,69 +643,72 @@ void FileReader::parseFile(Retina &retina, DisplayManager &displayMg){
                 break;
             // Input
             case 8:
-                if (token[2] && token[3] && token[4] && token[5]){
-                    if (strcmp(token[3], "{") == 0 ){
-                        // Input sequence
-                        if (strcmp(token[2], "sequence") == 0 ){
+                if (token[2] && token[3]){
+                    // Input sequence
+                    if (strcmp(token[2], "sequence") == 0 ){
+                        if (strcmp(token[3], "{") == 0){
                             continueReading=retina.setInputSeq(token[4]);
                             if(verbose)cout << "Input sequence read." << endl;
-
-                        }else if(strcmp(token[2], "grating") == 0 ){
-
-                            if (strcmp(token[4],"type")==0 && strcmp(token[6],"step")==0 && strcmp(token[8],"length1")==0 && strcmp(token[10],"length2")==0 && strcmp(token[12],"length3")==0 && strcmp(token[14],"sizeX")==0 && strcmp(token[16],"sizeY")==0 && strcmp(token[18],"freq")==0 && strcmp(token[20],"period")==0 && strcmp(token[22],"Lum")==0 && strcmp(token[24],"Contr")==0 && strcmp(token[26],"phi_s")==0 && strcmp(token[28],"phi_t")==0 && strcmp(token[30],"orientation")==0 && strcmp(token[32],"red_weight")==0 && strcmp(token[34],"green_weight")==0 && strcmp(token[36],"blue_weight")==0 && strcmp(token[38],"red_phase")==0 && strcmp(token[40],"green_phase")==0 && strcmp(token[42],"blue_phase")==0 && strcmp(token[44],"}")==0){
-                                continueReading=retina.generateGrating(atof(token[5]),atof(token[7]),atof(token[9]),atof(token[11]),atof(token[13]),atof(token[15]),atof(token[17]),atof(token[19]),atof(token[21]),atof(token[23]),atof(token[25]),atof(token[27]),atof(token[29]),atof(token[31]),atof(token[33]),atof(token[35]),atof(token[37]),atof(token[39]),atof(token[41]),atof(token[43]));
-                                retina.setRepetitions(1.0);
-                                if(verbose)cout << "Grating generated." << endl;
-                            }else{
-                                abort(line,"Expected parameter list of grating: 'type','step','length1','length2','length3','sizeX','sizeY','freq','period','Lum','Contr','phi_s','phi_t','orientation','red_weight','green_weight','blue_weight','red_phase','green_phase','blue_phase'");
-                                break;
-                            }
-                        }else if(strcmp(token[2], "fixationalMovGrating") == 0 ){
-
-                            if (strcmp(token[4],"sizeX")==0 && strcmp(token[6],"sizeY")==0 && strcmp(token[8],"circle_radius")==0 && strcmp(token[10],"jitter_period")==0 && strcmp(token[12],"spatial_period")==0 && strcmp(token[14],"step_size")==0 && strcmp(token[16],"Lum")==0 && strcmp(token[18],"Contr")==0 && strcmp(token[20],"orientation")==0 && strcmp(token[22],"red_weight")==0 && strcmp(token[24],"green_weight")==0 && strcmp(token[26],"blue_weight")==0 && strcmp(token[28],"type1")==0 && strcmp(token[30],"type2")==0 && strcmp(token[32],"switch")==0 && strcmp(token[34],"}")==0){
-                                continueReading=retina.generateFixationalMovGrating(atof(token[5]),atof(token[7]),atof(token[9]),atof(token[11]),atof(token[13]),atof(token[15]),atof(token[17]),atof(token[19]),atof(token[21]),atof(token[23]),atof(token[25]),atof(token[27]),atof(token[29]),atof(token[31]),atof(token[33]));
-                                retina.setRepetitions(1.0);
-                                if(verbose)cout << "Grating of fixational movements generated." << endl;
-                            }else{
-                                abort(line,"Expected parameter list of fixationalMovGrating: 'sizeX','sizeY','circle_radius','jitter_period','spatial_period','step_size','Lum','Contr','orientation','red_weight','green_weight','blue_weight','type1','type2','switch'");
-                                break;
-                            }
-
-                        }else if(strcmp(token[2], "whiteNoise") == 0 ){
-                            if (strcmp(token[4],"mean")==0 && strcmp(token[6],"contrast1")==0 && strcmp(token[8],"contrast2")==0 && strcmp(token[10],"period")==0 && strcmp(token[12],"switch")==0 && strcmp(token[14],"sizeX")==0 && strcmp(token[16],"sizeY")==0 && strcmp(token[18],"}")==0){
-                                continueReading=retina.generateWhiteNoise(atof(token[5]),atof(token[7]),atof(token[9]),atof(token[11]),atof(token[13]),atof(token[15]),atof(token[17]));
-                                retina.setRepetitions(1.0);
-                                if(verbose)cout << "White noise generated." << endl;
-                            }else{
-                                abort(line,"Expected parameter list of whiteNoise: 'mean','contrast1','contrast2','period','switch','sizeX','sizeY'");
-                                break;
-                            }
-                        }
-                        else if(strcmp(token[2], "impulse") == 0 ){
-                            if (strcmp(token[4],"start")==0 && strcmp(token[6],"stop")==0 && strcmp(token[8],"amplitude")==0 && strcmp(token[10],"offset")==0 && strcmp(token[12],"sizeX")==0 && strcmp(token[14],"sizeY")==0 && strcmp(token[16],"}")==0){
-                                continueReading=retina.generateImpulse(atof(token[5]),atof(token[7]),atof(token[9]),atof(token[11]),atof(token[13]),atof(token[15]));
-                                retina.setRepetitions(1.0);
-                                if(verbose)cout << "Impulse generated." << endl;
-                            }else{
-                                abort(line,"Expected parameter list of impulse: 'start','stop','amplitude','offset','sizeX','sizeY'");
-                                break;
-                            }
-                        }
-                        else if(strcmp(token[2], "streaming") == 0 ){
-                            continueReading=retina.setStreamingInput(token[4]);
-                            if(verbose)cout << "Input configured as streaming video." << endl;
-                        }
-                        else{
-                            abort(line,"Unknown input type");
+                        } else {
+                            abort(line,"Parameter start token ('{') not found");
                             break;
                         }
+                    }else if(strcmp(token[2], "grating") == 0 ){
 
+                        if (strcmp(token[3], "{") == 0 && strcmp(token[4],"type")==0 && strcmp(token[6],"step")==0 && strcmp(token[8],"length1")==0 && strcmp(token[10],"length2")==0 && strcmp(token[12],"length3")==0 && strcmp(token[14],"sizeX")==0 && strcmp(token[16],"sizeY")==0 && strcmp(token[18],"freq")==0 && strcmp(token[20],"period")==0 && strcmp(token[22],"Lum")==0 && strcmp(token[24],"Contr")==0 && strcmp(token[26],"phi_s")==0 && strcmp(token[28],"phi_t")==0 && strcmp(token[30],"orientation")==0 && strcmp(token[32],"red_weight")==0 && strcmp(token[34],"green_weight")==0 && strcmp(token[36],"blue_weight")==0 && strcmp(token[38],"red_phase")==0 && strcmp(token[40],"green_phase")==0 && strcmp(token[42],"blue_phase")==0 && strcmp(token[44],"}")==0){
+                            continueReading=retina.generateGrating(atof(token[5]),atof(token[7]),atof(token[9]),atof(token[11]),atof(token[13]),atof(token[15]),atof(token[17]),atof(token[19]),atof(token[21]),atof(token[23]),atof(token[25]),atof(token[27]),atof(token[29]),atof(token[31]),atof(token[33]),atof(token[35]),atof(token[37]),atof(token[39]),atof(token[41]),atof(token[43]));
+                            retina.setRepetitions(1.0);
+                            if(verbose)cout << "Grating generated." << endl;
+                        }else{
+                            abort(line,"Expected parameter list of grating: 'type','step','length1','length2','length3','sizeX','sizeY','freq','period','Lum','Contr','phi_s','phi_t','orientation','red_weight','green_weight','blue_weight','red_phase','green_phase','blue_phase'");
+                            break;
+                        }
+                    }else if(strcmp(token[2], "fixationalMovGrating") == 0 ){
 
-                    }
-                    else{
-                        abort(line,"Parameter start token ('{') not found");
+                        if (strcmp(token[3], "{") == 0 && strcmp(token[4],"sizeX")==0 && strcmp(token[6],"sizeY")==0 && strcmp(token[8],"circle_radius")==0 && strcmp(token[10],"jitter_period")==0 && strcmp(token[12],"spatial_period")==0 && strcmp(token[14],"step_size")==0 && strcmp(token[16],"Lum")==0 && strcmp(token[18],"Contr")==0 && strcmp(token[20],"orientation")==0 && strcmp(token[22],"red_weight")==0 && strcmp(token[24],"green_weight")==0 && strcmp(token[26],"blue_weight")==0 && strcmp(token[28],"type1")==0 && strcmp(token[30],"type2")==0 && strcmp(token[32],"switch")==0 && strcmp(token[34],"}")==0){
+                            continueReading=retina.generateFixationalMovGrating(atof(token[5]),atof(token[7]),atof(token[9]),atof(token[11]),atof(token[13]),atof(token[15]),atof(token[17]),atof(token[19]),atof(token[21]),atof(token[23]),atof(token[25]),atof(token[27]),atof(token[29]),atof(token[31]),atof(token[33]));
+                            retina.setRepetitions(1.0);
+                            if(verbose)cout << "Grating of fixational movements generated." << endl;
+                        }else{
+                            abort(line,"Expected parameter list of fixationalMovGrating: 'sizeX','sizeY','circle_radius','jitter_period','spatial_period','step_size','Lum','Contr','orientation','red_weight','green_weight','blue_weight','type1','type2','switch'");
+                            break;
+                        }
+                    }else if(strcmp(token[2], "whiteNoise") == 0 ){
+                        if (strcmp(token[3], "{") == 0 && strcmp(token[4],"mean")==0 && strcmp(token[6],"contrast1")==0 && strcmp(token[8],"contrast2")==0 && strcmp(token[10],"period")==0 && strcmp(token[12],"switch")==0 && strcmp(token[14],"sizeX")==0 && strcmp(token[16],"sizeY")==0 && strcmp(token[18],"}")==0){
+                            continueReading=retina.generateWhiteNoise(atof(token[5]),atof(token[7]),atof(token[9]),atof(token[11]),atof(token[13]),atof(token[15]),atof(token[17]));
+                            retina.setRepetitions(1.0);
+                            if(verbose)cout << "White noise generated." << endl;
+                        }else{
+                            abort(line,"Expected parameter list of whiteNoise: 'mean','contrast1','contrast2','period','switch','sizeX','sizeY'");
+                            break;
+                        }
+                    }else if(strcmp(token[2], "impulse") == 0 ){
+                        if (strcmp(token[3], "{") == 0 && strcmp(token[4],"start")==0 && strcmp(token[6],"stop")==0 && strcmp(token[8],"amplitude")==0 && strcmp(token[10],"offset")==0 && strcmp(token[12],"sizeX")==0 && strcmp(token[14],"sizeY")==0 && strcmp(token[16],"}")==0){
+                            continueReading=retina.generateImpulse(atof(token[5]),atof(token[7]),atof(token[9]),atof(token[11]),atof(token[13]),atof(token[15]));
+                            retina.setRepetitions(1.0);
+                            if(verbose)cout << "Impulse generated." << endl;
+                        }else{
+                            abort(line,"Expected parameter list of impulse: 'start','stop','amplitude','offset','sizeX','sizeY'");
+                            break;
+                        }
+                    }else if(strcmp(token[2], "streaming") == 0 ){
+                        module *new_input_module;
+                        new_input_module = new StreamingInput(retina.getSizeX(), retina.getSizeY(), retina.getStep(), token[3]);
+                        
+                        parseParameterBlock(token+4, new_input_module, line);
+                        
+                        // Add module to the retina
+                        if(continueReading) {
+                            retina.addModule(new_input_module, "Input");
+                            retina.setStreamingInput();
+                            if(verbose) cout << "Input configured as streaming video." << endl;
+                        } else 
+                            break;
+                    }else{
+                        abort(line,"Unknown input type");
                         break;
                     }
+
                 }else{
                     abort(line,"Tokens for input action command not found");
                     break;
@@ -949,47 +984,14 @@ void FileReader::parseFile(Retina &retina, DisplayManager &displayMg){
                         abort(line,"Unknown retina output type");
                         break;
                     }
-                    
-                    
-                    // Check if we have more parameters to read
-                    if (token[next_tok_idx]){
-                        if (strcmp(token[next_tok_idx], "{") == 0 && token[next_tok_idx+1]){ // parameter block start detected, read parameters
-                            
-                            next_tok_idx++; // skip block-start token
-                            while(continueReading && token[next_tok_idx]){
-                                if(strcmp(token[next_tok_idx], "}") == 0){ // parameter block end detected, end reading parameters
-                                    break; // exit while loop
-                                }else if (token[next_tok_idx+1]){ // There should be a value following the parameter name
-                                    pid.push_back(token[next_tok_idx]);
-                                    p.push_back(atof(token[next_tok_idx+1]));
-                                    next_tok_idx+=2;
-                                    
-                                    if (!token[next_tok_idx]){ // After each parameter-value tuple we should always find a token (at least block end)
-                                        abort(line,"Incorrect parameter block format: block-end character not found (at least in a correct place)");
-                                        continueReading=false;
-                                    }
-                                }else{
-                                    abort(line,"Incorrect parameter block format: apparent parameter name without value");
-                                    continueReading=false;
-                                }
-                            }
+                  
+                    // Process parameter block if it is found
+                    parseParameterBlock(token+next_tok_idx, newModule, line);
 
-                        }else{
-                            abort(line,"Incorrect start of parameter list");
-                            break;
-                        }
-                    }
                     // Add module to the retina
-                    if(continueReading){
-                        continueReading=newModule->setParameters(p,pid);
-
-                        if(continueReading){
-                            retina.addModule(newModule,"Output");
-                            if(verbose) cout << "Output module added to the retina" << endl;
-                        }else{
-                            abort(line,"Error setting specified output-module parameters (incorrect parameter name or invalid value)");
-                            break;
-                        }
+                    if(continueReading) {
+                        retina.addModule(newModule,"Output");
+                        if(verbose) cout << "Output module added to the retina" << endl;
                     } else
                         break;
 
