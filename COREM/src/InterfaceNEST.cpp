@@ -73,6 +73,9 @@ bool InterfaceNEST::allocateValues(const char *retinaPath, const char * outputFi
 
     if(FileReaderObject.getContReading()){
 
+        // Allocate retina object
+        ret_correct = retina.allocateValues();
+
         // retina size and step
         sizeX=retina.getSizeX();
         sizeY=retina.getSizeY();
@@ -84,9 +87,6 @@ bool InterfaceNEST::allocateValues(const char *retinaPath, const char * outputFi
 
         // LN parameters
         displayMg.setLNFile(outputFile,outputfactor);
-
-        // Allocate retina object
-        ret_correct = retina.allocateValues();
 
 
         // Display manager

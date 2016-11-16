@@ -132,7 +132,6 @@ void StreamingInput::feedInput(double sim_time, const CImg<double>& new_input,bo
 void StreamingInput::update(){
     pthread_mutex_lock(&receiver_vars.buffer_mutex); // Waits until a new frame is ready
     *outputImage = *receiver_vars.buffer_img; // Get output from buffer
-    cout << "copying"<<endl;
     pthread_mutex_unlock(&receiver_vars.reception_mutex); // Signal the receiver thread that it can update the value of buffer_img buffer with a new frame
 }
 
@@ -189,19 +188,31 @@ bool StreamingInput::openConnetionPort(){
 void *image_receiver_thread(struct receiver_params *params)
 {
     int error_code;
+    FILE *acc_socket_fh;
     
     cout << "socket: " << params->accept_socket_fd << endl;
     error_code=0;
-
-    while(!params->exit_reception && error_code==0) {
-        error_code=pthread_mutex_lock(&(params->reception_mutex)); // Waits until reception is allowed (buffer has been consumed)
-        if(error_code==0){
-            cout << "Receiving" << endl;
-            error_code=pthread_mutex_unlock(&(params->buffer_mutex)); // New frame available, unblock update()
+    acc_socket_fh = fdopen(params->accept_socket_fd, "rb");
+    if(acc_socket_fh != NULL)
+    {
+        while(!params->exit_reception && error_code==0) {
+            error_code=pthread_mutex_lock(&(params->reception_mutex)); // Waits until reception is allowed (buffer has been consumed)
+            if(!params->exit_reception && error_code==0){
+                //cout << "Receiving... " << endl;
+                
+                params->buffer_img->load_png(acc_socket_fh);
+                cout << "." << flush;
+                //cout << "Received " << params->buffer_img->width() << " x " << params->buffer_img->height() << endl;
+                error_code=pthread_mutex_unlock(&(params->buffer_mutex)); // New frame available, unblock update()
+            }
         }
+        fclose(acc_socket_fh); // Close file handle and correponding file descriptor
+    } else {
+        close(params->accept_socket_fd);
+        error_code=errno;
     }
+        
     cout << "eeror code: " << error_code << endl;
-    close(params->accept_socket_fd);
     // The thread will return the error code or 0 if success.
     // we do not know the sizeof(void *) in principle, so cast to intptr_t which has the same sizer to avoid warning
     return((void *)(intptr_t)error_code);

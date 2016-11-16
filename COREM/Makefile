@@ -5,10 +5,10 @@ MAKEFILE      = Makefile
 CC            = gcc
 CXX           = g++
 CFLAGS        = -m64 -pipe -Wall -W -D_REENTRANT -fPIE $(DEFINES)
-CXXFLAGS      = -m64 -pipe -fopenmp -std=c++0x -Wall -Wno-unused-parameter -W -D_REENTRANT -fPIE $(DEFINES)
+CXXFLAGS      = -m64 -pipe -fopenmp -std=c++0x -Wall -Wno-unused-parameter -W -D_REENTRANT -fPIE $(DEFINES) -Dcimg_use_png
 LINK          = g++
 LFLAGS        = -m64 -fopenmp
-LIBS          = $(SUBLIBS) -lX11 -lpthread 
+LIBS          = $(SUBLIBS) -lX11 -lpthread -lpng
 AR            = ar cqs
 TAR           = tar -cf
 COMPRESS      = gzip -9f

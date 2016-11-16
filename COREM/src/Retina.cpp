@@ -245,8 +245,17 @@ bool Retina::setRepetitions(int r){
 
 bool Retina::allocateValues(){
     bool ret_correct;
-    // Since Retina-class internal images are allocated in the constructor (and freed in the destructor)
-    // they are not allocated here, just resized to match the last specified sizeX and sizeY
+
+    //sizeX=128;sizeY=160;
+    
+    ret_correct = true;
+    for (size_t i=0;i<modules.size();i++){
+        module* m = modules[i];
+        m->setSizeX(sizeX);
+        m->setSizeY(sizeY);
+        ret_correct = ret_correct && m->allocateValues();
+    }
+
     if(verbose) {
         cout << "Allocating "<< (getNumberModules()-1) << " retinal modules." << endl;
         cout << "sizeX = "<< sizeX << endl;
@@ -257,7 +266,8 @@ bool Retina::allocateValues(){
     // Set current simulation time to 0 (this value is updated when feedInput() method is excuted)
     simTime = 0;
 
-    // Realloc images according to current Retina size
+    // Since Retina-class internal images are allocated in the constructor (and freed in the destructor)
+    // they are not allocated here, just resized to match the last specified sizeX and sizeY
     output->assign(sizeY, sizeX, 1, 1, 0.0);
     accumulator->assign(sizeY, sizeX, 1, 1, 0.0);
 
@@ -272,11 +282,6 @@ bool Retina::allocateValues(){
     Y_mat->assign(sizeY, sizeX, 1, 1, 0.0);
     Z_mat->assign(sizeY, sizeX, 1, 1, 0.0);
     
-    ret_correct = true;
-    for (size_t i=0;i<modules.size();i++){
-        module* m = modules[i];
-        ret_correct = ret_correct && m->allocateValues();
-    }
     return(ret_correct);
 }
 
@@ -394,6 +399,7 @@ CImg<double> *Retina::feedInput(int step){
                     string cellName2 = n->getModuleID();
                     if (cellName1.compare(cellName2)==0){
                         *accumulator = *(n->getOutput());
+                        //cout << "acc " << cellName2 << " x: " << accumulator->width() << endl;
                         break;
                     }
                 }
@@ -493,7 +499,13 @@ int Retina::getNumberModules(){
 //------------------------------------------------------------------------------//
 
 bool Retina::setStreamingInput(){
-    inputType = 5;
+//    CImg<double> *first_frame;
+    inputType = 5; // Set retina input type=streaming
+    // Use the first frame to find out the new dimensions of retina image size
+/*    modules[0]->update();
+    first_frame = modules[0]->getOutput(); */
+    sizeX = 128; //first_frame->height();
+    sizeY = 160; //first_frame->width();
     return(true);
 }
 

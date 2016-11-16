@@ -23,10 +23,6 @@ SingleCompartment::SingleCompartment(int x, int y, double temporal_step):module(
 
 SingleCompartment::SingleCompartment(const SingleCompartment &copy):module(copy){
 
-    /*step=copy.step;
-    sizeX=copy.sizeX;
-    sizeY=copy.sizeY;*/
-
     number_current_ports=copy.number_current_ports;
     number_conductance_ports=copy.number_conductance_ports;
     Cm = copy.Cm;
@@ -34,8 +30,8 @@ SingleCompartment::SingleCompartment(const SingleCompartment &copy):module(copy)
     taum = copy.taum;
     El = copy.El;
 
-    conductances=0;
-    currents=0;
+    conductances=NULL;
+    currents=NULL;
 
     current_potential=new CImg<double> (sizeY,sizeX,1,1,0.0);
     last_potential=new CImg<double> (sizeY,sizeX,1,1,0.0);
@@ -46,8 +42,16 @@ SingleCompartment::SingleCompartment(const SingleCompartment &copy):module(copy)
 }
 
 SingleCompartment::~SingleCompartment(){
-    if(conductances) delete[] conductances;
-    if(currents) delete[] currents;
+    if(conductances!=NULL){
+        for (int i=0;i<number_conductance_ports;i++)
+            delete conductances[i];
+        delete[] conductances;
+    }
+    if(currents!=NULL){
+        for (int j=0;j<number_current_ports;j++)
+            delete currents[j];
+        delete[] currents;
+    }
 
     if(current_potential) delete current_potential;
     if(last_potential) delete last_potential;
@@ -61,14 +65,34 @@ SingleCompartment::~SingleCompartment(){
 
 
 bool SingleCompartment::allocateValues(){
+    // Just in case allocateValues() is called several times, check if arrays were
+    // already allocated, before allocating them again
+    if(conductances!=NULL){
+        for (int i=0;i<number_conductance_ports;i++)
+            delete conductances[i];
+        delete[] conductances;
+    }
+    if(currents!=NULL){
+        for (int j=0;j<number_current_ports;j++)
+            delete currents[j];
+        delete[] currents;
+    }
+    
     conductances = new CImg<double>*[number_conductance_ports];
     currents = new CImg<double>*[number_current_ports];
 
-    for (int i=0;i<number_conductance_ports;i++){
-      conductances[i]=new CImg<double> (sizeY,sizeX,1,1,0.0);
-    }
+    for (int i=0;i<number_conductance_ports;i++)
+        conductances[i]=new CImg<double> (sizeY,sizeX,1,1,0.0);
     for (int j=0;j<number_current_ports;j++)
-      currents[j]=new CImg<double> (sizeY,sizeX,1,1,0.0);
+        currents[j]=new CImg<double> (sizeY,sizeX,1,1,0.0);
+        
+    // Ajust image sizes to new dimensions (just in case they have chanded)
+    current_potential->assign(sizeY, sizeX, 1, 1, 0);
+    last_potential->assign(sizeY, sizeX, 1, 1, 0);
+    total_cond->assign(sizeY, sizeX, 1, 1, 0);
+    potential_inf->assign(sizeY, sizeX, 1, 1, 0);
+    tau->assign(sizeY, sizeX, 1, 1, 0);
+    exp_term->assign(sizeY, sizeX, 1, 1, 0);
 
     return(true);
 }

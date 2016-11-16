@@ -5,9 +5,9 @@ GaussFilter::GaussFilter(int x, int y, double ppd):module(x,y,1.0){
     sizeY = y;
     pixelsPerDegree = ppd;
 
-    inputImage=NULL;
-    outputImage=NULL;
-    buffer=NULL;
+    inputImage=new CImg<double> (sizeY,sizeX,1,1,0.0);
+    outputImage=new CImg<double> (sizeY,sizeX,1,1,0.0);
+    buffer = new double[(sizeX+sizeY)*omp_get_max_threads()];
 }
 
 GaussFilter::GaussFilter(const GaussFilter &copy):module(copy){
@@ -25,11 +25,12 @@ bool GaussFilter::allocateValues(){
 
     // transform sigma to pixels
     sigma*=pixelsPerDegree;
+    // Resize images
+    inputImage->assign(sizeY, sizeX, 1, 1, 0);
+    outputImage->assign(sizeY, sizeX, 1, 1, 0);
 
-    inputImage=new CImg<double> (sizeY,sizeX,1,1,0.0);
-    outputImage=new CImg<double> (sizeY,sizeX,1,1,0.0);
-
-    // reserve space for all possible threads
+    // reallocate space for all possible threads
+    delete buffer;
     buffer = new double[(sizeX+sizeY)*omp_get_max_threads()];
 
     if (spaceVariantSigma==false){
@@ -72,13 +73,13 @@ bool GaussFilter::allocateValues(){
         //double rmax;
 
         // initialize matrices
-        q_m = CImg <double>(sizeY,sizeX,1,1,0.0);
-        b0_m = CImg <double>(sizeY,sizeX,1,1,0.0);
-        b1_m = CImg <double>(sizeY,sizeX,1,1,0.0);
-        b2_m = CImg <double>(sizeY,sizeX,1,1,0.0);
-        b3_m = CImg <double>(sizeY,sizeX,1,1,0.0);
-        B_m = CImg <double>(sizeY,sizeX,1,1,0.0);
-        M_m = CImg <double>(sizeY,sizeX,9,1,0.0);
+        q_m.assign(sizeY, sizeX, 1, 1, 0);
+        b0_m.assign(sizeY, sizeX, 1, 1, 0);
+        b1_m.assign(sizeY, sizeX, 1, 1, 0);
+        b2_m.assign(sizeY, sizeX, 1, 1, 0);
+        b3_m.assign(sizeY, sizeX, 1, 1, 0);
+        B_m.assign(sizeY, sizeX, 1, 1, 0);
+        M_m.assign(sizeY, sizeX, 9, 1, 0);
 
         for(int i=0;i<sizeY;i++){
             for(int j=0;j<sizeX;j++){
@@ -115,10 +116,8 @@ bool GaussFilter::allocateValues(){
                 M_m(i,j,8) = b3_m(i,j,0)*(b1_m(i,j,0)+b3_m(i,j,0)*b2_m(i,j,0));
                 for (int z=0; z<9; z++)
                     M_m(i,j,z) /= (1.0+b1_m(i,j,0)-b2_m(i,j,0)+b3_m(i,j,0))*(1.0+b2_m(i,j,0)+(b1_m(i,j,0)-b3_m(i,j,0))*b3_m(i,j,0));
-
             }
         }
-
     }
 
     return(true);
