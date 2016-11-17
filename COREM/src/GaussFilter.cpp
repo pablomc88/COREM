@@ -1,8 +1,6 @@
 #include "GaussFilter.h"
 
 GaussFilter::GaussFilter(int x, int y, double ppd):module(x,y,1.0){
-    sizeX = x;
-    sizeY = y;
     pixelsPerDegree = ppd;
 
     inputImage=new CImg<double> (sizeY,sizeX,1,1,0.0);
@@ -11,7 +9,12 @@ GaussFilter::GaussFilter(int x, int y, double ppd):module(x,y,1.0){
 }
 
 GaussFilter::GaussFilter(const GaussFilter &copy):module(copy){
-    (*this)=copy;
+    pixelsPerDegree = copy.pixelsPerDegree;
+
+    inputImage=new CImg<double>(*(copy.inputImage));
+    outputImage=new CImg<double>(*(copy.outputImage));
+    buffer = new double[(sizeX+sizeY)*omp_get_max_threads()];
+    allocateValues();
 }
 
 GaussFilter::~GaussFilter(){

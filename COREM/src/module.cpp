@@ -23,6 +23,14 @@ bool module::allocateValues(){
     return(true);
     }
 
+double module::getSizeX(){
+    return(sizeX);
+}
+
+double module::getSizeY(){
+    return(sizeY);
+}
+
 bool module::setSizeX(int x){
     bool ret_correct;    
     if (x>0){

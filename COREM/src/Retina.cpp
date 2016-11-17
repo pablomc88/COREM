@@ -247,9 +247,16 @@ bool Retina::allocateValues(){
     bool ret_correct;
 
     //sizeX=128;sizeY=160;
+    // The Input module (modules[0]) may want to adjust the image size, so call allocateValues()
+    // of this module first and then propagate the new image size to the rest of modules and retina
+    modules[0]->setSizeX(sizeX);
+    modules[0]->setSizeY(sizeY);
+    modules[0]->allocateValues();
+    sizeX=modules[0]->getSizeX();
+    sizeY=modules[0]->getSizeY();
     
     ret_correct = true;
-    for (size_t i=0;i<modules.size();i++){
+    for (size_t i=1;i<modules.size();i++){
         module* m = modules[i];
         m->setSizeX(sizeX);
         m->setSizeY(sizeY);

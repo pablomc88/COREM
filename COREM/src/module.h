@@ -45,7 +45,9 @@ public:
     module(const module& copy);
     virtual ~module(void); // Destructor is declared virtual, so when a pointer to module class is deleted the derived class destructor is called
 
-    // set protected parameters
+    // get/set protected parameters
+    double getSizeX();
+    double getSizeY();
     bool setSizeX(int x);
     bool setSizeY(int y);
     bool set_step(double temporal_step); // Set the duration of a simulation time step (slot) in milliseconds

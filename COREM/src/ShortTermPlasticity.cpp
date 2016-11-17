@@ -1,13 +1,9 @@
 #include "ShortTermPlasticity.h"
 
-ShortTermPlasticity::ShortTermPlasticity(int x,int y,double temporal_step,double Am,double Vm,double Em, double th, bool isTh){
+ShortTermPlasticity::ShortTermPlasticity(int x,int y,double temporal_step,double Am,double Vm,double Em, double th, bool isTh):module(x,y,temporal_step){
     slope = Am;
-    offset=Vm;
+    offset = Vm;
     exponent = Em;
-
-    sizeX = x;
-    sizeY = y;
-    step = temporal_step;
 
     kf = 0.0;
     kd = 0.0;
@@ -20,14 +16,36 @@ ShortTermPlasticity::ShortTermPlasticity(int x,int y,double temporal_step,double
         isThreshold = false;
         threshold = 0.0;
     }
+    
+    inputImage = new CImg<double>*[7];
+    for (int i=0;i<7;i++)
+        inputImage[i]=new CImg<double>(sizeY,sizeX,1,1,0.0);
+    outputImage=new CImg<double> (sizeY,sizeX,1,1,0.0);
 }
 
 ShortTermPlasticity::ShortTermPlasticity(const ShortTermPlasticity& copy):module(copy){
+    slope=copy.slope;
+    offset=copy.offset;
+    exponent=exponent;
 
+    kf=copy.kf;
+    kd=copy.kd;
+    tau=copy.tau;
+
+    isThreshold=copy.isThreshold;
+    threshold=copy.threshold;
+    
+    inputImage = new CImg<double>*[7];
+    for (int i=0;i<7;i++)
+        inputImage[i]=new CImg<double>(*(copy.inputImage[i]));
+    outputImage=new CImg<double> (*(copy.outputImage));
 }
 
-ShortTermPlasticity::~ShortTermPlasticity(void){
-
+ShortTermPlasticity::~ShortTermPlasticity(){
+    for (int i=0;i<7;i++)
+        delete inputImage[i];
+    delete[] inputImage;
+    delete outputImage;
 }
 
 //------------------------------------------------------------------------------//
@@ -75,17 +93,9 @@ bool ShortTermPlasticity::setTau(double p3){
 //------------------------------------------------------------------------------//
 
 bool ShortTermPlasticity::allocateValues(){
-    inputImage = new CImg<double>*[7];
-
-    for (int i=0;i<7;i++)
-      inputImage[i]=new CImg<double> (sizeY,sizeX,1,1,0.0);
-
-
     // exp(-step/tau)
-    (inputImage[5])->fill(-step/tau);
-    (inputImage[5])->exp();
-
-    outputImage=new CImg<double> (sizeY,sizeX,1,1,0.0);
+    inputImage[5]->fill(-step/tau);
+    inputImage[5]->exp();
 
     return(true);
 }
@@ -151,8 +161,6 @@ void ShortTermPlasticity::update(){
     inputImage[0]->pow(exponent);
 
     *outputImage = *inputImage[0];
-
-
 }
 
 //------------------------------------------------------------------------------//
@@ -190,11 +198,9 @@ bool ShortTermPlasticity::setParameters(vector<double> params, vector<string> pa
     }
 
     return correct;
-
 }
 
 //------------------------------------------------------------------------------//
-
 
 CImg<double>* ShortTermPlasticity::getOutput(){
     return outputImage;

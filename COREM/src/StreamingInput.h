@@ -19,6 +19,7 @@
 #include <fstream>
 #include <vector>
 #include <string>
+#include <stdio.h> // For FILE*
 #include <pthread.h>
 #include "module.h"
 
@@ -27,7 +28,7 @@ using namespace std;
 
 // Parameter of frame receiver thread
 struct receiver_params {
-    int accept_socket_fd; // Socket fd created when a connection is accepted
+    FILE *accept_socket_fh; // File stream associated to accept_socket_fd
     CImg<double> *buffer_img; // Buffer used to temporally store the image being received
     bool exit_reception; // Reception threads exits when this var is set to true by a the caller 
     pthread_mutex_t buffer_mutex; // This var is locked when the buffer is started to be copied to the output and unlocked when it can be copied agin (new frame received)
@@ -44,6 +45,7 @@ protected:
     // image output
     CImg<double> *outputImage; // Buffer where Update() stores the received image for getOutput()
     int socket_fd; // Connection socket file descriptor or -1 if socket has not been creted
+    int accept_socket_fd; // Socket fd created when a connection is accepted
     string connection_url; // URL of the connection. It must be 'tcp://localhost:port', where port 
     pthread_t Receiver_thread_id; // ID of the thread created to receive images
     struct receiver_params receiver_vars; // Variables shared between the class object and the thread
@@ -68,14 +70,14 @@ public:
     virtual bool setParameters(vector<double> params, vector<string> paramID);
     
     // This method creates a socket (used for streaming) and bind it to a local port
-    bool openConnetionPort();
+    bool openConnetion();
 
     // This method waits for an incomming connection and creates a thread which
     // continuously receives images
-    bool receiveImages();
+    bool receiveStream();
 
     // This method stops the thread in charge of receving the images
-    bool stopImageReception();
+    bool stopStreamReception();
     
     // This method closes the streaming connection
     bool closeConnection();

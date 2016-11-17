@@ -10,8 +10,8 @@ SingleCompartment::SingleCompartment(int x, int y, double temporal_step):module(
     number_current_ports=0;
     number_conductance_ports=0;
 
-    conductances=0;
-    currents=0;
+    conductances=NULL;
+    currents=NULL;
 
     current_potential=new CImg<double> (sizeY,sizeX,1,1,0.0);
     last_potential=new CImg<double> (sizeY,sizeX,1,1,0.0);
@@ -30,15 +30,20 @@ SingleCompartment::SingleCompartment(const SingleCompartment &copy):module(copy)
     taum = copy.taum;
     El = copy.El;
 
-    conductances=NULL;
-    currents=NULL;
+    conductances = new CImg<double>*[number_conductance_ports];
+    currents = new CImg<double>*[number_current_ports];
 
-    current_potential=new CImg<double> (sizeY,sizeX,1,1,0.0);
-    last_potential=new CImg<double> (sizeY,sizeX,1,1,0.0);
-    total_cond=new CImg<double> (sizeY,sizeX,1,1,0.0);
-    potential_inf=new CImg<double> (sizeY,sizeX,1,1,0.0);
-    tau=new CImg<double> (sizeY,sizeX,1,1,0.0);
-    exp_term=new CImg<double> (sizeY,sizeX,1,1,0.0);
+    for (int i=0;i<number_conductance_ports;i++)
+        conductances[i]=new CImg<double> (*(copy.currents[i]));
+    for (int j=0;j<number_current_ports;j++)
+        currents[j]=new CImg<double> (*(copy.currents[j]));
+
+    current_potential=new CImg<double>(*(copy.current_potential));
+    last_potential=new CImg<double>(*(copy.last_potential));
+    total_cond=new CImg<double>(*(copy.total_cond));
+    potential_inf=new CImg<double>(*(copy.potential_inf));
+    tau=new CImg<double>(*(copy.tau));
+    exp_term=new CImg<double>(*(copy.exp_term));
 }
 
 SingleCompartment::~SingleCompartment(){
@@ -53,12 +58,12 @@ SingleCompartment::~SingleCompartment(){
         delete[] currents;
     }
 
-    if(current_potential) delete current_potential;
-    if(last_potential) delete last_potential;
-    if(total_cond) delete total_cond;
-    if(potential_inf) delete potential_inf;
-    if(tau) delete tau;
-    if(exp_term) delete exp_term;
+    if(current_potential!=NULL) delete current_potential;
+    if(last_potential!=NULL) delete last_potential;
+    if(total_cond!=NULL) delete total_cond;
+    if(potential_inf!=NULL) delete potential_inf;
+    if(tau!=NULL) delete tau;
+    if(exp_term!=NULL) delete exp_term;
 }
 
 //------------------------------------------------------------------------------//
@@ -77,7 +82,7 @@ bool SingleCompartment::allocateValues(){
             delete currents[j];
         delete[] currents;
     }
-    
+    // Allocate memory according to new dimensions
     conductances = new CImg<double>*[number_conductance_ports];
     currents = new CImg<double>*[number_current_ports];
 
@@ -150,6 +155,12 @@ bool SingleCompartment::set_E(double NernstPotential, int port){
 bool SingleCompartment::set_number_current_ports(int number){
     bool ret_correct;
     if (number>0) {
+        if(currents!=NULL){
+            for (int j=0;j<number_current_ports;j++)
+                delete currents[j];
+            delete[] currents;
+            currents=NULL;
+        }
         number_current_ports = number;
         ret_correct=true;
     } else
@@ -160,6 +171,13 @@ bool SingleCompartment::set_number_current_ports(int number){
 bool SingleCompartment::set_number_conductance_ports(int number){
     bool ret_correct;
     if (number>0) {
+        if(conductances!=NULL){
+            for (int i=0;i<number_conductance_ports;i++)
+                delete conductances[i];
+            delete[] conductances;
+            conductances=NULL;
+        }
+
         number_conductance_ports = number;
 
         for (int i=0;i<number_conductance_ports;i++){

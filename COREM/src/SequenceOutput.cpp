@@ -40,8 +40,8 @@ SequenceOutput::SequenceOutput(const SequenceOutput &copy):module(copy){
     Voxel_Y_size = copy.Voxel_Y_size;
     num_written_frames = copy.num_written_frames;
     out_seq_filename = copy.out_seq_filename;
-    Start_time=copy.Start_time;
-    End_time=copy.End_time;
+    Start_time = copy.Start_time;
+    End_time = copy.End_time;
     
     out_seq_file_handle.open(out_seq_filename, ios::out | ios::binary);
     if(out_seq_file_handle.is_open())

@@ -1,20 +1,27 @@
 #include "StaticNonLinearity.h"
 
-StaticNonLinearity::StaticNonLinearity(int x, int y, double temporal_step, int t){
-    sizeX = x;
-    sizeY = y;
-    step = temporal_step;
-
+StaticNonLinearity::StaticNonLinearity(int x, int y, double temporal_step, int t):module(x,y,temporal_step){
     type = t;
     isThreshold = false;
+    
+    inputImage=new CImg<double> (sizeY,sizeX,1,1,0.0);
+    outputImage=new CImg<double> (sizeY,sizeX,1,1,0.0);
+    markers=new CImg<double> (sizeY,sizeX,1,1,0.0);
 }
 
 StaticNonLinearity::StaticNonLinearity(const StaticNonLinearity& copy):module(copy){
-
+    type = copy.type;
+    isThreshold = copy.isThreshold;
+    
+    inputImage=new CImg<double>(*(copy.inputImage));
+    outputImage=new CImg<double>(*(copy.outputImage));
+    markers=new CImg<double>(*(copy.markers));
 }
 
 StaticNonLinearity::~StaticNonLinearity(void){
-
+    delete inputImage;
+    delete outputImage;
+    delete markers;
 }
 
 //------------------------------------------------------------------------------//
@@ -45,9 +52,9 @@ void StaticNonLinearity::setType(int t){
 //------------------------------------------------------------------------------//
 
 bool StaticNonLinearity::allocateValues(){
-    inputImage=new CImg<double> (sizeY,sizeX,1,1,0.0);
-    outputImage=new CImg<double> (sizeY,sizeX,1,1,0.0);
-    markers=new CImg<double> (sizeY,sizeX,1,1,0.0);
+    inputImage->assign(sizeY,sizeX,1,1,0.0);
+    outputImage->assign(sizeY,sizeX,1,1,0.0);
+    markers->assign(sizeY,sizeX,1,1,0.0);
     return(true);
 }
 
