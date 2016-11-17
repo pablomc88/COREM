@@ -62,6 +62,8 @@ protected:
     int numberImages;
     // Number of repetitions of each image
     int repetitions;
+    // Index of the current repetition of the current image (only used for input from modules[0])
+    int current_rep;
 
     // total (end) simulation time and current simulation time
     int totalSimTime, simTime;

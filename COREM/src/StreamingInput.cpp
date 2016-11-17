@@ -153,8 +153,10 @@ void StreamingInput::feedInput(double sim_time, const CImg<double>& new_input,bo
 //------------------------------------------------------------------------------//
 
 void StreamingInput::update(){
-    if(receiver_vars.buffer_img != NULL) {
+    if(receiver_vars.buffer_img != NULL) // Don't wait for a frame if input already ended
         pthread_mutex_lock(&receiver_vars.buffer_mutex); // Waits until a new frame is ready
+
+    if(receiver_vars.buffer_img != NULL) {
         *outputImage = *receiver_vars.buffer_img; // Get output from buffer
         pthread_mutex_unlock(&receiver_vars.reception_mutex); // Signal the receiver thread that it can update the value of buffer_img buffer with a new frame
     } else { // End of stream
