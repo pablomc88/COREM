@@ -933,7 +933,7 @@ void FileReader::parseFile(Retina &retina, DisplayManager &displayMg){
 
                 if (token[2]){
                     if (atof(token[2])>0)
-                        retina.setSimTotalRep(atof(token[2]));
+                        retina.setSimTotalTrials(atof(token[2]));
                     else{
                         abort(line,"Expected a positive value (>0)");
                         break;

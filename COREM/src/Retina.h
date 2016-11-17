@@ -51,7 +51,6 @@ protected:
 
     // Inputs
     vector < CImg<double> > sequence;
-    StreamingInput *video_stream;
     GratingGenerator *g;
     fixationalMovGrating *fg;
     whiteNoise *WN;
@@ -63,7 +62,7 @@ protected:
     // Number of repetitions of each image
     int repetitions;
     // Index of the current repetition of the current image (only used for input from modules[0])
-    int current_rep;
+    int currentRep;
 
     // total (end) simulation time and current simulation time
     int totalSimTime, simTime;
@@ -90,11 +89,11 @@ public:
     int getSizeY();
     double getStep();
     bool setVerbosity(bool verbose_flag);
-    bool setSimCurrentRep(double r);
-    bool setSimTotalRep(double r);
+    bool setSimCurrentTrial(double r);
+    bool setSimTotalTrials(double r);
     bool setTotalSimTime(int t);
-    double getSimCurrentRep();
-    double getSimTotalRep();
+    double getSimCurrentTrial();
+    double getSimTotalTrials();
     int getTotalSimTime();
 
     // set and get pixelsPerDegree

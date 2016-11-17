@@ -66,10 +66,10 @@ bool InterfaceNEST::allocateValues(const char *retinaPath, const char * outputFi
 
     // Simulation parameters
     totalSimTime = retina.getTotalSimTime();
-    totalNumberTrials = retina.getSimTotalRep();
+    totalNumberTrials = retina.getSimTotalTrials();
 
     CurrentTrial = currentRep;
-    retina.setSimCurrentRep(currentRep);
+    retina.setSimCurrentTrial(currentRep);
 
     if(FileReaderObject.getContReading()){
 
@@ -88,12 +88,10 @@ bool InterfaceNEST::allocateValues(const char *retinaPath, const char * outputFi
         // LN parameters
         displayMg.setLNFile(outputFile,outputfactor);
 
-
         // Display manager
         for(int k=0;k<retina.getNumberModules();k++){ // we call addModule() even if retina ony has one module in order to always initialize Displays of Display Manager
             displayMg.addModule(k,(retina.getModule(k))->getModuleID());
         }
-
 
     }else {
         abortExecution=true;

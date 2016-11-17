@@ -12,7 +12,7 @@ Retina::Retina(int x, int y, double temporal_step){
     inputType = -1; // Invalid retina input type
     numberImages = 0;
     repetitions = 0;
-    current_rep = 0;
+    currentRep = 0;
 
     verbose = false;
 
@@ -47,7 +47,7 @@ Retina::Retina(const Retina& copy){
     inputType = copy.inputType;
     numberImages = copy.numberImages;
     repetitions = copy.repetitions;
-    current_rep = copy.current_rep;
+    currentRep = copy.currentRep;
     verbose = copy.verbose;
 
     modules= copy.modules;
@@ -187,7 +187,7 @@ bool Retina::setVerbosity(bool verbose_flag){
     return(true);
 }
 
-bool Retina::setSimTotalRep(double r){
+bool Retina::setSimTotalTrials(double r){
     bool ret_correct;
     if(r >= 0) {
         totalNumberTrials = r;
@@ -197,7 +197,7 @@ bool Retina::setSimTotalRep(double r){
     return(ret_correct);
 }
 
-bool Retina::setSimCurrentRep(double r){
+bool Retina::setSimCurrentTrial(double r){
     bool ret_correct;
     if(r >= 0) {
         CurrentTrial = r;
@@ -217,11 +217,11 @@ bool Retina::setTotalSimTime(int t){
     return(ret_correct);
 }
 
-double Retina::getSimCurrentRep(){
+double Retina::getSimCurrentTrial(){
     return CurrentTrial;
 }
 
-double Retina::getSimTotalRep(){
+double Retina::getSimTotalTrials(){
     return totalNumberTrials;
 }
 
@@ -445,11 +445,11 @@ CImg<double> *Retina::feedInput(int step){
 //------------------------------------------------------------------------------//
 
 void Retina::update(){
-    if(current_rep == 0)
+    if(currentRep == 0)
         modules[0]->update(); // We only update() the Input module once each 'repetitions' times, so each Input image is repeated
-    current_rep++; // Times that Input image is currently repeated
-    if(current_rep >= repetitions)
-        current_rep = 0;
+    currentRep++; // Times that Input image is currently repeated
+    if(currentRep >= repetitions)
+        currentRep = 0;
 
     for (size_t i=1;i<modules.size();i++){ // Update all modules, including Output and Input modules
         module* m = modules[i];
