@@ -129,11 +129,8 @@ int main(int argc, char *argv[])
                 cout << "   AbortExecution " << interface.getAbortExecution() << endl;
             }
 
-            if(interface.getAbortExecution()==false){
-                for(int sim_time=0;sim_time<totalSimTime;sim_time+=simStep){
-                    interface.update();
-                }
-            }
+            for(int sim_time=0;interface.getAbortExecution()==false && sim_time<totalSimTime;sim_time+=simStep)
+                interface.update();
 
         } while(++trial_ind < num_trials); // Check the loop end condition in the end, after reading the number of trials
         
@@ -143,5 +140,5 @@ int main(int argc, char *argv[])
             cout << "Execute '" << argv[0] << " -h' for more help" << endl;
         }
     }    
-   return 1;
+   return(!got_script_file); // Returns 0 when input arguments are ok
 }

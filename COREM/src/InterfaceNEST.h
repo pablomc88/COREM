@@ -28,7 +28,7 @@ class InterfaceNEST{
 protected:
     // Image size (sizeY = width, sizeX = height)
     int sizeX, sizeY;
-    // simulation step
+    // Length of one simulation step
     double step;
     // Number of repetitions of each image (for a sequence)
     int repetitions;
@@ -61,8 +61,8 @@ public:
     bool allocateValues(const char * retinaPath, const char * outputFile, double outputfactor, double currentRep);
     void update();
     double getValue(double cell);
-    bool getAbortExecution(){return abortExecution;}
-    Retina& getRetina(){return retina;}
+    bool getAbortExecution();
+    Retina& getRetina();
     double getSimStep();
     void setVerbosity(bool verbose_flag);
 

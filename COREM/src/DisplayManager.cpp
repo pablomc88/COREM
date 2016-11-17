@@ -218,7 +218,7 @@ void DisplayManager::addModule(int pos,string ID){
 
         // create input display
         if(isShown[0]){
-            CImgDisplay *input = new CImgDisplay(*image,"Input",0);
+            CImgDisplay *input = new CImgDisplay(*image,"Norm. input",0);
             input->move(0,0);
             displays.push_back(input);
             inputImage = new CImg <double>(sizeY,sizeX,1,1,0.0);
@@ -278,7 +278,7 @@ void DisplayManager::addModule(int pos,string ID){
 //------------------------------------------------------------------------------//
 
 
-void DisplayManager::updateDisplay(CImg <double> *input, Retina &retina, int step, double totalSimTime, double numberTrials,double totalNumberTrials){
+void DisplayManager::updateDisplay(CImg <double> *input, Retina &retina, int simTime, double totalSimTime, double numberTrials,double totalNumberTrials){
 
     double newX = (double)sizeX * displayZoom;
     double newY = (double)sizeY * displayZoom;
@@ -288,21 +288,18 @@ void DisplayManager::updateDisplay(CImg <double> *input, Retina &retina, int ste
 
 
     // Display input
-    if(isShown.size() > 0 && isShown[0]){
+    if(isShown.size() > 0 && isShown[0] && input != NULL){
 
         CImgDisplay *d0 = displays[0];
         *inputImage = *input;
 
-        // find maximum and minimum values
-        min = findMin(inputImage);
-        max = findMax(inputImage);
-
-        inputImage->crop(margin[0],margin[0],0,0,sizeY-margin[0]-1,sizeX-margin[0]-1,0,0,false);
-        (((255*(*inputImage - min)/(max-min))).resize((int)newY,(int)newX)).display(*d0);
+        inputImage->crop(margin[0],margin[0],0,0,sizeY-margin[0]-1,sizeX-margin[0]-1,0,inputImage->spectrum()-1,false);
+        min = inputImage->min_max(max); // find maximum and minimum values in all color channels
+        ((255*(*inputImage - min)/(max-min))).resize((int)newY,(int)newX).display(*d0);
     }
 
     // Update windows
-    if (numberModules>0 && step==0){
+    if (numberModules>0 && simTime==0){
         bars = new CImg<double>*[numberModules-1];
         templateBar = new CImg <double>(50,(int)newX, 1, 1);
         for(int i=0;i<numberModules-1;i++){
@@ -366,68 +363,66 @@ void DisplayManager::updateDisplay(CImg <double> *input, Retina &retina, int ste
         }
     }
 
+    if(input!=NULL) { // If the retina has input, update multimeters
+        for(size_t i=0;i<multimeters.size();i++){
+            multimeter *m = multimeters[i];
+            module *n;
+            const char * moduleID = (moduleIDs[i]).c_str();
 
-    // update multimeters
-    for(size_t i=0;i<multimeters.size();i++){
-        multimeter *m = multimeters[i];
-        module *n;
-        const char * moduleID = (moduleIDs[i]).c_str();
-
-        // find target module
-        if(strcmp(moduleID, "Input") != 0){
-            for(int j=1;j<retina.getNumberModules();j++){
-                n = retina.getModule(j);
-                if(n->checkID(moduleID)){
-                    break;
+            // find target module
+            if(strcmp(moduleID, "Input") != 0){
+                for(int j=1;j<retina.getNumberModules();j++){
+                    n = retina.getModule(j);
+                    if(n->checkID(moduleID)){
+                        break;
+                    }
                 }
             }
-        }
 
+            // temporal and LN mult.
+            if(multimeterType[i]==0 || multimeterType[i]==2){
+                vector <int> aux = multimeterParam[i];
 
-        // temporal and LN mult.
-        if(multimeterType[i]==0 || multimeterType[i]==2){
-            vector <int> aux = multimeterParam[i];
-
-            if(strcmp(moduleID, "Input") == 0){
-                m->recordValue((*input)(aux[0],aux[1],0,0));
-            }else{
-                CImg<double> *module_output = n->getOutput();
-                if(module_output != NULL)
-                    m->recordValue((*module_output)(aux[0],aux[1],0,0));
-            }
-
-            m->recordInput((*input)(aux[0],aux[1],0,0));
-        }
-        // spatial mult.
-        else if(multimeterType[i]==1){
-            vector <int> aux = multimeterParam[i];
-            if(step == aux[1]){
-
-                // set position
-                int capacity = int((CImgDisplay::screen_width()-newY-100) / (newY+50));
-
-                if (last_col<capacity && last_col < imagesPerRow){
-                    last_col++;
+                if(strcmp(moduleID, "Input") == 0){
+                    m->recordValue((*input)(aux[0],aux[1],0,0));
                 }else{
-                    last_col = 1;
-                    last_row++;
+                    CImg<double> *module_output = n->getOutput();
+                    if(module_output != NULL)
+                        m->recordValue((*module_output)(aux[0],aux[1],0,0));
                 }
 
-                if(isShown[numberModules+i]==true){
+                m->recordInput((*input)(aux[0],aux[1],0,0));
+            }
+            // spatial mult.
+            else if(multimeterType[i]==1){
+                vector <int> aux = multimeterParam[i];
+                if(simTime >= aux[1] && simTime < aux[1]+simStep) { // aux[1] may not be divisible by simStep, we check that aux[1] is in the current sim. slot
+                    // set position
+                    int capacity = int((CImgDisplay::screen_width()-newY-100) / (newY+50));
 
-                    if(strcmp(moduleID, "Input") == 0){
-
-                        if(aux[0]>0)
-                            m->showSpatialProfile(input,true,aux[0],multimeterIDs[i],(int)last_col*(newY+80.0),(int)last_row*(newX+80.0),-1);
-                        else
-                            m->showSpatialProfile(input,false,-aux[0],multimeterIDs[i],(int)last_col*(newY+80.0),(int)last_row*(newX+80.0),-1);
+                    if (last_col<capacity && last_col < imagesPerRow){
+                        last_col++;
                     }else{
-                        CImg<double> *module_output = n->getOutput();
-                        if(module_output != NULL) {
+                        last_col = 1;
+                        last_row++;
+                    }
+
+                    if(isShown[numberModules+i]==true){
+
+                        if(strcmp(moduleID, "Input") == 0){
+
                             if(aux[0]>0)
-                                m->showSpatialProfile(module_output,true,aux[0],multimeterIDs[i],(int)last_col*(newY+80.0),(int)last_row*(newX+80.0),-1);
+                                m->showSpatialProfile(input,true,aux[0],multimeterIDs[i],(int)last_col*(newY+80.0),(int)last_row*(newX+80.0),-1);
                             else
-                                m->showSpatialProfile(module_output,false,-aux[0],multimeterIDs[i],(int)last_col*(newY+80.0),(int)last_row*(newX+80.0),-1);
+                                m->showSpatialProfile(input,false,-aux[0],multimeterIDs[i],(int)last_col*(newY+80.0),(int)last_row*(newX+80.0),-1);
+                        }else{
+                            CImg<double> *module_output = n->getOutput();
+                            if(module_output != NULL) {
+                                if(aux[0]>0)
+                                    m->showSpatialProfile(module_output,true,aux[0],multimeterIDs[i],(int)last_col*(newY+80.0),(int)last_row*(newX+80.0),-1);
+                                else
+                                    m->showSpatialProfile(module_output,false,-aux[0],multimeterIDs[i],(int)last_col*(newY+80.0),(int)last_row*(newX+80.0),-1);
+                            }
                         }
                     }
                 }
@@ -435,10 +430,8 @@ void DisplayManager::updateDisplay(CImg <double> *input, Retina &retina, int ste
         }
     }
 
-
     // display temporal and LN multimeters for the last simulation step
-    if(step==totalSimTime-simStep){
-
+    if(simTime==totalSimTime-simStep || input == NULL) {
         int LNMultimeters = 0;
         for(size_t i=0;i<multimeters.size();i++){
             multimeter *m = multimeters[i];
@@ -479,9 +472,7 @@ void DisplayManager::updateDisplay(CImg <double> *input, Retina &retina, int ste
                         m->showLNAnalysis(multimeterIDs[i],(int)last_col*(newY+80.0),(int)last_row*(newX+80.0),-1,LNSegment[LNMultimeters]/simStep,LNInterval[LNMultimeters]/simStep,LNStart[LNMultimeters]/simStep,LNStop[LNMultimeters]/simStep,totalNumberTrials,LNFile);
                 }
 
-
                 // check last trial to show average results
-
                 if(numberTrials == totalNumberTrials-1){
                     m->getSwitchTime(retina.getWhiteNoise()->getSwitchTime());
                     if(isShown[numberModules+i]==false){
@@ -490,22 +481,13 @@ void DisplayManager::updateDisplay(CImg <double> *input, Retina &retina, int ste
                         m->showLNAnalysisAvg((int)last_col*(newY+80.0),(int)last_row*(newX+80.0),0,LNSegment[LNMultimeters]/simStep,LNStart[LNMultimeters]/simStep, LNStop[LNMultimeters]/simStep,totalNumberTrials,LNFile,LNfactor);
                     }
                 }
-
-
                 LNMultimeters++;
             }
-
-
-
         }
-
-
     }
-
     // Show displays if there's an input display
-        if(isShown.size() > 0 && isShown[0])
-            displays[0]->wait(delay);
-
+    if(isShown.size() > 0 && isShown[0])
+        displays[0]->wait(delay);
 }
 
 //------------------------------------------------------------------------------//

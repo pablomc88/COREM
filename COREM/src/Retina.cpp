@@ -245,18 +245,16 @@ bool Retina::setRepetitions(int r){
 
 bool Retina::allocateValues(){
     bool ret_correct;
-
-    //sizeX=128;sizeY=160;
     // The Input module (modules[0]) may want to adjust the image size, so call allocateValues()
     // of this module first and then propagate the new image size to the rest of modules and retina
     modules[0]->setSizeX(sizeX);
     modules[0]->setSizeY(sizeY);
-    modules[0]->allocateValues();
+    modules[0]->allocateValues(); // Input module may determine a new size after allocateValues() call
     sizeX=modules[0]->getSizeX();
     sizeY=modules[0]->getSizeY();
     
     ret_correct = true;
-    for (size_t i=1;i<modules.size();i++){
+    for (size_t i=1;i<modules.size();i++){ // For all modules except the Input one:
         module* m = modules[i];
         m->setSizeX(sizeX);
         m->setSizeY(sizeY);
@@ -265,8 +263,8 @@ bool Retina::allocateValues(){
 
     if(verbose) {
         cout << "Allocating "<< (getNumberModules()-1) << " retinal modules." << endl;
-        cout << "sizeX = "<< sizeX << endl;
-        cout << "sizeY = "<< sizeY << endl;
+        cout << "sizeX (height) = "<< sizeX << endl;
+        cout << "sizeY (width)  = "<< sizeY << endl;
         cout << "Temporal step = "<< step << " ms" << endl;
     }
     
@@ -328,116 +326,117 @@ CImg<double> *Retina::feedInput(int step){
 
     case 5: // streaming input
         input = modules[0]->getOutput();
-        modules[0]->update();
+        // The update of input (modules[0]->update()) is performed later, in Retina::update()
         break;
 
     default:
         cout << "Wrong retina input type! Specify a correct retina input." << endl;
-        exit(1); // Panic error
+        input = NULL; // End simulation
         break;
     }
 
-    if (input->size() == (size_t)sizeX*(size_t)sizeY){
-        // Separate color channels
-        // cimg_forXY(img,x,y) is equivalent to cimg_forY(img,y) cimg_forX(img,x).
-        // cimg_forX(img,x) is equivalent to for(int x=0;x<img.width();++x)
-        cimg_forXY(*input,x,y) {
-            (*RGBred)(x,y,0,0) = (*input)(x,y,0,0),    // Red component of image sent to imgR
-            (*RGBgreen)(x,y,0,0) = (*input)(x,y,0,0),    // Green component of image sent to imgG
-            (*RGBblue)(x,y,0,0) = (*input)(x,y,0,0);    // Blue component of image sent to imgB
-        }
-    }else{
-       // Separate color channels
-       cimg_forXY(*input,x,y) {
-           (*RGBred)(x,y,0,0) = (*input)(x,y,0,0),    // Red component of image sent to imgR
-           (*RGBgreen)(x,y,0,0) = (*input)(x,y,0,1),    // Green component of image sent to imgG
-           (*RGBblue)(x,y,0,0) = (*input)(x,y,0,2);    // Blue component of image sent to imgB
-       }
-    }
-    // Hunt-Pointer-Estévez (HPE) transform
-    // sRGB --> XYZ
-    *X_mat = 0.4124564*(*RGBblue) + 0.3575761*(*RGBgreen) + 0.1804375*(*RGBred);
-    *Y_mat = 0.2126729*(*RGBblue) + 0.7151522*(*RGBgreen) + 0.0721750*(*RGBred);
-    *Z_mat = 0.0193339*(*RGBblue) + 0.1191920*(*RGBgreen) + 0.9503041*(*RGBred);
-
-    // XYZ --> LMS
-    *ch1 = 0.38971*(*X_mat) + 0.68898*(*Y_mat) - 0.07868*(*Z_mat);
-    *ch2 = -0.22981*(*X_mat) + 1.1834*(*Y_mat) + 0.04641*(*Z_mat);
-    *ch3 = (*Z_mat);
-
-    *rods = (*ch1 + *ch2 + *ch3)/3;
-
-    for (size_t i=0;i<modules.size();i++){ // Feed the input of all modules (including Input module although it is not necessart)
-
-        module* neuron = modules[i];
-
-        // port search
-        for (int o=0;o<neuron->getSizeID();o++){ // For all the module input connections:
-
-            vector <string> l = neuron->getID(o);
-            vector <int> p = neuron->getOperation(o);
-
-            //image input
-            const char * cellName = l[0].c_str(); // ID of the first port of current connection
-
-            if(strcmp(cellName,"L_cones")==0){
-                    *accumulator = *ch3;
-            }else if(strcmp(cellName,"M_cones")==0){
-                    *accumulator = *ch2;
-            }else if(strcmp(cellName,"S_cones")==0){
-                    *accumulator = *ch1;
-            }else if(strcmp(cellName,"rods")==0){
-                    *accumulator = *rods;
-            // Inputs mainly used for testing
-            }else if(strcmp(cellName,"red_channel")==0){
-                    *accumulator = *RGBred;
-            }else if(strcmp(cellName,"green_channel")==0){
-                    *accumulator = *RGBgreen;
-            }else if(strcmp(cellName,"blue_channel")==0){
-                    *accumulator = *RGBblue;
-            }else{
-
-            // other inputs rather than cones or rods
-
-                //search for the first image
-                for (size_t m=0;m<modules.size();m++){ // Start from module 0: We consider Input module as possible source here although it it not necessary
-                    module *n = modules[m];
-                    string cellName1 = l[0];
-                    string cellName2 = n->getModuleID();
-                    if (cellName1.compare(cellName2)==0){
-                        *accumulator = *(n->getOutput());
-                        //cout << "acc " << cellName2 << " x: " << accumulator->width() << endl;
-                        break;
-                    }
-                }
+    if(input != NULL) { // We have input, so simulation can continue
+        if(input->size() == (size_t)sizeX*(size_t)sizeY){
+            // Separate color channels
+            // cimg_forXY(img,x,y) is equivalent to cimg_forY(img,y) cimg_forX(img,x).
+            // cimg_forX(img,x) is equivalent to for(int x=0;x<img.width();++x)
+            cimg_forXY(*input,x,y) {
+                (*RGBred)(x,y,0,0) = (*input)(x,y,0,0),    // Red component of image sent to imgR
+                (*RGBgreen)(x,y,0,0) = (*input)(x,y,0,0),    // Green component of image sent to imgG
+                (*RGBblue)(x,y,0,0) = (*input)(x,y,0,0);    // Blue component of image sent to imgB
             }
+        }else{
+           // Separate color channels
+           cimg_forXY(*input,x,y) {
+               (*RGBred)(x,y,0,0) = (*input)(x,y,0,0),    // Red component of image sent to imgR
+               (*RGBgreen)(x,y,0,0) = (*input)(x,y,0,1),    // Green component of image sent to imgG
+               (*RGBblue)(x,y,0,0) = (*input)(x,y,0,2);    // Blue component of image sent to imgB
+           }
+        }
+        // Hunt-Pointer-Estévez (HPE) transform
+        // sRGB --> XYZ
+        *X_mat = 0.4124564*(*RGBblue) + 0.3575761*(*RGBgreen) + 0.1804375*(*RGBred);
+        *Y_mat = 0.2126729*(*RGBblue) + 0.7151522*(*RGBgreen) + 0.0721750*(*RGBred);
+        *Z_mat = 0.0193339*(*RGBblue) + 0.1191920*(*RGBgreen) + 0.9503041*(*RGBred);
 
-            // Accumulate input from other ports (perform other operations), even if the first port is a predefined input
-            for (size_t k=1;k<l.size();k++){
+        // XYZ --> LMS
+        *ch1 = 0.38971*(*X_mat) + 0.68898*(*Y_mat) - 0.07868*(*Z_mat);
+        *ch2 = -0.22981*(*X_mat) + 1.1834*(*Y_mat) + 0.04641*(*Z_mat);
+        *ch3 = (*Z_mat);
 
-                for (size_t m=0;m<modules.size();m++){ // Search for source in all modules
-                    module* n = modules[m];
-                    string cellName1 = l[k];
-                    string cellName2 = n->getModuleID();
-                    if (cellName1.compare(cellName2)==0){
+        *rods = (*ch1 + *ch2 + *ch3)/3;
 
-                       if (p[k-1]==0){
-                            *accumulator += *(n->getOutput());
-                        }else{
-                            *accumulator -= *(n->getOutput());
+        for (size_t i=0;i<modules.size();i++){ // Feed the input of all modules (including Input module although it is not necessart)
+
+            module* neuron = modules[i];
+
+            // port search
+            for (int o=0;o<neuron->getSizeID();o++){ // For all the module input connections:
+
+                vector <string> l = neuron->getID(o);
+                vector <int> p = neuron->getOperation(o);
+
+                //image input
+                const char * cellName = l[0].c_str(); // ID of the first port of current connection
+
+                if(strcmp(cellName,"L_cones")==0){
+                        *accumulator = *ch3;
+                }else if(strcmp(cellName,"M_cones")==0){
+                        *accumulator = *ch2;
+                }else if(strcmp(cellName,"S_cones")==0){
+                        *accumulator = *ch1;
+                }else if(strcmp(cellName,"rods")==0){
+                        *accumulator = *rods;
+                // Inputs mainly used for testing
+                }else if(strcmp(cellName,"red_channel")==0){
+                        *accumulator = *RGBred;
+                }else if(strcmp(cellName,"green_channel")==0){
+                        *accumulator = *RGBgreen;
+                }else if(strcmp(cellName,"blue_channel")==0){
+                        *accumulator = *RGBblue;
+                }else{
+
+                // other inputs rather than cones or rods
+
+                    //search for the first image
+                    for (size_t m=0;m<modules.size();m++){ // Start from module 0: We consider Input module as possible source here although it it not necessary
+                        module *n = modules[m];
+                        string cellName1 = l[0];
+                        string cellName2 = n->getModuleID();
+                        if (cellName1.compare(cellName2)==0){
+                            *accumulator = *(n->getOutput());
+                            //cout << "acc " << cellName2 << " x: " << accumulator->width() << endl;
+                            break;
                         }
-                       break;
                     }
                 }
-            }
 
-            if (neuron->getTypeSynapse(o)==0)
-                neuron->feedInput(step, *accumulator, true, o);
-            else
-                neuron->feedInput(step, *accumulator, false, o);
+                // Accumulate input from other ports (perform other operations), even if the first port is a predefined input
+                for (size_t k=1;k<l.size();k++){
+
+                    for (size_t m=0;m<modules.size();m++){ // Search for source in all modules
+                        module* n = modules[m];
+                        string cellName1 = l[k];
+                        string cellName2 = n->getModuleID();
+                        if (cellName1.compare(cellName2)==0){
+
+                           if (p[k-1]==0){
+                                *accumulator += *(n->getOutput());
+                            }else{
+                                *accumulator -= *(n->getOutput());
+                            }
+                           break;
+                        }
+                    }
+                }
+
+                if (neuron->getTypeSynapse(o)==0)
+                    neuron->feedInput(step, *accumulator, true, o);
+                else
+                    neuron->feedInput(step, *accumulator, false, o);
+            }
         }
     }
-
     return input;
 }
 
@@ -506,13 +505,7 @@ int Retina::getNumberModules(){
 //------------------------------------------------------------------------------//
 
 bool Retina::setStreamingInput(){
-//    CImg<double> *first_frame;
     inputType = 5; // Set retina input type=streaming
-    // Use the first frame to find out the new dimensions of retina image size
-/*    modules[0]->update();
-    first_frame = modules[0]->getOutput(); */
-    sizeX = 128; //first_frame->height();
-    sizeY = 160; //first_frame->width();
     return(true);
 }
 

@@ -82,9 +82,9 @@ void multimeter::showSpatialProfile(CImg<double> *img,bool rowCol,int number,str
         draw_disp->move(col,row);
 
         if(waitTime == -1){
-            while (!draw_disp->is_closed()) {
+            cout << "Close spatial multimeter window to continue..." << endl;
+            while (!draw_disp->is_closed())
                 draw_disp->wait();
-            }
         }
         delete draw_disp;
         delete profile;
@@ -159,9 +159,9 @@ void multimeter::showTemporalProfile(string title,int col,int row, double waitTi
         draw_disp->move(col,row);
 
         if(waitTime == -1){
-            while (!draw_disp->is_closed()) {
+            cout << "Close temporal multimeter window to continue..." << endl;
+            while (!draw_disp->is_closed())
                 draw_disp->wait();
-            }
         }
         
         delete draw_disp;
@@ -512,9 +512,9 @@ void multimeter::showLNAnalysisAvg(int col, int row, double waitTime,double segm
         draw_disp->move(col,row);
 
         // wait for the user closes display
-            while (!draw_disp->is_closed()) {
-                draw_disp->wait();
-            }
+        cout << "Close LN analysis multimeter window to continue..." << endl;
+        while (!draw_disp->is_closed())
+            draw_disp->wait();
 
         delete draw_disp;
         delete nonlinearity;

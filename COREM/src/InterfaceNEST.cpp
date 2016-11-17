@@ -108,13 +108,14 @@ bool InterfaceNEST::allocateValues(const char *retinaPath, const char * outputFi
 
 
 void InterfaceNEST::update(){
-
-    CImg<double> *input= retina.feedInput(SimTime);
-    retina.update();
-    displayMg.updateDisplay(input,retina,SimTime,totalSimTime,CurrentTrial,totalNumberTrials);
-
+    CImg<double> *input;
+    
+    input = retina.feedInput(SimTime);
+    displayMg.updateDisplay(input, retina, SimTime, totalSimTime, CurrentTrial, totalNumberTrials);
+    retina.update(); // This call updates all the modules, so since input is a pointer the content may be modified
     SimTime+=step;
-
+    if(input == NULL) // If this is the end of simulation, end
+        abortExecution=true;
 }
 
 //------------------------------------------------------------------------------//
@@ -151,6 +152,18 @@ double InterfaceNEST::getValue(double cell){
     return (*neuron->getOutput())(col,row,0,0);
 
 
+}
+
+//------------------------------------------------------------------------------//
+
+bool InterfaceNEST::getAbortExecution(){
+    return abortExecution;
+}
+
+//------------------------------------------------------------------------------//
+
+Retina& InterfaceNEST::getRetina(){
+    return retina;
 }
 
 //------------------------------------------------------------------------------//

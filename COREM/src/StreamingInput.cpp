@@ -42,7 +42,6 @@ StreamingInput::StreamingInput(int x, int y, double temporal_step, string conn_u
     pthread_mutex_init(&receiver_vars.reception_mutex, &mutex_attrib); // Initialize reception mutex
     pthread_mutexattr_destroy(&mutex_attrib); // We do not need the attributes: destroy them
 
-    pthread_mutex_lock(&receiver_vars.buffer_mutex); // buffer_img is not ready until unlocked by the receiver thread
     // This implementation for mutual exclusion of access to receiver_vars.buffer_img is really not legal, because
     // a thread should not unlock a mutex which has been locked by other thread, however, it does work because
     // mutex are created with attibute PTHREAD_MUTEX_NORMAL or (PTHREAD_MUTEX_DEFAULT), so the thread ID is not checked.
@@ -80,8 +79,10 @@ StreamingInput::~StreamingInput(){
     pthread_mutex_destroy(&receiver_vars.reception_mutex);
     pthread_mutex_destroy(&receiver_vars.buffer_mutex);
     
-    delete receiver_vars.buffer_img;
-    delete outputImage;
+    if(receiver_vars.buffer_img != NULL)
+        delete receiver_vars.buffer_img;
+    if(outputImage != NULL)
+        delete outputImage;
 }
 
 //------------------------------------------------------------------------------//
@@ -90,12 +91,22 @@ bool StreamingInput::allocateValues(){
     bool ret_correct;
     module::allocateValues(); // Call the allocateValues() method of the base class
     
-    // Resize initial value
-    outputImage->assign(sizeY, sizeX, 1, 1, 0);
-    
     ret_correct = openConnetion(); // Set socket to listen
-    if(ret_correct)
+    if(ret_correct){
+        // Use the first frame to find out the new dimensions of retina image size
+        outputImage->load_png(receiver_vars.accept_socket_fh); // Get first frame
+        sizeY=outputImage->width();
+        sizeX=outputImage->height();
+        // output image should have been automatically resized after first frame load
+        // Resize buffer image as well
+        receiver_vars.buffer_img->assign(sizeY, sizeX, 1, 1, 0);
+        
+        // The first frame is now ready in the output, but receicer thread can still populate the buffer image,
+        // so leave the receiver unlocked (as it is by default) and lock the access to the buffer 
+        pthread_mutex_lock(&receiver_vars.buffer_mutex); // lock access the the buffer (it is not full yet)
+        
         ret_correct = receiveStream();
+    }
 
     return(ret_correct);
 }
@@ -142,9 +153,16 @@ void StreamingInput::feedInput(double sim_time, const CImg<double>& new_input,bo
 //------------------------------------------------------------------------------//
 
 void StreamingInput::update(){
-    pthread_mutex_lock(&receiver_vars.buffer_mutex); // Waits until a new frame is ready
-    *outputImage = *receiver_vars.buffer_img; // Get output from buffer
-    pthread_mutex_unlock(&receiver_vars.reception_mutex); // Signal the receiver thread that it can update the value of buffer_img buffer with a new frame
+    if(receiver_vars.buffer_img != NULL) {
+        pthread_mutex_lock(&receiver_vars.buffer_mutex); // Waits until a new frame is ready
+        *outputImage = *receiver_vars.buffer_img; // Get output from buffer
+        pthread_mutex_unlock(&receiver_vars.reception_mutex); // Signal the receiver thread that it can update the value of buffer_img buffer with a new frame
+    } else { // End of stream
+        if(outputImage != NULL){
+            delete outputImage;
+            outputImage=NULL; // Indicate an end of input
+        }
+    }
 }
 
 //------------------------------------------------------------------------------//
@@ -234,16 +252,23 @@ void *image_receiver_thread(struct receiver_params *params)
     while(!params->exit_reception && error_code==0) {
         error_code=pthread_mutex_lock(&(params->reception_mutex)); // Waits until reception is allowed (buffer has been consumed)
         if(!params->exit_reception && error_code==0){
-            //cout << "Receiving... " << endl;
-            
-            params->buffer_img->load_png(params->accept_socket_fh);
-            cout << "." << flush;
-            //cout << "Received " << params->buffer_img->width() << " x " << params->buffer_img->height() << endl;
-            error_code=pthread_mutex_unlock(&(params->buffer_mutex)); // New frame available, unblock update()
+            int first_frame_char;
+            // Try to get the last frame character to check if a next frame is being sent
+            first_frame_char=fgetc(params->accept_socket_fh);
+            if(first_frame_char != EOF) { // Another frame is comming
+                ungetc(first_frame_char, params->accept_socket_fh); // Put the char back in the stream as that a complete image can be loaded
+                
+                params->buffer_img->load_png(params->accept_socket_fh); // Receive a complete frame
+
+                error_code=pthread_mutex_unlock(&(params->buffer_mutex)); // New frame available, unblock update()
+            } else {
+                pthread_mutex_unlock(&(params->buffer_mutex)); // New (empty) frame available, unblock update()
+                error_code=EIO; // Exit loop
+                delete params->buffer_img;
+                params->buffer_img=NULL; // End of stream is indicated with a NULL pointer frame
+            }
         }
     }
-        
-    cout << "eeror code: " << error_code << endl;
     // The thread will return the error code or 0 if success.
     // we do not know the sizeof(void *) in principle, so cast to intptr_t which has the same sizer to avoid warning
     return((void *)(intptr_t)error_code);
@@ -276,7 +301,7 @@ bool StreamingInput::stopStreamReception(){
         if(join_err == 0) {// If success joining
             thread_ret = (int)(intptr_t)thread_ret_ptr;
             if(thread_ret != 0)
-                cout << "Image receiver thread ended anormally. code: " << thread_ret << "." << endl;
+                cout << "Frame reception ended anormally. errno: " << thread_ret << "." << endl;
             
             ret_correct = true;
         } else {
