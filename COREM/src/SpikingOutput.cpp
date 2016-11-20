@@ -13,7 +13,6 @@
 #include "SpikingOutput.h"
 
 SpikingOutput::SpikingOutput(int x, int y, double temporal_step, string output_filename):module(x,y,temporal_step){
-    
     // input-to-spike-time conversion parameters (default values)
     Min_period=0.0; // Max. firing frequency is inifite Hz
     Longest_sustained_period=numeric_limits<double>::infinity(); // Neuron start firing from 0Hz
@@ -28,7 +27,7 @@ SpikingOutput::SpikingOutput(int x, int y, double temporal_step, string output_f
     // Save all input images by default
     Start_time=0.0;
     End_time=numeric_limits<double>::infinity();
-    Random_init=false;
+    Random_init=0.0; // Same initial state for all neurons
     
     normal_distribution<double>::param_type init_norm_dist_params(0.0, Min_period_std_dev/1000.0); // Random numbers from a Gaussian distribution of  mean=0, sigma=Noise_std_dev/1000 seconds
     norm_dist.param(init_norm_dist_params); // Set initial params of normal distribution
@@ -47,7 +46,6 @@ SpikingOutput::SpikingOutput(int x, int y, double temporal_step, string output_f
 }
 
 SpikingOutput::SpikingOutput(const SpikingOutput &copy):module(copy){
-
     Min_period = copy.Min_period;
     Longest_sustained_period = copy.Longest_sustained_period;
     Input_threshold = copy.Input_threshold;
@@ -66,7 +64,6 @@ SpikingOutput::SpikingOutput(const SpikingOutput &copy):module(copy){
 }
 
 SpikingOutput::~SpikingOutput(){
-
     // Save generated spikes before destructing the object
     cout << "Saving output spike file: " << out_spk_filename << "... " << flush;
     cout << (SaveFile(out_spk_filename)?"Ok":"Fail") << endl;
@@ -90,7 +87,7 @@ void SpikingOutput::randomize_state(){
         // In this way (next_spk_time-tslot_start) / last_firing_period is
         // a number between 0 and 1, and the first firing phase is random.
         *last_firing_period_it = last_firing_per;
-        *next_spk_time_it = unif_dist(rand_gen)*last_firing_per; // random number in the interval [0,1) seconds from unif. dist.
+        *next_spk_time_it = (1.0 - Random_init*unif_dist(rand_gen))*last_firing_per; // random number in the interval [0,1) seconds from unif. dist.
         last_firing_period_it++;
         next_spk_time_it++;
     }
@@ -100,17 +97,26 @@ void SpikingOutput::randomize_state(){
 
 bool SpikingOutput::allocateValues(){
     module::allocateValues(); // Use the allocateValues() method of the base class
+    double last_per, last_spk;
+    double first_spk_delay = 1; // Configure the delay of the first spike in proportion of the first period
 
     // Set parameters of distributions for random number generation
     normal_distribution<double>::param_type init_params(0.0, Min_period_std_dev/1000.0); // (mean=0, sigma=Limit_std_dev/1000 seconds)
     norm_dist.param(init_params); // Set initial params of normal distribution
     
+    if(first_spk_delay == 0){ // No delay
+        last_spk=0.0;
+        last_per=numeric_limits<double>::infinity(); // For a 0 input the firing period is infinity
+    } else { // The delay will be: t_first_spk = last_spk/last_per * first_firing_period
+        last_spk=first_spk_delay;
+        last_per=1.0;
+    }
     // Resize initial value
     inputImage->assign(sizeY, sizeX, 1, 1, 0);
-    last_firing_period->assign(sizeY, sizeX, 1, 1, numeric_limits<double>::infinity()); // For a 0 input the firing period is infinity
-    next_spk_time->assign(sizeY, sizeX, 1, 1, 0.0);
+    last_firing_period->assign(sizeY, sizeX, 1, 1, last_per);
+    next_spk_time->assign(sizeY, sizeX, 1, 1, last_spk);
 
-    if(Random_init) // If parameter Random_init is set to true, init the state of outputs randomly
+    if(Random_init != 0) // If parameter Random_init is differnt from 0, init the state of outputs randomly
         randomize_state();
     return(true);
 }
@@ -136,23 +142,13 @@ bool SpikingOutput::set_Longest_sustained_period(double max_spk_per){
 }
 
 bool SpikingOutput::set_Input_threshold(double input_threshold){
-    bool ret_correct;
-    if (input_threshold>=0) {
-        Input_threshold = input_threshold;
-        ret_correct=true;
-    } else
-        ret_correct=false;
-    return(ret_correct);
+    Input_threshold = input_threshold;
+    return(true);
 }
 
 bool SpikingOutput::set_Freq_per_inp(double freq_per_inp_unit){
-    bool ret_correct;
-    if (freq_per_inp_unit>=0) {
-        Spk_freq_per_inp = freq_per_inp_unit;
-        ret_correct=true;
-    } else
-        ret_correct=false;
-    return(ret_correct);
+    Spk_freq_per_inp = freq_per_inp_unit;
+    return(true);
 }
 
 bool SpikingOutput::set_Spike_std_dev(double std_dev_val){
@@ -190,7 +186,7 @@ bool SpikingOutput::set_End_time(double end_time){
     return(ret_correct);
 }
 
-bool SpikingOutput::set_Random_init(bool rnd_init){
+bool SpikingOutput::set_Random_init(double rnd_init){
     Random_init = rnd_init;
     return(true);
 }
@@ -221,7 +217,7 @@ bool SpikingOutput::setParameters(vector<double> params, vector<string> paramID)
         } else if (strcmp(s,"End_time")==0){
             correct = set_End_time(params[i]);
         } else if (strcmp(s,"Random_init")==0){
-            correct = set_Random_init(params[i] > 0.0);
+            correct = set_Random_init(params[i]);
         } else {
             correct = false;
         }

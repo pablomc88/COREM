@@ -1,10 +1,10 @@
 %RETSPKPLOTPAR represent graphically neural spike activity
 %   This script reads the simulation spikes generated during the retina 
-%   simulation from the activity output file and plot them.
+%   simulation from an activity output file and plot them.
 %   RETSPKPLOTPAR mode represent the spikes stored in the default spike
 %   output file of COREM (in results directory).
 %   Aditional arguments can be specified to limit the amount of spikes
-%   loaded from file:
+%   loaded and to load from a specific file:
 %   RETSPKPLOTPAR mode filename represents the spikes stored in filename
 %   using the mode mode.
 %   RETSPKPLOTPAR mode filename t_ini t_end only reads the spikes from
@@ -47,9 +47,9 @@ end
 
 if nargin > 0
    plot_mode=varargin{1};
-   if ~isequal(plot_mode,'ra') && ~isequal(plot_mode,'hi') && ~isequal(plot_mode,'ph')
-      error('Incorrect value of mode (first argument)');
+   if ~isequal(plot_mode,'ra') && ~isequal(plot_mode,'hi') && ~isequal(plot_mode,'ph') && ~isequal(plot_mode,'rf')
       nargs=0;
+      error('Incorrect value of mode (first argument)');
    end
    if nargin > 1
        filename=varargin{2}; % specified file name
@@ -113,36 +113,38 @@ if nargs == 6 % only some neurons must be plotted
     activity_list=activity_list(activity_list(:,1) >= first_neu & activity_list(:,1) <= last_neu,:); % remove unwanted neurons from the list
 end
 
-disp('Sorting spikes...');
-disp(' 00%')
-
 if isempty(activity_list)
     activity_list=zeros(0,2); % To avoid errors when file constains no activity
 end
 
-% Create an array of cells. Each cell containing the activity of a
-% particular neuron and a list of different neuron number
-% These variables will be used by the following code
-tot_spks=size(activity_list,1); % Total number of spikes
-neu_list=zeros(numel(unique(activity_list(:,1))),1); % Allocate space for neuron numbers
-neu_spk=num2cell(neu_list); % Allocate space for spike times
+if  ~isequal(plot_mode,'rf')
+    disp('Sorting spikes...');
+    disp(' 00%')
 
-[neu_sort, neu_sort_ind] = sort(activity_list(:,1)); % Sort neuron numbers
-nneu=1; % Index of current (differnt) neuron
-diff_neus=0; % Total number of different neuron numbers
-neu_sort=[neu_sort;Inf]; % Add an extra neuron number so that find always find a next (different) neuron number in the loop
-while nneu <= length(neu_sort_ind)
-    diff_neus = diff_neus+1;
-    curr_neu = neu_sort(nneu); % Current neuron number
-    neu_list(diff_neus) = curr_neu; % Add new neuron number to the list
-    next_neu_ind = find(neu_sort((nneu+1):end) ~= curr_neu,1) + nneu; % Find index of the next (differnt) neuron in neu_sort
-    neu_spk{diff_neus} = sort(activity_list(neu_sort_ind(nneu:(next_neu_ind-1)),2)); % Store all spike times of this neuron in the cell
-    nneu=next_neu_ind; % Pass to the next neuron number
-    if mod(diff_neus,fix(length(neu_spk)/100)) == 0
-        fprintf(1,'\b\b\b\b% 3.f%%',diff_neus*100/length(neu_spk));
+    % Create an array of cells. Each cell containing the activity of a
+    % particular neuron and a list of different neuron number
+    % These variables will be used by the following code
+    tot_spks=size(activity_list,1); % Total number of spikes
+    neu_list=zeros(numel(unique(activity_list(:,1))),1); % Allocate space for neuron numbers
+    neu_spk=num2cell(neu_list); % Allocate space for spike times
+
+    [neu_sort, neu_sort_ind] = sort(activity_list(:,1)); % Sort neuron numbers
+    nneu=1; % Index of current (differnt) neuron
+    diff_neus=0; % Total number of different neuron numbers
+    neu_sort=[neu_sort;Inf]; % Add an extra neuron number so that find always find a next (different) neuron number in the loop
+    while nneu <= length(neu_sort_ind)
+        diff_neus = diff_neus+1;
+        curr_neu = neu_sort(nneu); % Current neuron number
+        neu_list(diff_neus) = curr_neu; % Add new neuron number to the list
+        next_neu_ind = find(neu_sort((nneu+1):end) ~= curr_neu,1) + nneu; % Find index of the next (differnt) neuron in neu_sort
+        neu_spk{diff_neus} = sort(activity_list(neu_sort_ind(nneu:(next_neu_ind-1)),2)); % Store all spike times of this neuron in the cell
+        nneu=next_neu_ind; % Pass to the next neuron number
+        if mod(diff_neus,fix(length(neu_spk)/100)) == 0
+            fprintf(1,'\b\b\b\b% 3.f%%',diff_neus*100/length(neu_spk));
+        end
     end
+    fprintf(1,'\b\b\b\b\b100%%\n');
 end
-fprintf(1,'\b\b\b\b\b100%%\n');
 
 disp('Creating figure...');
 
@@ -223,11 +225,15 @@ case 'ph' % PHase plot
     hist(spk_phases, n_bins);
     xlabel('firing phase (ms)');
     ylabel('spike count');
-    
+case 'rf' % Fast Raster plot
+    plot(activity_list(:,2), activity_list(:,1), '.')
+    xlabel('time');
+    ylabel('neuron number');
 end
-display(['Total number of spikes: ' num2str(tot_spks)]);
-display(['Number of spiking neurons: ' num2str(diff_neus)]);
-    
+display(['Total number of spikes: ' num2str(size(activity_list,1))])
+display(['Number of spiking neurons: ' num2str(length(unique(activity_list(:,1))))])
+display(['First neuron index: ' num2str(min(activity_list(:,1))) ' Last neuron index: ' num2str(max(activity_list(:,1)))])
+
 % READ_LINE_TIME gets the time of the next register from the simulation-log file.
 %    REGTIME = READ_FILE_PART(FID) advances the file position indicator in the
 %    file associated with the given FID to the beginning of the next text

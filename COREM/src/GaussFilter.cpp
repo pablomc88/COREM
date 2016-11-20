@@ -6,6 +6,12 @@ GaussFilter::GaussFilter(int x, int y, double ppd):module(x,y,1.0){
     inputImage=new CImg<double> (sizeY,sizeX,1,1,0.0);
     outputImage=new CImg<double> (sizeY,sizeX,1,1,0.0);
     buffer = new double[(sizeX+sizeY)*omp_get_max_threads()];
+
+    // Some default values, just in case
+    sigma = 0.3;
+    spaceVariantSigma = true;
+    K = 0.2;
+    R0 = 5.0;
 }
 
 GaussFilter::GaussFilter(const GaussFilter &copy):module(copy){
@@ -14,6 +20,11 @@ GaussFilter::GaussFilter(const GaussFilter &copy):module(copy){
     inputImage=new CImg<double>(*(copy.inputImage));
     outputImage=new CImg<double>(*(copy.outputImage));
     buffer = new double[(sizeX+sizeY)*omp_get_max_threads()];
+    
+    sigma = copy.sigma;
+    spaceVariantSigma = copy.spaceVariantSigma;
+    K = copy.K;
+    R0 = copy.R0;
     allocateValues();
 }
 

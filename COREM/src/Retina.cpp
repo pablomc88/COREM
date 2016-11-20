@@ -306,7 +306,8 @@ CImg<double> *Retina::feedInput(int step){
         if (step/repetitions < numberImages)
             input = inputSeq[step/repetitions];
         else
-            input = inputSeq[numberImages-1];
+            //input = inputSeq[numberImages-1];
+            input = NULL;
         break;
 
     case 1:
@@ -326,7 +327,7 @@ CImg<double> *Retina::feedInput(int step){
         break;
 
     case 5: // streaming input
-        input = modules[0]->getOutput();
+        input = modules[0]->getOutput(); // the output does not change if update() is not called
         // The update of input (modules[0]->update()) is performed later, in Retina::update()
         break;
 
@@ -395,6 +396,8 @@ CImg<double> *Retina::feedInput(int step){
                         *accumulator = *RGBgreen;
                 }else if(strcmp(cellName,"blue_channel")==0){
                         *accumulator = *RGBblue;
+                }else if(strcmp(cellName,"zeros")==0){
+                        accumulator->fill(0.0);
                 }else{
 
                 // other inputs rather than cones or rods
@@ -633,7 +636,7 @@ bool Retina::connect(vector <string> from, const char *to,vector <int> operation
                 size_t k;
 
                 ff = from[j].c_str();
-                if(strcmp(ff,"rods")!=0 && strcmp(ff,"L_cones")!=0 && strcmp(ff,"M_cones")!=0 && strcmp(ff,"S_cones")!=0 && strcmp(ff,"red_channel")!=0 && strcmp(ff,"green_channel")!=0 && strcmp(ff,"blue_channel")!=0){ // Internal input type specified
+                if(strcmp(ff,"rods")!=0 && strcmp(ff,"L_cones")!=0 && strcmp(ff,"M_cones")!=0 && strcmp(ff,"S_cones")!=0 && strcmp(ff,"red_channel")!=0 && strcmp(ff,"green_channel")!=0 && strcmp(ff,"blue_channel")!=0 && strcmp(ff,"zeros")!=0){ // Internal input type specified
                     // Search in the list of all modules (including Intput module, although it is not necessary) for the current module (ff) of the specified source module list (from)
                     for(k=0;k<modules.size();k++){
                         module* neuronfrom = modules[k];

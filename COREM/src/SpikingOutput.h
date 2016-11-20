@@ -48,7 +48,7 @@ protected:
     // firing_period_ms = 1 / (pixel_value - Input_threshold)*(Spk_freq_per_inp/1000) + Lower_sustained_period_ms
     double Spike_std_dev; // Standard deviation in milliseconds of spike times. When this value is <>0, they are randomly drawn from a gamma distribution. If <0, is set to be equual to distribution mean (firing period)
     double Min_period_std_dev; // Standard deviation in milliseconds of a normal distribition with mean Min_period from which min. firing periods are drawn. When this value is equal to 0, min. firing periods are fixed
-    bool Random_init; // true (differnt from 0) if the initial state of must be initialized randomly, so that the starting firing phase is uniformly random
+    double Random_init; // If differnt from 0, it configures the initial state randomly, so that the starting firing phase is uniformly random between 1 and (1-Random_init)*first_firing_period
     // Since the spike time generation is not impemented as a real non-homogeneous random process, Spike_std_dev is not exactly
     // the standard deviation of the generated spike times, but the standar deviation of the distribution used to generate these spikes.
     default_random_engine rand_gen; // For generating random numbers: neuron output random noise, random states and refractory period
@@ -76,7 +76,7 @@ public:
     bool set_Min_period_std_dev(double sigma_val);
     bool set_Start_time(double start_time);
     bool set_End_time(double end_time);
-    bool set_Random_init(bool rnd_init);
+    bool set_Random_init(double rnd_init);
 
     // Get new input
     virtual void feedInput(double sim_time, const CImg<double> &new_input, bool isCurrent, int port);

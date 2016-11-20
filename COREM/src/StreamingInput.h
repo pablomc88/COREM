@@ -8,6 +8,8 @@
  *              video streaming through a network connection.
  * In particular it creates a TCP socket listening for a incoming connection through which the
  * input images are received in PNG format sequentialy.
+ * This class uses the method load_PNG from CImg, so it requires libpng-dev (and zlib). upng
+ * library could be adapted to load CImg images and thus remove these dependences.
  *
  * Author: Pablo Martinez Cañada. University of Granada. CITIC-UGR. Spain.
  * <pablomc@ugr.es>

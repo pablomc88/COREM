@@ -201,7 +201,6 @@ void DisplayManager::modifyLN(string moduleID, double start, double stop){
 
     LNStart[pos] = start;
     LNStop[pos] = stop;
-
 }
 
 //------------------------------------------------------------------------------//
@@ -217,7 +216,7 @@ void DisplayManager::addModule(int pos,string ID){
         CImg <double> *image = new CImg <double>((int)newY,(int)newX,1,1,0.0);
 
         // create input display
-        if(isShown[0]){
+        if(isShown.size() > 0 && isShown[0]){
             CImgDisplay *input = new CImgDisplay(*image,"Norm. input",0);
             input->move(0,0);
             displays.push_back(input);
@@ -227,13 +226,14 @@ void DisplayManager::addModule(int pos,string ID){
         }
 
         // initialize intermediate images
-        intermediateImages = new CImg<double>*[numberModules-1];
-        for (int i=0;i<numberModules-1;i++){
-          intermediateImages[i]=new CImg<double> (sizeY,sizeX,1,1,0.0);
+        if(numberModules>1){
+            intermediateImages = new CImg<double>*[numberModules-1];
+            for (int i=0;i<numberModules-1;i++)
+              intermediateImages[i]=new CImg<double> (sizeY,sizeX,1,1,0.0);
         }
     }
 
-    if(pos>0) { // display for pos==0 (Input) is create above
+    if(pos>0 && isShown.size() > (size_t)pos) { // display for pos==0 (Input) is create above
         if(isShown[pos]){
 
             // black image
