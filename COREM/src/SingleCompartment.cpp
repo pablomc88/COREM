@@ -114,7 +114,7 @@ bool SingleCompartment::set_Cm(double capacitance){
 
 bool SingleCompartment::set_Rm(double resistance){
     bool ret_correct;
-    if (resistance>0) {
+    if (resistance>=0) {
         Rm = resistance;
         ret_correct=true;
     } else
@@ -124,7 +124,7 @@ bool SingleCompartment::set_Rm(double resistance){
 
 bool SingleCompartment::set_taum(double temporal_constant){
     bool ret_correct;
-    if (temporal_constant>0) {
+    if (temporal_constant>=0) {
         taum = temporal_constant;
         ret_correct=true;
     } else

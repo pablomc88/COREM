@@ -47,7 +47,7 @@ end
 
 if nargin > 0
    plot_mode=varargin{1};
-   if ~isequal(plot_mode,'ra') && ~isequal(plot_mode,'hi') && ~isequal(plot_mode,'ph') && ~isequal(plot_mode,'rf')
+   if ~isequal(plot_mode,'ra') && ~isequal(plot_mode,'hi') && ~isequal(plot_mode,'ph') && ~isequal(plot_mode,'rf')  && ~isequal(plot_mode,'rs')
       nargs=0;
       error('Incorrect value of mode (first argument)');
    end
@@ -149,7 +149,7 @@ end
 disp('Creating figure...');
 
 switch(plot_mode)
-case 'ra' % Raster plot
+case {'ra', 'rs'} % Raster plot
     
     for nneu=1:diff_neus
         cur_neu_spk_times=neu_spk{nneu};
@@ -233,6 +233,22 @@ end
 display(['Total number of spikes: ' num2str(size(activity_list,1))])
 display(['Number of spiking neurons: ' num2str(length(unique(activity_list(:,1))))])
 display(['First neuron index: ' num2str(min(activity_list(:,1))) ' Last neuron index: ' num2str(max(activity_list(:,1)))])
+
+if isequal(plot_mode,'rs') % Raster scroll
+    set(gca, 'Ydir', 'reverse')
+    scroll_wnd=1;
+    scroll_step=0.06666;
+    curr_axis=axis;
+    vid_obj = VideoWriter('raster.avi');
+    vid_obj.FrameRate = 1/scroll_step;
+    open(vid_obj);
+    for curr_t=min(activity_list(:,2)):scroll_step:max(activity_list(:,2))
+        axis([curr_t-scroll_wnd curr_t curr_axis(3) curr_axis(4)])
+        curr_frame = getframe(gcf);
+        writeVideo(vid_obj,curr_frame);
+    end
+    close(vid_obj);
+end
 
 % READ_LINE_TIME gets the time of the next register from the simulation-log file.
 %    REGTIME = READ_FILE_PART(FID) advances the file position indicator in the

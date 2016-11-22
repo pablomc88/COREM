@@ -25,10 +25,10 @@ os.system("mkdir "+root+"Retina_scripts/scripts")
 ### Best set of parameters ###
 # Parameter 1: tau_photo (ms)
 # Parameter 2: n_photo
-# Parameter 3: C_calcium (10^(-2) uF/cm^2)
+# Parameter 3: C_calcium (pF)
 # Parameter 4: tau_calcium (ms)
 # Parameter 5: n_calcium
-# Parameter 6: C_inner (10^(-2) uF/cm^2)
+# Parameter 6: C_inner (pF)
 # Parameter 7: tau_inner (ms)
 # Parameter 8: n_inner
 # Parameter 9: tau_horizontal (ms)

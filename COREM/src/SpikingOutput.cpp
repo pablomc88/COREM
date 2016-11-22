@@ -24,9 +24,16 @@ SpikingOutput::SpikingOutput(int x, int y, double temporal_step, string output_f
         out_spk_filename=output_filename;
     else
         out_spk_filename="results/spikes.spk";
+
     // Save all input images by default
     Start_time=0.0;
     End_time=numeric_limits<double>::infinity();
+
+    // Process al input pixels by default
+    First_inp_ind=0;
+    Inp_ind_inc=1;
+    Total_inputs=~0UL; // Practcally infinite 
+    
     Random_init=0.0; // Same initial state for all neurons
     
     normal_distribution<double>::param_type init_norm_dist_params(0.0, Min_period_std_dev/1000.0); // Random numbers from a Gaussian distribution of  mean=0, sigma=Noise_std_dev/1000 seconds
@@ -191,6 +198,36 @@ bool SpikingOutput::set_Random_init(double rnd_init){
     return(true);
 }
 
+bool SpikingOutput::set_First_inp_ind(double first_input){
+    bool ret_correct;
+    if (first_input>=0) {
+        First_inp_ind = first_input;
+        ret_correct=true;
+    } else
+        ret_correct=false;
+    return(ret_correct);
+}
+
+bool SpikingOutput::set_Inp_ind_inc(double input_inc){
+    bool ret_correct;
+    if (input_inc>=0) {
+        Inp_ind_inc = input_inc;
+        ret_correct=true;
+    } else
+        ret_correct=false;
+    return(ret_correct);
+}
+
+bool SpikingOutput::set_Total_inputs(double num_inputs){
+    bool ret_correct;
+    if (num_inputs>=0) {
+        Total_inputs = num_inputs;
+        ret_correct=true;
+    } else
+        ret_correct=false;
+    return(ret_correct);
+}
+
 //------------------------------------------------------------------------------//
 
 bool SpikingOutput::setParameters(vector<double> params, vector<string> paramID){
@@ -218,9 +255,14 @@ bool SpikingOutput::setParameters(vector<double> params, vector<string> paramID)
             correct = set_End_time(params[i]);
         } else if (strcmp(s,"Random_init")==0){
             correct = set_Random_init(params[i]);
-        } else {
+        } else if (strcmp(s,"First_inp_ind")==0){
+            correct = set_First_inp_ind(params[i]);
+        } else if (strcmp(s,"Inp_ind_inc")==0){
+            correct = set_Inp_ind_inc(params[i]);
+        } else if (strcmp(s,"Total_inputs")==0){
+            correct = set_Total_inputs(params[i]);
+        } else
             correct = false;
-        }
     }
 
     return correct;
@@ -338,8 +380,11 @@ void SpikingOutput::update(){
     vector<spike_t> slot_spks; // Temporal vector of output spikes for current sim. time slot
 
     out_neu_idx=0UL;
+    inp_img_it+=First_inp_ind; // start from the pixl selected by user
+    last_firing_period_it+=First_inp_ind;
+    next_spk_time_it+=First_inp_ind;
     // For each input image pixel:
-    while(inp_img_it<inputImage->end()){ // we use inp_img_it.end() as upper bound for all iterators
+    while(inp_img_it<inputImage->end() && out_neu_idx<Total_inputs){ // we use inp_img_it.end() as upper bound for all iterators
         spike_t new_spk;
         // Intermediate variables used to calculate next spike time
         double inp_pix_per;
@@ -407,9 +452,9 @@ void SpikingOutput::update(){
             *next_spk_time_it = *next_spk_time_it + slot_len;
             
         // Switch to the next neuron (pixel)
-        inp_img_it++;
-        last_firing_period_it++;
-        next_spk_time_it++;
+        inp_img_it+=Inp_ind_inc;
+        last_firing_period_it+=Inp_ind_inc;
+        next_spk_time_it+=Inp_ind_inc;
         out_neu_idx++;
     }
 

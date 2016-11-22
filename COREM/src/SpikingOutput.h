@@ -39,6 +39,10 @@ protected:
     string out_spk_filename; // filename (including path) to the spike output file to create
     
     double Start_time, End_time; // These recording parameters define the simulation time interval when the images must be saved (in milliseconds)
+    
+    // These parameter select which pixels will be condiered, thus restricting the number of outputs as well
+    size_t First_inp_ind, Inp_ind_inc; // Index of the first pixel (from 0), Increment the get the next pixel index
+    unsigned long Total_inputs; // and total number of pixels to consider
 
     // parameters for conversion from input magnitude to firing rate
     double Min_period; // Minimum time in milliseconds allowed to elape between two consecutive spikes of a neuron (min. ISI or refractory period)
@@ -77,6 +81,9 @@ public:
     bool set_Start_time(double start_time);
     bool set_End_time(double end_time);
     bool set_Random_init(double rnd_init);
+    bool set_First_inp_ind(double first_input);
+    bool set_Inp_ind_inc(double input_inc);
+    bool set_Total_inputs(double num_inputs);
 
     // Get new input
     virtual void feedInput(double sim_time, const CImg<double> &new_input, bool isCurrent, int port);
