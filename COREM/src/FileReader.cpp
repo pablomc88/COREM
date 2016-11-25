@@ -377,6 +377,7 @@ void FileReader::parseFile(Retina &retina, DisplayManager &displayMg){
                 displayMg.allocateValues(retina.getNumberModules(),retina.getStep()); // allocate values of Display Manager even if no Connect command is used
                 
             switch(action){
+
             // Create
             case 1:
 
@@ -541,6 +542,7 @@ void FileReader::parseFile(Retina &retina, DisplayManager &displayMg){
 
                 action = 0;
                 break;
+
             // Temporal step
             case 3:
 
@@ -559,6 +561,7 @@ void FileReader::parseFile(Retina &retina, DisplayManager &displayMg){
                 if(verbose)cout << "Temporal step = "<< atof(token[2]) << endl;
                 action = 0;
                 break;
+
             // Pixels per degree
             case 4:
                 if (token[2] && token[3] && token[4]){
@@ -604,6 +607,7 @@ void FileReader::parseFile(Retina &retina, DisplayManager &displayMg){
                 if(verbose)cout << "Number of repetitions = "<< atof(token[2]) << endl;
                 action = 0;
                 break;
+
             // Display delay
             case 6:
 
@@ -641,6 +645,7 @@ void FileReader::parseFile(Retina &retina, DisplayManager &displayMg){
                 if(verbose)cout << "Windows configured." << endl;
                 action = 0;
                 break;
+
             // Input
             case 8:
                 if (token[2] && token[3]){
@@ -727,6 +732,7 @@ void FileReader::parseFile(Retina &retina, DisplayManager &displayMg){
                 if(verbose)cout << "Density assigned to modules." << endl;
                 action = 0;
                 break;
+
             // Show windows
             case 11:
 
@@ -745,7 +751,7 @@ void FileReader::parseFile(Retina &retina, DisplayManager &displayMg){
                                 displayMg.setIsShown(true,l);
                                 if(verbose)cout << "Module "<<  token[2] <<" is displayed." << endl;
                                 // also input
-                                displayMg.setIsShown(true,0);
+                                //displayMg.setIsShown(true,0);
                             }
                             else if(strcmp(token[3],"False")==0){
                                 displayMg.setIsShown(false,l);
@@ -889,9 +895,6 @@ void FileReader::parseFile(Retina &retina, DisplayManager &displayMg){
                                 abort(line,"Parameter syntax error or specified module ID not found");
                                 break;
                             }
-
-
-
                         }else{
                             abort(line,"Expected parameter list start token ('{')");
                             break;
@@ -957,7 +960,7 @@ void FileReader::parseFile(Retina &retina, DisplayManager &displayMg){
                     vector<double> p;
                     vector<string> pid;
                     
-                    if (strcmp(token[2], "SpikingOutput") == 0 ) {
+                    if (strcmp(token[2], "spikes") == 0 ) {
                         string output_filename;
                         
                         if (token[3] && strcmp(token[3], "{") != 0){ // the next token is not {, assume that it is the output filename
@@ -969,7 +972,7 @@ void FileReader::parseFile(Retina &retina, DisplayManager &displayMg){
                         }
                         newModule = new SpikingOutput(retina.getSizeX(), retina.getSizeY(), retina.getStep(), output_filename);
                     }
-                    else if (strcmp(token[2], "SequenceOutput") == 0 ) {
+                    else if (strcmp(token[2], "sequence") == 0 ) {
                         string output_filename;
                         
                         if (token[3] && strcmp(token[3], "{") != 0){ // the next token is not {, assume that it is the output filename
@@ -1007,13 +1010,10 @@ void FileReader::parseFile(Retina &retina, DisplayManager &displayMg){
                 break;
             }
         }
-
     }//end while
-
 
     // close file
     fin.close();
-
 }
 
 //-------------------------------------------------//

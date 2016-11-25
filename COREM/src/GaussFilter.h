@@ -33,6 +33,9 @@ using namespace cimg_library;
 
 class GaussFilter:public module{
 protected:
+    // Input image size for this module
+    int buffSizeX, buffSizeY;
+
     // Filter parameters
     double sigma;
     double* buffer;

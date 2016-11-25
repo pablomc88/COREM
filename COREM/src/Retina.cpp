@@ -246,8 +246,9 @@ bool Retina::setRepetitions(int r){
 
 bool Retina::allocateValues(){
     bool ret_correct;
-    // The Input module (modules[0]) may want to adjust the image size, so call allocateValues()
-    // of this module first and then propagate the new image size to the rest of modules and retina
+    // The Input module (modules[0]) may want to adjust the image size, so we call allocateValues()
+    // of this module first, and then propagate the new image size (normally the same) to the rest
+    // of modules and retina
     modules[0]->setSizeX(sizeX);
     modules[0]->setSizeY(sizeY);
     modules[0]->allocateValues(); // Input module may determine a new size after allocateValues() call

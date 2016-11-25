@@ -76,8 +76,8 @@ TARGET        = corem
 
 first: all
 
-debug: CXXFLAGS += -DDEBUG -g
-debug: CFLAGS += -DDEBUG -g
+debug: CXXFLAGS += -DDEBUG -g -O0
+debug: CFLAGS += -DDEBUG -g -O0
 debug: first
 
 release: CXXFLAGS += -O2

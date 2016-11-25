@@ -98,7 +98,6 @@ bool DisplayManager::setSizeY(int y){
 
 void DisplayManager::setZoom(double zoom){
     displayZoom = zoom;
-
 }
 
 void DisplayManager::setDelay(int displayDelay){
@@ -110,7 +109,6 @@ void DisplayManager::setImagesPerRow(int numberI){
 }
 
 void DisplayManager::setIsShown(bool value,int pos){
-
     isShown[pos]=value;
 }
 
@@ -225,7 +223,7 @@ void DisplayManager::addModule(int pos,string ID){
             displays.push_back(new CImgDisplay());
         }
 
-        // initialize intermediate images
+        // initialize intermediate images at the first call
         if(numberModules>1){
             intermediateImages = new CImg<double>*[numberModules-1];
             for (int i=0;i<numberModules-1;i++)
@@ -295,7 +293,10 @@ void DisplayManager::updateDisplay(CImg <double> *input, Retina &retina, int sim
 
         inputImage->crop(margin[0],margin[0],0,0,sizeY-margin[0]-1,sizeX-margin[0]-1,0,inputImage->spectrum()-1,false);
         min = inputImage->min_max(max); // find maximum and minimum values in all color channels
-        ((255*(*inputImage - min)/(max-min))).resize((int)newY,(int)newX).display(*d0);
+        if(max-min > DBL_EPSILON) // normalize Input before showing it if it has different pixel values
+            ((255*(*inputImage - min)/(max-min))).resize((int)newY,(int)newX).display(*d0);
+        else // If we normalize we lose the offset and so all the informaton: we better don't normalize
+            inputImage->resize((int)newY,(int)newX).display(*d0);
     }
 
     // Update windows
@@ -351,7 +352,6 @@ void DisplayManager::updateDisplay(CImg <double> *input, Retina &retina, int sim
             else
                 strs2 << (int)max;
 
-
             string str2 = strs2.str();
             string max_value_text = str2.substr(0,4);
 
@@ -359,7 +359,10 @@ void DisplayManager::updateDisplay(CImg <double> *input, Retina &retina, int sim
 
             // show image
             intermediateImages[k]->crop(margin[k+1],margin[k+1],0,0,sizeY-margin[k+1]-1,sizeX-margin[k+1]-1,0,0,false);
-            (((255*(*intermediateImages[k] - min)/(max-min))).map(CImg<double>::jet_LUT256()).resize((int)newY,(int)newX),*bars[k]).display(*d);
+            if(max-min > DBL_EPSILON) // normalize image before showing it if all its pixel do not the same value
+                ((255*(*intermediateImages[k] - min)/(max-min)).map(CImg<double>::jet_LUT256()).resize((int)newY,(int)newX),*bars[k]).display(*d);
+            else // Do not normalize to preserve the pixel offset information
+                (intermediateImages[k]->map(CImg<double>::jet_LUT256()).resize((int)newY,(int)newX),*bars[k]).display(*d);
         }
     }
 
