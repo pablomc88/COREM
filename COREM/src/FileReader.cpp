@@ -953,53 +953,57 @@ void FileReader::parseFile(Retina &retina, DisplayManager &displayMg){
 
             // Output
             case 16:
-                if (token[2]){ // Check that at least we can read the output type
-                    // read module type
-                    int next_tok_idx; // Next token to parse
-                    module* newModule;
-                    vector<double> p;
-                    vector<string> pid;
-                    
-                    if (strcmp(token[2], "spikes") == 0 ) {
-                        string output_filename;
+                if(token[2] && token[3]){ // Check that at least we can read the output type and its ID
+                    if(strstr(token[3], "Output") == token[3]){ // Check if the specified module ID contains the substring Output at the beggining of the ID
+                        // read module type
+                        int next_tok_idx; // Next token to parse
+                        module *newModule;
+                        vector<double> p;
+                        vector<string> pid; // Parameter list
                         
-                        if (token[3] && strcmp(token[3], "{") != 0){ // the next token is not {, assume that it is the output filename
-                            output_filename=token[3]; // Replace (default) filename
-                            next_tok_idx=4; // Pass to the next token to continue reading parameters
-                        } else {
-                            output_filename=""; // Use the default filename
-                            next_tok_idx=3; // continue reading parameters from this current token
+                        if (strcmp(token[2], "spikes") == 0 ) {
+                            string output_filename;
+                            
+                            if (token[4] && strcmp(token[4], "{") != 0){ // the next token is not {, assume that it is the output filename
+                                output_filename=token[4]; // Replace (default) filename
+                                next_tok_idx=5; // Pass to the next token to continue reading parameters
+                            } else {
+                                output_filename=""; // Use the default filename
+                                next_tok_idx=4; // continue reading parameters from this current token
+                            }
+                            newModule = new SpikingOutput(retina.getSizeX(), retina.getSizeY(), retina.getStep(), output_filename);
                         }
-                        newModule = new SpikingOutput(retina.getSizeX(), retina.getSizeY(), retina.getStep(), output_filename);
-                    }
-                    else if (strcmp(token[2], "sequence") == 0 ) {
-                        string output_filename;
-                        
-                        if (token[3] && strcmp(token[3], "{") != 0){ // the next token is not {, assume that it is the output filename
-                            output_filename=token[3]; // Replace (default) filename
-                            next_tok_idx=4; // Pass to the next token to continue reading parameters
+                        else if (strcmp(token[2], "sequence") == 0 ) {
+                            string output_filename;
+                            
+                            if (token[4] && strcmp(token[4], "{") != 0){ // the next token is not {, assume that it is the output filename
+                                output_filename=token[4]; // Replace (default) filename
+                                next_tok_idx=5; // Pass to the next token to continue reading parameters
+                            } else {
+                                output_filename=""; // Use the default filename
+                                next_tok_idx=4; // continue reading parameters from this current token
+                            }
+                            newModule = new SequenceOutput(retina.getSizeX(), retina.getSizeY(), retina.getStep(), output_filename);
                         } else {
-                            output_filename=""; // Use the default filename
-                            next_tok_idx=3; // continue reading parameters from this current token
+                            abort(line,"Unknown retina output type");
+                            break;
                         }
-                        newModule = new SequenceOutput(retina.getSizeX(), retina.getSizeY(), retina.getStep(), output_filename);
+                      
+                        // Process parameter block if it is found
+                        parseParameterBlock(token+next_tok_idx, newModule, line);
+
+                        // Add module to the retina
+                        if(continueReading) {
+                            retina.addModule(newModule,token[3]);
+                            if(verbose) cout << "Output module " << token[3] << "added to the retina" << endl;
+                        } else
+                            break;
                     } else {
-                        abort(line,"Unknown retina output type");
+                        abort(line,"The ID of Output module must start with the characters 'Output'");
                         break;
-                    }
-                  
-                    // Process parameter block if it is found
-                    parseParameterBlock(token+next_tok_idx, newModule, line);
-
-                    // Add module to the retina
-                    if(continueReading) {
-                        retina.addModule(newModule,"Output");
-                        if(verbose) cout << "Output module added to the retina" << endl;
-                    } else
-                        break;
-
+                    }                    
                 }else{
-                    abort(line,"Expected a retina output type");
+                    abort(line,"Expected a retina output type and output module ID");
                     break;
                 }
 

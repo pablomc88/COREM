@@ -465,19 +465,29 @@ void Retina::update(){
 
 bool Retina::addModule(module *new_module, string new_mod_ID){
     bool correctly_added;
+    const char *out_mod_id_start="Output"; // Output modules are recognied bececause their ID start with string
+    const char *inp_mod_id="Input";
+    bool out_mod_insertion; // An Output* module is being inserted
 
     new_module->setModuleID(new_mod_ID);
-    // If Input or a Output module is being added, first try to find the corresponding
-    // dummy module and replace it with the currently being added module.
-    // If no corresponding dummy module is found, insert it anyway (if it is Outout) or
-    // warn and ignore it (if is Input).
-    if(new_mod_ID.compare("Input") == 0 || new_mod_ID.compare("Output") == 0){
+    // If the Input or an Output module is being added, first try to find the corresponding
+    // initial dummy module and replace it with the currently being added module.
+    // If no corresponding dummy module is found (Input/Output module was already inserted),
+    // insert it anyway (if it is Output) or warn and ignore it (if is Input).
+    out_mod_insertion = (new_mod_ID.compare(0,strlen(out_mod_id_start),out_mod_id_start) == 0); // An output module is being inserted
+    if(new_mod_ID.compare(inp_mod_id) == 0 || out_mod_insertion){ // An input or output module is being inserted
+        const char *dummy_mod_id;
+        if(out_mod_insertion) // Output module is being inserted
+            dummy_mod_id=out_mod_id_start; // Search for a dummy Input module
+        else // Input module is being inserted
+            dummy_mod_id=inp_mod_id; // Search for a dummy Output module
+            
         correctly_added=false; // Default fn return value
         // Search for the Input module in list of modules already added to the retina object
         for(size_t module_ind=0; module_ind < modules.size() && !correctly_added; module_ind++){
             module *curr_module;
             curr_module = modules[module_ind];
-            if (curr_module->checkID(new_mod_ID.c_str())){ // Input/Output module found
+            if (curr_module->checkID(dummy_mod_id)){ // Input/Output module found
                 // check if the module found is the expected default module (dummy)
                 // Otherwise, Input/Output module has already been added (and has been found)
                 if(curr_module->isDummy()){ 
@@ -486,8 +496,8 @@ bool Retina::addModule(module *new_module, string new_mod_ID){
                     modules[module_ind] = new_module; // Use the specified module as Input module
                     correctly_added=true; // Exit for loop
                 } else {
-                    if(new_mod_ID.compare("Input") == 0) {
-                        cout << "Warning: Retina Input has alredy been specified. Ignoring posterior ones." << endl; // Ignore insertion (and return false)
+                    if(!out_mod_insertion) { // Other non-dummy Input module has been found
+                        cout << "Warning: Retina Input has alredy been specified. Ignoring posterior one." << endl; // Ignore insertion (and return false)
                         break; // Exit for loop
                     } else { // We can have more than one Output module, so insert it anyway
                         modules.push_back(new_module);
@@ -495,6 +505,10 @@ bool Retina::addModule(module *new_module, string new_mod_ID){
                     }
                 }
             }
+        }
+        if(!correctly_added && out_mod_insertion){ // All Output* modules must be inserted
+            modules.push_back(new_module);
+            correctly_added=true;            
         }
     } else { // For any other module, just insert it in the end of the modules vector
         modules.push_back(new_module);
@@ -623,8 +637,8 @@ bool Retina::connect(vector <string> from, const char *to,vector <int> operation
     bool valueToReturn = false; // default return value
     module* neuronto;
 
-    // Search in the list of all modules (although Input module (i=0) could be excluded) for the specified target module
-    for(size_t i=0;i<modules.size();i++){
+    // Search in the list of all modules (excluding Input module (i=0)) for the specified target module
+    for(size_t i=1;i<modules.size();i++){
         neuronto = modules[i];
         if(neuronto->checkID(to)){
             const char *ff=NULL;
@@ -638,8 +652,8 @@ bool Retina::connect(vector <string> from, const char *to,vector <int> operation
 
                 ff = from[j].c_str();
                 if(strcmp(ff,"rods")!=0 && strcmp(ff,"L_cones")!=0 && strcmp(ff,"M_cones")!=0 && strcmp(ff,"S_cones")!=0 && strcmp(ff,"red_channel")!=0 && strcmp(ff,"green_channel")!=0 && strcmp(ff,"blue_channel")!=0 && strcmp(ff,"zeros")!=0){ // Internal input type specified
-                    // Search in the list of all modules (including Intput module, although it is not necessary) for the current module (ff) of the specified source module list (from)
-                    for(k=0;k<modules.size();k++){
+                    // Search in the list of all modules (excluding the Intput module, which may return a multi-spectrum image) for the current module (ff) of the specified source module list (from)
+                    for(k=1;k<modules.size();k++){
                         module* neuronfrom = modules[k];
                         if(neuronfrom->checkID(ff)) // Connection source found: exit the loop to make false the next if condition
                             break;
