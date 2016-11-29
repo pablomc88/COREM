@@ -129,9 +129,11 @@ int main(int argc, char *argv[])
                 cout << "   AbortExecution " << interface.getAbortExecution() << endl;
             }
 
-            for(int sim_time=0;interface.getAbortExecution()==false && sim_time<totalSimTime;sim_time+=simStep)
+            for(int sim_time=0;interface.getAbortExecution()==false && sim_time<totalSimTime;sim_time+=simStep){
                 interface.update();
-
+                cout << "\rSim. time: " << sim_time << " of: " << totalSimTime << "ms" << flush;
+            }
+            cout << endl;
         } while(++trial_ind < num_trials); // Check the loop end condition in the end, after reading the number of trials
         
     }else{

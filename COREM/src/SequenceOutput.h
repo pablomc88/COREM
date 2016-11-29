@@ -32,12 +32,13 @@ protected:
     string out_seq_filename; // filename (including path) to the movie output file to create
     ofstream out_seq_file_handle; // The out_seq_filename file is created when the object is created and this handle is set
     unsigned int num_written_frames; // Number of frames currently added to out_seq_file_handle
+    unsigned int num_skipped_frames; // Number of frames currently skipped (following user specification)
 
     double Start_time, End_time; // These recording parameters define the simulation time interval when the images must be saved
     
     // parameters of output file
     double Voxel_X_size, Voxel_Y_size; // Size of a voxel (pixel) in X and Y dimensions. The size in Z (time) is always set to 1
-
+    unsigned int InFramesPerOut; // Number of input frames waited until an output frame is generated
 public:
     // Constructor, copy, destructor.
     SequenceOutput(int x=1, int y=1, double temporal_step=1.0, string output_filename="");
@@ -52,6 +53,7 @@ public:
     bool set_Voxel_Y_size(double voxel_y_size);
     bool set_Start_time(double start_time);
     bool set_End_time(double end_time);
+    bool set_InFramesPerOut(unsigned int n_frames);
 
     // Get new input
     virtual void feedInput(double sim_time, const CImg<double> &new_input, bool isCurrent, int port);

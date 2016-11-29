@@ -51,7 +51,7 @@ protected:
     string connection_url; // URL of the connection. It must be 'tcp://localhost:port', where port 
     pthread_t Receiver_thread_id; // ID of the thread created to receive images
     struct receiver_params receiver_vars; // Variables shared between the class object and the thread
-    double Par; // to be erased
+    int SkipNInitFrames; // Number of of frames to skip just at the beginning of the stream
 public:
     // Constructor, copy, destructor.
     StreamingInput(int x=1, int y=1, double temporal_step=1.0, string conn_url="");
@@ -62,7 +62,7 @@ public:
     virtual bool allocateValues();
 
     // These functions are mainly used by setParameters() to set object parameter properties after the object is created
-    bool set_Par(double par);
+    bool set_SkipNInitFrames(int n_frames);
 
     // Get new input
     virtual void feedInput(double sim_time, const CImg<double> &new_input, bool isCurrent, int port);

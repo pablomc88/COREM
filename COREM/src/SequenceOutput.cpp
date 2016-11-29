@@ -15,6 +15,7 @@ SequenceOutput::SequenceOutput(int x, int y, double temporal_step, string output
     // Default output parameters
     Voxel_X_size=1.0;
     Voxel_Y_size=1.0;
+    InFramesPerOut=1U;
     // Save all images by default
     Start_time=0.0;
     End_time=numeric_limits<double>::infinity();
@@ -27,8 +28,9 @@ SequenceOutput::SequenceOutput(int x, int y, double temporal_step, string output
     // Input buffer
     inputImage=new CImg<double> (sizeY, sizeX, 1, 1, 0);
 
-    // Internal state variables: number of frames already saved
+    // Internal state variables: number of frames already saved and skipped
     num_written_frames=0;
+    num_skipped_frames=0;
 
     CreateINRFile(); // Create out_seq_filename file
 }
@@ -39,9 +41,11 @@ SequenceOutput::SequenceOutput(const SequenceOutput &copy):module(copy){
     Voxel_X_size = copy.Voxel_X_size;
     Voxel_Y_size = copy.Voxel_Y_size;
     num_written_frames = copy.num_written_frames;
+    num_skipped_frames = copy.num_skipped_frames;
     out_seq_filename = copy.out_seq_filename;
     Start_time = copy.Start_time;
     End_time = copy.End_time;
+    InFramesPerOut = copy.InFramesPerOut;
     
     out_seq_file_handle.open(out_seq_filename, ios::out | ios::binary);
     if(out_seq_file_handle.is_open())
@@ -109,6 +113,15 @@ bool SequenceOutput::set_End_time(double end_time){
     return(ret_correct);
 }
 
+bool SequenceOutput::set_InFramesPerOut(unsigned int n_frames){
+    bool ret_correct;
+    if (n_frames>0){
+        InFramesPerOut = n_frames;
+        ret_correct=true;
+    } else
+        ret_correct=false;
+    return(ret_correct);
+}
 
 //------------------------------------------------------------------------------//
 
@@ -127,6 +140,8 @@ bool SequenceOutput::setParameters(vector<double> params, vector<string> paramID
             correct = set_Start_time(params[i]);
         }else if (strcmp(s,"End_time")==0){
             correct = set_End_time(params[i]);
+        }else if (strcmp(s,"InFramesPerOut")==0){
+            correct = set_InFramesPerOut((unsigned int)(params[i]));
         } else{
               correct = false;
         }
@@ -148,7 +163,10 @@ void SequenceOutput::feedInput(double sim_time, const CImg<double>& new_input,bo
 
 void SequenceOutput::update(){
     if(simTime >= Start_time && simTime+step <= End_time) // Check if the user wants to record the image at current time
-        WriteINRFrame(); // Save inputImage image into the file
+        if(++num_skipped_frames >= InFramesPerOut){ // Is time to write a new frame?
+            WriteINRFrame(); // Save inputImage image into the file
+            num_skipped_frames=0; // Reset the counter
+        }
 }
 
 //------------------------------------------------------------------------------//

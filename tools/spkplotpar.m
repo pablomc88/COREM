@@ -149,7 +149,7 @@ end
 disp('Creating figure...');
 
 switch(plot_mode)
-case {'ra', 'rs'} % Raster plot
+case 'ra' % Raster plot
     
     for nneu=1:diff_neus
         cur_neu_spk_times=neu_spk{nneu};
@@ -225,9 +225,11 @@ case 'ph' % PHase plot
     hist(spk_phases, n_bins);
     xlabel('firing phase (ms)');
     ylabel('spike count');
-case 'rf' % Fast Raster plot
+case {'rf', 'rs'} % Fast Raster plot
     plot(activity_list(:,2), activity_list(:,1), '.')
-    xlabel('time');
+    set(gca, 'FontName', 'Courier 10 Pitch')
+    set(gca, 'FontSize', 18)
+    xlabel('time (s)');
     ylabel('neuron number');
 end
 display(['Total number of spikes: ' num2str(size(activity_list,1))])
@@ -235,9 +237,10 @@ display(['Number of spiking neurons: ' num2str(length(unique(activity_list(:,1))
 display(['First neuron index: ' num2str(min(activity_list(:,1))) ' Last neuron index: ' num2str(max(activity_list(:,1)))])
 
 if isequal(plot_mode,'rs') % Raster scroll
+    title('Ganglion cells')
     set(gca, 'Ydir', 'reverse')
     scroll_wnd=1;
-    scroll_step=0.06666;
+    scroll_step=0.05;
     curr_axis=axis;
     vid_obj = VideoWriter('raster.avi');
     vid_obj.FrameRate = 1/scroll_step;

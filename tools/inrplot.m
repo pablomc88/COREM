@@ -98,6 +98,7 @@ else
                 images = permute(images,[2 1 4 3]); % for immovie image must be an M-by-N-by-1-by-K array, where K is the number of images
                 if size(images,3) == 1 % grayscaled frames
                     % normalize pixel values to interval 1 255
+                    images = images - min(images(:));
                     images = 1 + double(images)/double(max(images(:)))*255;
                     images_mov = immovie(images,gray(256));
                 else

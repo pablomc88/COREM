@@ -295,36 +295,36 @@ bool Retina::allocateValues(){
 
 //------------------------------------------------------------------------------//
 
-CImg<double> *Retina::feedInput(int step){
+CImg<double> *Retina::feedInput(int sim_time){
     CImg <double> *input;
     
     // Update Retina current simulation time from InterfaceNEST current simulation time
-    simTime = step;
-
+    simTime = sim_time;
+ 
     // Input selection
     switch(inputType){
     case 0:
-        if (step/repetitions < numberImages)
-            input = inputSeq[step/repetitions];
+        if (sim_time/repetitions < numberImages)
+            input = inputSeq[sim_time/repetitions];
         else
             //input = inputSeq[numberImages-1];
             input = NULL;
         break;
 
     case 1:
-        input = updateGrating(step);
+        input = updateGrating(sim_time);
         break;
 
     case 2:
-        input = updateNoise(step);
+        input = updateNoise(sim_time);
         break;
 
     case 3:
-        input = updateImpulse(step);
+        input = updateImpulse(sim_time);
         break;
 
     case 4:
-        input = updateFixGrating(step);
+        input = updateFixGrating(sim_time);
         break;
 
     case 5: // streaming input
@@ -436,9 +436,9 @@ CImg<double> *Retina::feedInput(int step){
                 }
 
                 if (neuron->getTypeSynapse(o)==0)
-                    neuron->feedInput(step, *accumulator, true, o);
+                    neuron->feedInput(sim_time, *accumulator, true, o);
                 else
-                    neuron->feedInput(step, *accumulator, false, o);
+                    neuron->feedInput(sim_time, *accumulator, false, o);
             }
         }
     }
@@ -544,6 +544,8 @@ bool Retina::setInputSeq(string s){
     
     // Check if the specified input-sequence path is a directory or a movie file
     if(stat(s.c_str(), &input_seq_path_stat) == 0){
+        if(verbose)
+            cout << "Loading image sequence from: " << s << "..." << endl;
         if(S_ISDIR(input_seq_path_stat.st_mode)){ // The user has specified a directory as input sequence: load all the directory files
             std::vector <std::string> result;
             DIR* dp=opendir(s.c_str());

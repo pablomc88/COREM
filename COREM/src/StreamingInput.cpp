@@ -23,7 +23,8 @@ StreamingInput::StreamingInput(int x, int y, double temporal_step, string conn_u
     
     // Default input parameters
     connection_url = conn_url;    
-    
+    SkipNInitFrames = 0; // No frame skipped by default
+
     // Allocate image buffers buffer
     outputImage = new CImg<double> (sizeY, sizeX, 1, 1, 0);
     receiver_vars.buffer_img = new CImg<double> (sizeY, sizeX, 1, 1, 0);
@@ -63,7 +64,7 @@ StreamingInput::StreamingInput(const StreamingInput &copy):module(copy){
     receiver_vars = copy.receiver_vars;
     receiver_vars.buffer_mutex = copy.receiver_vars.buffer_mutex;
     receiver_vars.reception_mutex = copy.receiver_vars.reception_mutex;
-    Par = copy.Par;
+    SkipNInitFrames = copy.SkipNInitFrames;
 
     outputImage=new CImg<double>(*copy.outputImage);
     receiver_vars.buffer_img=new CImg<double>(*copy.receiver_vars.buffer_img);
@@ -93,8 +94,11 @@ bool StreamingInput::allocateValues(){
     
     ret_correct = openConnetion(); // Set socket to listen
     if(ret_correct){
+        for(int n_skipped_frames=0;n_skipped_frames<SkipNInitFrames;n_skipped_frames++)
+            outputImage->load_png(receiver_vars.accept_socket_fh); // Skip frame
+            
         // Use the first frame to find out the new dimensions of retina image size
-        outputImage->load_png(receiver_vars.accept_socket_fh); // Get first frame
+        outputImage->load_png(receiver_vars.accept_socket_fh); // Get first valid frame
         sizeY=outputImage->width();
         sizeX=outputImage->height();
         // output image should have been automatically resized after first frame load
@@ -112,10 +116,10 @@ bool StreamingInput::allocateValues(){
 }
 
 
-bool StreamingInput::set_Par(double par){
+bool StreamingInput::set_SkipNInitFrames(int n_frames){
     bool ret_correct;
-    if (par>=0) {
-        Par = par;
+    if (n_frames>=0) {
+        SkipNInitFrames = n_frames;
         ret_correct=true;
     } else
         ret_correct=false;
@@ -133,7 +137,7 @@ bool StreamingInput::setParameters(vector<double> params, vector<string> paramID
         const char * s = paramID[i].c_str();
 
         if (strcmp(s,"Par")==0){
-            correct = set_Par(params[i]);
+            correct = set_SkipNInitFrames((int)(params[i]));
         } else{
               correct = false;
         }
@@ -302,8 +306,13 @@ bool StreamingInput::stopStreamReception(){
         join_err = pthread_join(Receiver_thread_id, &thread_ret_ptr); // Wait for thread to terminate
         if(join_err == 0) {// If success joining
             thread_ret = (int)(intptr_t)thread_ret_ptr;
-            if(thread_ret != 0)
-                cout << "Frame reception ended anormally. errno: " << thread_ret << "." << endl;
+            if(thread_ret != 0){
+                if(thread_ret == EIO)
+                    cout << "Streaming connection was closed by the other peer: Ending simulation..." << endl;
+                else
+                    cout << "Frame reception ended anormally. errno: " << thread_ret << "." << endl;
+                
+            }
             
             ret_correct = true;
         } else {
