@@ -1,4 +1,3 @@
-
 /* BeginDocumentation
  * Name: main
  *
@@ -64,10 +63,11 @@ int main(int argc, char *argv[])
     string retinaString;
     int arg_index;
     bool got_script_file;
-    bool verbose_flag, help_param;
+    bool verbose_flag, help_param, show_progress;
 
     // Default parameter values
     verbose_flag=false;
+    show_progress=false;
     help_param=false;
     got_script_file=false;
     // Parse all input arguments
@@ -78,19 +78,24 @@ int main(int argc, char *argv[])
                 got_script_file=true;
             }else
                 cout << "Warning: More than one argument seem retina script filenames: Using the first one:" << retinaString << endl;
+        } else {
+            if(strcmp(argv[arg_index],"-h") == 0 || strcmp(argv[arg_index],"--help") == 0){ // Help argument found
+                cout << "COREM retina simulator." << endl;
+                cout << " Syntax: " << argv[0] << " [-v] [-p] <retina_script_filename>" << endl;
+                cout << "   <retina_script_filename> is a text file (usually with extension .py) which" << endl;
+                cout << "   defines a retina model and simulation parameters." << endl;
+                cout << "   -v argument shows verbose information." << endl;
+                cout << "   -p argument shows progress information during simulation." << endl;
+                cout << "   Visit https://github.com/pablomc88/COREM/wiki for information about the" << endl;
+                cout << "   format of this script file" << endl;
+                help_param=true;
+            } else if(strcmp(argv[arg_index],"-v") == 0) // Verbose execution requested
+                verbose_flag=true;
+            else if(strcmp(argv[arg_index],"-p") == 0) // Progress information requested
+                show_progress=true;
+            else
+                cout << "Ignoring unknown argument " << argv[arg_index] << endl;
         }
-        if(strcmp(argv[arg_index],"-h") == 0 || strcmp(argv[arg_index],"--help") == 0 || strcmp(argv[arg_index],"/?") == 0){ // Help argument found
-            cout << "COREM retina simulator." << endl;
-            cout << " Syntax: " << argv[0] << " [-v] <retina_script_filename>" << endl;
-            cout << "   <retina_script_filename> is a text file (usually with extension .py) which" << endl;
-            cout << "   defines a retina model and simulation parameters." << endl;
-            cout << "   Visit https://github.com/pablomc88/COREM/wiki for information about the" << endl;
-            cout << "   format of this script file" << endl;
-            help_param=true;
-        }
-        
-        if(strcmp(argv[arg_index],"-v") == 0) // Verbose execution requested
-            verbose_flag=true;
     }
     if(got_script_file){
         // Create interface
@@ -131,9 +136,11 @@ int main(int argc, char *argv[])
 
             for(int sim_time=0;interface.getAbortExecution()==false && sim_time<totalSimTime;sim_time+=simStep){
                 interface.update();
-                cout << "\rSim. time: " << sim_time << " of: " << totalSimTime << "ms" << flush;
+                if(show_progress)
+                    cout << "\rSim. time: " << sim_time << " of: " << totalSimTime << "ms" << flush;
             }
-            cout << endl;
+            if(show_progress)
+                cout << endl;
         } while(++trial_ind < num_trials); // Check the loop end condition in the end, after reading the number of trials
         
     }else{
