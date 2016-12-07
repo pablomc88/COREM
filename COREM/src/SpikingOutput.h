@@ -60,8 +60,8 @@ protected:
     gamma_distribution<double> gam_dist; // For generating random spike times
     uniform_real_distribution<double> unif_dist; // For generating neuron random init states
     
-    // Last firing period and predicted firing time for each output neuron (in seconds)
-    CImg<double> *last_firing_period, *next_spk_time;
+    // Predicted firing time for each output neuron (in seconds)
+    CImg<double> *next_spk_time; // This time value is relative to the next sim. slot start time
 
 public:
     // Constructor, copy, destructor.
@@ -96,37 +96,22 @@ public:
     // Spks_per_inp) to convert the magnitude of an input pixel into an instant
     // spike firing rate.
     double inp_pixel_to_period(double pixel_value);
-
+    
     // This method basically gerates spike times during current simulation time slot for one neuron.
     // For this, this method calculates the firing period (ISI) corresponding to the current input and
-    // generates 1 spike after each period.
-    // The extra complexity arises when calculating the time of the first spike of this series.
-    // If the previous input is the same as the current one, it is easy, we use the same period to space
-    // the spike series. But when the previous input is different from the current one, we calculate the
-    // time of the next spike taking into account: the firing period correspondind to the last input,
-    // the time of the spike that would be fired is the last input continued during this sim. slot, the 
-    // firing period correspondind to the current input, and the start of the current sim. slot.
-    // Considering these variables we calculate the ISI between the last series spike and the new series
-    // first spike. We do it in a way that is consistent with the previous and the current input.
-    // The intuitive interpretation of this calculation is that if a spike of the last series occurred
-    // very recently, it pushes forward the first spike of the current series (in order not to generate
-    // a very small ISI), especially if the firing period of the current input is large orthe firing
-    // period of the last input was small.
-    // The final outcome is that the resulting complete series of spikes is relatively smooth (if the
-    // input does not changes abruptly, of course) and it does not depend on the sim. slot times.
-    // One key point for this caculation is to consider what ISI we get when we get a zero input.
-    // In this implementation we consider that a zero input normally does not reset the pushing effect
-    // of the last elicited spike, however, another convection could be followed.
-    // Method precondition and postcondition: last_firing_period must not be zero,
-    // next_spk_time must not be infinite and next_spk_time higher or equals than current tslot_start.
-    vector<spike_t> deterministic_spike_generation(unsigned long out_neu_idx, double input_val, CImg<double>::iterator last_firing_period_it, CImg<double>::iterator next_spk_time_it);
-    
-    vector<spike_t> stochastic_spike_generation(unsigned long out_neu_idx, double input_val, CImg<double>::iterator last_firing_period_it, CImg<double>::iterator next_spk_time_it);
+    // generates one spike after each period.
+    // The spike times are stochastic or deterministic depending on the parameter Spike_dist_shape.
+    // Method precondition and postcondition:
+    // next_spk_time must be neither infinite nor negative
+    vector<spike_t> stochastic_spike_generation(unsigned long out_neu_idx, double input_val, CImg<double>::iterator next_spk_time_it);
 
-    // This method initializes randomly the state of the spike generator for all the outputs so that
+    // This method randomize the state of the spike generator for all the outputs so that
     // each neuron will start firing at random times (from 0 to the initial firing period)
+    // That is, it makes the delay of the first spike random in inverse Random_init proportion of the first period
     void randomize_state();
 
+    // This method randomize the state of the spike generator for all the outputs
+    void initialize_state();
     // Save the accumulated spike activity into a file
     bool SaveFile(string spk_filename);
     
