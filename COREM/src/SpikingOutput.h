@@ -4,9 +4,12 @@
 /* BeginDocumentation
  * Name: SpikingOutput
  *
- * Description: Special retina module in charge of generating action potentials as output.
- * In particular it can instantly (without delay) convert the retina output into spike times and
+ * Description: Special retina module in charge of generating retina output action potentials.
+ * In particular it can instantly convert the retina output into spike times and
  * finally save them in a file.
+ * This module supports deterministics or stochastic spikes times.
+ * A piecewise-stationary gamma process is implemented to generate stochastic spikes times.
+ * Therefore, the generated inter-spike intervals (ISI) are drawn from the gamma distribution.
  *
  * Author: Pablo Martinez Cañada. University of Granada. CITIC-UGR. Spain.
  * <pablomc@ugr.es>
@@ -53,8 +56,7 @@ protected:
     double Spike_dist_shape; // When this value is specified and different from infinity, inter-spike intervals are randomly drawn from a gamma distribution whose shape is specified by this parameter. If this parameter is not specified, firing period is stochastic. The higher this value is, the lower standard deviation
     double Min_period_std_dev; // Standard deviation in milliseconds of a normal distribition with mean Min_period from which min. firing periods are drawn. When this value is equal to 0, min. firing periods are fixed
     double Random_init; // If differnt from 0, it configures the initial state randomly, so that the starting firing phase is uniformly random between 1 and (1-Random_init)*first_firing_period
-    // Since the spike time generation is not impemented as a real non-homogeneous random process, Spike_std_dev is not exactly
-    // the standard deviation of the generated spike times, but the standar deviation of the distribution used to generate these spikes.
+    double First_spk_delay; // It specifies the delay of the first spike of each neuron in proportion to the first firing period. If this value is 0, all neurons start firing at time 0. If it is 1, all neurons waits for the first firing period before firing (default behaviour)
     default_random_engine rand_gen; // For generating random numbers: neuron output random noise, random states and refractory period
     normal_distribution<double> norm_dist; // For introducing noise in neuron random max. firing rate
     gamma_distribution<double> gam_dist; // For generating random spike times
@@ -72,6 +74,7 @@ public:
     // Allocate values and set protected parameters
     virtual bool allocateValues();
 
+    // Set spiking output parameters
     bool set_Min_period(double min_spk_per);
     bool set_Longest_sustained_period(double max_spk_per);
     bool set_Input_threshold(double input_threshold);
@@ -81,14 +84,17 @@ public:
     bool set_Start_time(double start_time);
     bool set_End_time(double end_time);
     bool set_Random_init(double rnd_init);
+    bool set_First_spk_delay(double spk_delay);
     bool set_First_inp_ind(double first_input);
     bool set_Inp_ind_inc(double input_inc);
     bool set_Total_inputs(double num_inputs);
 
     // Get new input
     virtual void feedInput(double sim_time, const CImg<double> &new_input, bool isCurrent, int port);
+    
     // update of state and generate output spikes for all neurons during current sim. slot
     virtual void update();
+    
     // set Parameters
     virtual bool setParameters(vector<double> params, vector<string> paramID);
     
@@ -101,17 +107,26 @@ public:
     // For this, this method calculates the firing period (ISI) corresponding to the current input and
     // generates one spike after each period.
     // The spike times are stochastic or deterministic depending on the parameter Spike_dist_shape.
+    // To simulate a non-stationary processes (since input may change in each simulation slot) first
+    // firing periods are drawn from a stationary gamma process (corresponding to a constant input of 1)
+    // and then these periods are "warped" according to the actual neuron input. That is, the initial
+    // periods are expanded or contracted to match the desired mean output frequency. For a detailed
+    // explanaton search for "warp" in:
+    // Nawrot, M. P., Boucsein, C., Molina, V. R., Riehle, A., Aertsen, A., & Rotter, S. (2008).
+    // Measurement of variability dynamics in cortical spike trains. Journal of neuroscience methods,
+    // 169(2), 374-390.
     // Method precondition and postcondition:
     // next_spk_time must be neither infinite nor negative
     vector<spike_t> stochastic_spike_generation(unsigned long out_neu_idx, double input_val, CImg<double>::iterator next_spk_time_it);
 
-    // This method randomize the state of the spike generator for all the outputs so that
+    // This method randomizes the state of the spike generator for all the outputs so that
     // each neuron will start firing at random times (from 0 to the initial firing period)
     // That is, it makes the delay of the first spike random in inverse Random_init proportion of the first period
     void randomize_state();
 
-    // This method randomize the state of the spike generator for all the outputs
+    // This method initizlizes the state of the all the outputs (neurons)
     void initialize_state();
+    
     // Save the accumulated spike activity into a file
     bool SaveFile(string spk_filename);
     

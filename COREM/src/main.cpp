@@ -137,7 +137,7 @@ int main(int argc, char *argv[])
             for(int sim_time=0;interface.getAbortExecution()==false && sim_time<totalSimTime;sim_time+=simStep){
                 interface.update();
                 if(show_progress)
-                    cout << "\rSim. time: " << sim_time << " of: " << totalSimTime << "ms" << flush;
+                    cout << "\rSim. time: " << sim_time+simStep << " of: " << totalSimTime << "ms" << flush;
             }
             if(show_progress)
                 cout << endl;

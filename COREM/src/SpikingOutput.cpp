@@ -37,6 +37,8 @@ SpikingOutput::SpikingOutput(int x, int y, double temporal_step, string output_f
     
     Random_init=0.0; // Same initial state for all neurons
     
+    First_spk_delay=1.0; // Neurons start firing after the complete first spiking period
+    
     normal_distribution<double>::param_type init_norm_dist_params(0.0, Min_period_std_dev/1000.0); // Random numbers from a Gaussian distribution of  mean=0, sigma=Noise_std_dev/1000 seconds
     norm_dist.param(init_norm_dist_params); // Set params of normal distribution
     
@@ -61,6 +63,7 @@ SpikingOutput::SpikingOutput(const SpikingOutput &copy):module(copy){
     Min_period_std_dev = copy.Min_period_std_dev;
     out_spk_filename = copy.out_spk_filename;
     Random_init = copy.Random_init;
+    First_spk_delay = copy.First_spk_delay;
     norm_dist = copy.norm_dist;
     unif_dist = copy.unif_dist;
     gam_dist = copy.gam_dist;
@@ -97,9 +100,17 @@ void SpikingOutput::initialize_state(){
     CImg<double>::iterator next_spk_time_it = next_spk_time->begin();
 
     while(next_spk_time_it < next_spk_time->end()){ // For every spiking output
+    double first_firing_period;
         // To initialize the state of each output, we set the last next_spk_time
         // to the next firing period.
-        *next_spk_time_it = 1.0; // 
+        
+        // Determine firing period in the "unwarped" time slot
+        if(isfinite(Spike_dist_shape)) // Select stochastic or deterministic spike times
+            first_firing_period = gam_dist(rand_gen);
+        else // Spike_dist_shape is infinite (not specified), so we do not use stochasticity
+            first_firing_period = 1; // 1Hz is the firing freq. in a "unwarped" time slot
+
+        *next_spk_time_it = first_firing_period * First_spk_delay; // Anticipate (if First_spk_delay < 1) or postpone (if First_spk_delay > 1) first spike time according to First_spk_delay
         next_spk_time_it++;
     }
 }
@@ -119,9 +130,10 @@ bool SpikingOutput::allocateValues(){
     inputImage->assign(sizeY, sizeX, 1, 1, 0.0);
     next_spk_time->assign(sizeY, sizeX, 1, 1, 1.0);
 
+    initialize_state();
+
     if(Random_init != 0.0) // If parameter Random_init is differnt from 0, init the state of outputs randomly
         randomize_state();
-    initialize_state();
     return(true);
 }
 
@@ -200,6 +212,16 @@ bool SpikingOutput::set_Random_init(double rnd_init){
     return(true);
 }
 
+bool SpikingOutput::set_First_spk_delay(double spk_delay){
+    bool ret_correct;
+    if (spk_delay>=0) {
+        First_spk_delay = spk_delay;
+        ret_correct=true;
+    } else
+        ret_correct=false;
+    return(ret_correct);
+}
+
 bool SpikingOutput::set_First_inp_ind(double first_input){
     bool ret_correct;
     if (first_input>=0) {
@@ -257,6 +279,8 @@ bool SpikingOutput::setParameters(vector<double> params, vector<string> paramID)
             correct = set_End_time(params[i]);
         } else if (strcmp(s,"Random_init")==0){
             correct = set_Random_init(params[i]);
+        } else if (strcmp(s,"First_spk_delay")==0){
+            correct = set_First_spk_delay(params[i]);
         } else if (strcmp(s,"First_inp_ind")==0){
             correct = set_First_inp_ind(params[i]);
         } else if (strcmp(s,"Inp_ind_inc")==0){
@@ -266,7 +290,6 @@ bool SpikingOutput::setParameters(vector<double> params, vector<string> paramID)
         } else
             correct = false;
     }
-
     return correct;
 }
 
@@ -327,8 +350,10 @@ bool spk_time_comp(spike_t spk1, spike_t spk2){
     }
 
 // time of next spike (*next_spk_time_it) is relative to slot start time and corresponding to a input rate of value 1.
-// *next_spk_time_it specifies the spike time in a "warped" time slot (time is scaled according to input rate)
-// told_next_spk specifies the real time of spike (non-warped)
+// *next_spk_time_it specifies the spike time in a "unwarped" time slot (time is then scaled according to input rate)
+// told_next_spk specifies the real time of spike (warped)
+// So, the length of a warped simulation time slot is step and
+// the length of a unwarped simulation time slot is step*mean_firing_rate, this is step/inp_pix_per
 vector<spike_t> SpikingOutput::stochastic_spike_generation(unsigned long out_neu_idx, double input_val, CImg<double>::iterator next_spk_time_it){
     vector<spike_t> slot_spks; // Temporal vector of output spikes for current sim. time slot
     // Intermediate variables used to calculate next spike time
@@ -347,7 +372,7 @@ vector<spike_t> SpikingOutput::stochastic_spike_generation(unsigned long out_neu
 
         new_spk.neuron = out_neu_idx; // Index of output neuron are assigned in the same way as Cimg pixel offsets
         // We can have several spikes in a single simulation time slot: iterate
-        while(*next_spk_time_it * inp_pix_per < slot_len){ // unwarp next spike time accoring to input rate
+        while(*next_spk_time_it * inp_pix_per < slot_len){ // warp next spike time accoring to input rate to get the desired firing rate
             double firing_period;
 
             new_spk.time = tslot_start + *next_spk_time_it * inp_pix_per; // Time of next spike
@@ -360,17 +385,16 @@ vector<spike_t> SpikingOutput::stochastic_spike_generation(unsigned long out_neu
 
             slot_spks.push_back(new_spk);
             
-            // Determine firing period in the "warped" time slot
+            // Determine firing period in the "unwarped" time slot
             if(isfinite(Spike_dist_shape)) // Select stochastic or deterministic spike times
                 firing_period = gam_dist(rand_gen);
             else // Spike_dist_shape is infinite (not specified), so we do not use stochasticity
-                firing_period = 1; // 1Hz is the firing freq. in a "warped" time slot
+                firing_period = 1; // 1Hz is the firing freq. in a "unwarped" time slot
         
             *next_spk_time_it = *next_spk_time_it + firing_period; // Update the time of predicted next firing for this neuron
         }
         *next_spk_time_it = *next_spk_time_it - slot_len/inp_pix_per; // Make *next_spk_time_it relative to the next time slot
     }
-
     return(slot_spks);
 }
 
