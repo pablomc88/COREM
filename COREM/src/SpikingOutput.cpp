@@ -39,7 +39,7 @@ SpikingOutput::SpikingOutput(int x, int y, double temporal_step, string output_f
     
     First_spk_delay=1.0; // Neurons start firing after the complete first spiking period
     
-    normal_distribution<double>::param_type init_norm_dist_params(0.0, Min_period_std_dev/1000.0); // Random numbers from a Gaussian distribution of  mean=0, sigma=Noise_std_dev/1000 seconds
+    normal_distribution<double>::param_type init_norm_dist_params(Min_period/1000.0, Min_period_std_dev/1000.0); // Random numbers from a Gaussian distribution of mean=Min_period/1000.0 and sigma=Min_period_std_dev/1000.0 seconds
     norm_dist.param(init_norm_dist_params); // Set params of normal distribution
     
     uniform_real_distribution<double>::param_type init_unif_dist_params(0.0, 1.0); // Random numbers distributed uniformly between 0 and 1 (not included)
@@ -50,8 +50,10 @@ SpikingOutput::SpikingOutput(int x, int y, double temporal_step, string output_f
     // Input buffer
     inputImage=new CImg<double> (sizeY, sizeX, 1, 1, 0);
 
-    // Internal state variables: initial value
-    next_spk_time=new CImg<double> (sizeY, sizeX, 1, 1, 1.0); // Next predicted spike time = 1 period
+    // Internal state variables: initial value 
+    next_spk_time=new CImg<double>(sizeY, sizeX, 1, 1, First_spk_delay); // Next predicted spike time = 1 period
+    last_spk_time=new CImg<double>(sizeY, sizeX, 1, 1, -numeric_limits<double>::infinity()); // Last spike time = -infinity
+    curr_ref_period=new CImg<double>(sizeY, sizeX, 1, 1, Min_period/1000.0); // Current refractory period
 }
 
 SpikingOutput::SpikingOutput(const SpikingOutput &copy):module(copy){
@@ -70,6 +72,8 @@ SpikingOutput::SpikingOutput(const SpikingOutput &copy):module(copy){
 
     inputImage=new CImg<double>(*copy.inputImage);
     next_spk_time=new CImg<double>(*copy.next_spk_time);
+    last_spk_time=new CImg<double>(*copy.last_spk_time);
+    curr_ref_period=new CImg<double>(*copy.curr_ref_period);
 }
 
 SpikingOutput::~SpikingOutput(){
@@ -79,6 +83,8 @@ SpikingOutput::~SpikingOutput(){
     
     delete inputImage;
     delete next_spk_time;
+    delete last_spk_time;
+    delete curr_ref_period;
 }
 
 //------------------------------------------------------------------------------//
@@ -98,9 +104,10 @@ void SpikingOutput::randomize_state(){
 
 void SpikingOutput::initialize_state(){
     CImg<double>::iterator next_spk_time_it = next_spk_time->begin();
+    CImg<double>::iterator curr_ref_period_it = curr_ref_period->begin();
 
     while(next_spk_time_it < next_spk_time->end()){ // For every spiking output
-    double first_firing_period;
+        double first_firing_period;
         // To initialize the state of each output, we set the last next_spk_time
         // to the next firing period.
         
@@ -111,24 +118,35 @@ void SpikingOutput::initialize_state(){
             first_firing_period = 1; // 1Hz is the firing freq. in a "unwarped" time slot
 
         *next_spk_time_it = first_firing_period * First_spk_delay; // Anticipate (if First_spk_delay < 1) or postpone (if First_spk_delay > 1) first spike time according to First_spk_delay
+        
+        // Set refractory eriod for each neuron
+        if(Min_period_std_dev == 0.0) // If fixed refractory period:
+            *curr_ref_period_it = Min_period/1000.0;
+        else
+            *curr_ref_period_it = norm_dist(rand_gen);
+            
         next_spk_time_it++;
+        curr_ref_period_it++;
     }
 }
+
 //------------------------------------------------------------------------------//
 
 bool SpikingOutput::allocateValues(){
     module::allocateValues(); // Use the allocateValues() method of the base class
 
     // Set parameters of distributions for random number generation
-    normal_distribution<double>::param_type init_params(0.0, Min_period_std_dev/1000.0); // (mean=0, sigma=Limit_std_dev/1000 seconds)
-    norm_dist.param(init_params); // Set initial params of normal distribution
+    normal_distribution<double>::param_type init_norm_dist_params(Min_period/1000.0, Min_period_std_dev/1000.0); // (mean=Min_period/1000.0, sigma=Min_period_std_dev/1000.0 seconds)
+    norm_dist.param(init_norm_dist_params); // Set initial params of normal distribution
 
     gamma_distribution<double>::param_type init_gam_dist_params(Spike_dist_shape, 1.0/Spike_dist_shape); // Parameters of gamma distribution for spike: gam_k (alpha), gam_theta (beta)
     gam_dist.param(init_gam_dist_params); // Set params of uniform distribution
 
-    // Resize initial value
+    // Resize initial image buffers
     inputImage->assign(sizeY, sizeX, 1, 1, 0.0);
-    next_spk_time->assign(sizeY, sizeX, 1, 1, 1.0);
+    next_spk_time->assign(sizeY, sizeX, 1, 1, First_spk_delay);
+    last_spk_time->assign(sizeY, sizeX, 1, 1, -numeric_limits<double>::infinity());
+    curr_ref_period->assign(sizeY, sizeX, 1, 1, Min_period/1000.0);
 
     initialize_state();
 
@@ -306,17 +324,14 @@ void SpikingOutput::feedInput(double sim_time, const CImg<double>& new_input, bo
     simTime = sim_time;
 }
 
+//------------------------------------------------------------------------------//
+
 double SpikingOutput::inp_pixel_to_period(double pixel_value){
     double firing_period_sec; // Calculated firing period in seconds
-    double cur_min_period_sec; // Current (used for this calculation) firing period in seconds (refractory period)
     double max_period_sec; // Longest firind period: Offset firing period added to resultant firing period
 
     // Convert periods from ms to s:
     max_period_sec = Longest_sustained_period/1000.0;
-    if(Min_period_std_dev > 0.0) // Soft Min_period limit chosen
-        cur_min_period_sec = Min_period/1000.0 + norm_dist(rand_gen); // / sqrt(step/1000.0); //  Add Gaussian white noise. We divide by sqrt(step/1000) to make the noise independent of the time step length (As in DOI:10.1523/JNEUROSCI.3305-05.2005)
-    else // No noise in freq limit: use hard limits
-        cur_min_period_sec = Min_period/1000.0;
 
 
     if(pixel_value < Input_threshold) // If value under threshold, output activity is 0Hz
@@ -324,14 +339,89 @@ double SpikingOutput::inp_pixel_to_period(double pixel_value){
     else
         firing_period_sec = 1.0 / ((pixel_value-Input_threshold)*Spk_freq_per_inp + 1.0/max_period_sec);
 
-    // Firing rate is saturated
-    if(firing_period_sec < cur_min_period_sec)
-        firing_period_sec = cur_min_period_sec;
-
     return(firing_period_sec);
 }
 
+// All times in this fn are relative to current sim. slot start time
+double SpikingOutput::apply_ref_period(double new_spk_time, double last_spk_time){
+    double cur_min_period_sec; // Current (used for this calculation) firing period in seconds (refractory period)
+    double ref_spk_time; // New spike time with refractory period applied
+    double new_firing_period; // New inter-spike period
+
+    if(Min_period_std_dev > 0.0) // Soft Min_period limit chosen
+        // Add Gaussian white noise. We should divide by sqrt(step/1000) to make the noise independent of the time step length (As in DOI:10.1523/JNEUROSCI.3305-05.2005)
+        cur_min_period_sec = norm_dist(rand_gen); // / sqrt(step/1000.0); TODO: make ref. period completely indempendent of sim. slot length. A new image buffer is required storing last calculated ref. period
+    else // No noise in freq limit: use hard limits
+        cur_min_period_sec = Min_period/1000.0;
+
+    new_firing_period = new_spk_time - last_spk_time;
+    
+    // Firing rate is saturated
+    if(new_firing_period < cur_min_period_sec) // In refractory period
+        ref_spk_time = last_spk_time + cur_min_period_sec;
+    else // Not in refractory period
+        ref_spk_time = new_spk_time;
+
+    if(ref_spk_time < 0.0) // Spike time must be always positive or 0
+        ref_spk_time = 0;
+
+    return(ref_spk_time);
+}
+
+// time of next spike (*next_spk_time_it) is relative to slot start time and corresponding to a input rate of value 1.
+// *next_spk_time_it specifies the spike time in a "unwarped" time slot (time is then scaled according to input rate)
+// told_next_spk specifies the real time of spike (warped)
+// So, the length of a warped simulation time slot is step and
+// the length of a unwarped simulation time slot is step*mean_firing_rate, this is step/inp_pix_per
+vector<spike_t> SpikingOutput::stochastic_spike_generation(unsigned long out_neu_idx, double input_val, CImg<double>::iterator next_spk_time_it, CImg<double>::iterator last_spk_time_it, CImg<double>::iterator curr_ref_period_it){
+    vector<spike_t> slot_spks; // Temporal vector of output spikes for current sim. time slot
+    // Intermediate variables used to calculate next spike time
+    double inp_pix_per;
+    double tslot_start, slot_len;
+
+    // All calculations are done in whole units, so convert class time properties (in ms) into seconds
+    tslot_start = simTime / 1000.0; // Start time of the current sim. slot: Convert it into seconds
+    slot_len = step / 1000.0; // Length in time of a simulation slot (step)
+
+    inp_pix_per = inp_pixel_to_period(input_val); // Convert input pixel magnitude into firing period in seconds
+    // If input is not zero, we do not have to calculate spike times but the expression for updating
+    // the next spike time becomes an indeterminate form, so evaluate its limit
+    if(isfinite(inp_pix_per)) {
+        double new_spk_time; // New spike time relative to current time slot start
+        spike_t new_spk;
+
+        new_spk.neuron = out_neu_idx; // Index of output neuron are assigned in the same way as Cimg pixel offsets
+        // We can have several spikes in a single simulation time slot: iterate
+        while((new_spk_time = apply_ref_period(*next_spk_time_it * inp_pix_per, *last_spk_time_it - tslot_start)) < slot_len){ // warp next spike time accoring to input rate to get the desired firing rate and apply ref. period
+            double firing_period;
+
+            new_spk.time = tslot_start + new_spk_time; // Time of next spike
+
+            // These conditions should never be met:
+            if(new_spk.time < tslot_start)
+                cout << "Internal error: a spike for a previous simulation step has been generated. current step [" << tslot_start << "," << tslot_start + slot_len << ") spike time:" << new_spk.time << "s" << endl;
+            if(!isfinite(*next_spk_time_it))
+                cout << "Internal error: spike time could not be calculated (indeterminate form). current step [" << tslot_start << "," << tslot_start + slot_len << ") spike time:" << new_spk.time << endl;
+
+            slot_spks.push_back(new_spk); // Insert spike in list
+            *last_spk_time_it = new_spk.time; // Update last spike time
+            
+            // Determine firing period in the "unwarped" time slot
+            if(isfinite(Spike_dist_shape)) // Select stochastic or deterministic spike times
+                firing_period = gam_dist(rand_gen);
+            else // Spike_dist_shape is infinite (not specified), so we do not use stochasticity
+                firing_period = 1; // 1Hz is the firing freq. in a "unwarped" time slot
+        
+            *next_spk_time_it = *next_spk_time_it + firing_period; // Update the time of predicted next firing for this neuron
+        }
+        *next_spk_time_it = *next_spk_time_it - slot_len/inp_pix_per; // Make *next_spk_time_it relative to the next time slot
+    }
+    return(slot_spks);
+}
+
+
 //------------------------------------------------------------------------------//
+
 // function used to compare spikes according to time (and neuron index) when
 // sorting in SpikingOutput::update()
 bool spk_time_comp(spike_t spk1, spike_t spk2){
@@ -349,76 +439,33 @@ bool spk_time_comp(spike_t spk1, spike_t spk2){
     return(comp_result);
     }
 
-// time of next spike (*next_spk_time_it) is relative to slot start time and corresponding to a input rate of value 1.
-// *next_spk_time_it specifies the spike time in a "unwarped" time slot (time is then scaled according to input rate)
-// told_next_spk specifies the real time of spike (warped)
-// So, the length of a warped simulation time slot is step and
-// the length of a unwarped simulation time slot is step*mean_firing_rate, this is step/inp_pix_per
-vector<spike_t> SpikingOutput::stochastic_spike_generation(unsigned long out_neu_idx, double input_val, CImg<double>::iterator next_spk_time_it){
-    vector<spike_t> slot_spks; // Temporal vector of output spikes for current sim. time slot
-    // Intermediate variables used to calculate next spike time
-    double inp_pix_per;
-    double tslot_start, slot_len;
-
-    // All calculations are done in whole units, so convert class time properties (in ms) into seconds
-    tslot_start = simTime / 1000.0; // Start time of the current sim. slot: Convert it into seconds
-    slot_len = step / 1000.0; // Length in time of a simulation slot (step)
-
-    inp_pix_per = inp_pixel_to_period(input_val); // Convert input pixel magnitude into firing period in seconds
-    // If input is not zero, we do not have to calculate spike times but the expression for updating
-    // the next spike time becomes an indeterminate form, so evaluate its limit
-    if(isfinite(inp_pix_per)) {
-        spike_t new_spk;
-
-        new_spk.neuron = out_neu_idx; // Index of output neuron are assigned in the same way as Cimg pixel offsets
-        // We can have several spikes in a single simulation time slot: iterate
-        while(*next_spk_time_it * inp_pix_per < slot_len){ // warp next spike time accoring to input rate to get the desired firing rate
-            double firing_period;
-
-            new_spk.time = tslot_start + *next_spk_time_it * inp_pix_per; // Time of next spike
-
-            // These conditions should never be met:
-            if(new_spk.time < tslot_start)
-                cout << "Internal error: a spike for a previous simulation step has been generated. current step [" << tslot_start << "," << tslot_start + slot_len << ") spike time:" << new_spk.time << "s" << endl;
-            if(!isfinite(*next_spk_time_it))
-                cout << "Internal error: spike time could not be calculated (indeterminate form). current step [" << tslot_start << "," << tslot_start + slot_len << ") spike time:" << new_spk.time << endl;
-
-            slot_spks.push_back(new_spk);
-            
-            // Determine firing period in the "unwarped" time slot
-            if(isfinite(Spike_dist_shape)) // Select stochastic or deterministic spike times
-                firing_period = gam_dist(rand_gen);
-            else // Spike_dist_shape is infinite (not specified), so we do not use stochasticity
-                firing_period = 1; // 1Hz is the firing freq. in a "unwarped" time slot
-        
-            *next_spk_time_it = *next_spk_time_it + firing_period; // Update the time of predicted next firing for this neuron
-        }
-        *next_spk_time_it = *next_spk_time_it - slot_len/inp_pix_per; // Make *next_spk_time_it relative to the next time slot
-    }
-    return(slot_spks);
-}
-
 void SpikingOutput::update(){
     unsigned long out_neu_idx; // Index to the current neuron (or image pixel)
     CImg<double>::iterator inp_img_it = inputImage->begin();
     CImg<double>::iterator next_spk_time_it = next_spk_time->begin();
+    CImg<double>::iterator last_spk_time_it = last_spk_time->begin();
+    CImg<double>::iterator curr_ref_period_it = curr_ref_period->begin();
     vector<spike_t> slot_spks; // Temporal vector of output spikes for current sim. time slot
 
     out_neu_idx=0UL;
     inp_img_it+=First_inp_ind; // start from the pixl selected by user
     next_spk_time_it+=First_inp_ind;
+    last_spk_time_it+=First_inp_ind;
+    curr_ref_period_it+=First_inp_ind;
     // For each image input pixel:
     while(inp_img_it<inputImage->end() && out_neu_idx<Total_inputs){ // we use inp_img_it.end() as upper bound for all iterators
         vector<spike_t> neu_spks;
         double input_val=*inp_img_it;
         
-        neu_spks = stochastic_spike_generation(out_neu_idx, input_val, next_spk_time_it);
+        neu_spks = stochastic_spike_generation(out_neu_idx, input_val, next_spk_time_it, last_spk_time_it, curr_ref_period_it);
         
         slot_spks.insert(slot_spks.end(), neu_spks.begin(), neu_spks.end()); // Append spikes of current neuron
         
         // Switch to the next neuron (pixel)
         inp_img_it+=Inp_ind_inc;
         next_spk_time_it+=Inp_ind_inc;
+        last_spk_time_it+=Inp_ind_inc;
+        curr_ref_period_it+=Inp_ind_inc;
         out_neu_idx++;
     }
 
@@ -434,7 +481,7 @@ void SpikingOutput::update(){
 // Implement a method to write a spike_t object to a ouput stream
 // This method is used in SpikingOutput::SaveFile()
 ostream& operator<< (ostream& out, const spike_t& spk) {
-    out << setprecision(15) << spk.neuron << " " << spk.time;
+    out << setprecision(9) << spk.neuron << " " << spk.time;
     return out;
 }
 
@@ -473,7 +520,7 @@ bool SpikingOutput::SaveFile(string spk_filename){
 
 //------------------------------------------------------------------------------//
 
-// This function is neither needed nor used
+// This function is normally neither needed nor used
 CImg<double>* SpikingOutput::getOutput(){
     return inputImage;
 }

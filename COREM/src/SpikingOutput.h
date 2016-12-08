@@ -37,8 +37,20 @@ class SpikingOutput:public module{
 protected:
     // image buffers
     CImg<double> *inputImage; // Buffer used to temporally store the input values which will be converted to spikes
+    // Predicted firing time for each output neuron (in seconds)
+    CImg<double> *next_spk_time; // This time value is relative to the next sim. slot start time and unwarped
+    // Last firing time for each output neuron (in seconds). It is used only to check the refractory period
+    CImg<double> *last_spk_time; // This time value is absolute and warped    
+    // Current refractory period for each output neuron (in seconds). It is used only to check the refractory period
+    CImg<double> *curr_ref_period; // This time value is change if Min_period_std_dev is not 0 
+
+    default_random_engine rand_gen; // For generating random numbers: neuron output random noise, random states and refractory period
+    normal_distribution<double> norm_dist; // For introducing noise in neuron random max. firing rate
+    gamma_distribution<double> gam_dist; // For generating random spike times
+    uniform_real_distribution<double> unif_dist; // For generating neuron random init states
 
     vector<spike_t> out_spks; // Vector of retina output spikes
+
     string out_spk_filename; // filename (including path) to the spike output file to create
     
     double Start_time, End_time; // These recording parameters define the simulation time interval when the images must be saved (in milliseconds)
@@ -57,13 +69,6 @@ protected:
     double Min_period_std_dev; // Standard deviation in milliseconds of a normal distribition with mean Min_period from which min. firing periods are drawn. When this value is equal to 0, min. firing periods are fixed
     double Random_init; // If differnt from 0, it configures the initial state randomly, so that the starting firing phase is uniformly random between 1 and (1-Random_init)*first_firing_period
     double First_spk_delay; // It specifies the delay of the first spike of each neuron in proportion to the first firing period. If this value is 0, all neurons start firing at time 0. If it is 1, all neurons waits for the first firing period before firing (default behaviour)
-    default_random_engine rand_gen; // For generating random numbers: neuron output random noise, random states and refractory period
-    normal_distribution<double> norm_dist; // For introducing noise in neuron random max. firing rate
-    gamma_distribution<double> gam_dist; // For generating random spike times
-    uniform_real_distribution<double> unif_dist; // For generating neuron random init states
-    
-    // Predicted firing time for each output neuron (in seconds)
-    CImg<double> *next_spk_time; // This time value is relative to the next sim. slot start time
 
 public:
     // Constructor, copy, destructor.
@@ -103,6 +108,9 @@ public:
     // spike firing rate.
     double inp_pixel_to_period(double pixel_value);
     
+    // Apply refractory period effect to a new spike time
+    double apply_ref_period(double new_spk_time, double last_spk_time);
+
     // This method basically gerates spike times during current simulation time slot for one neuron.
     // For this, this method calculates the firing period (ISI) corresponding to the current input and
     // generates one spike after each period.
@@ -117,7 +125,7 @@ public:
     // 169(2), 374-390.
     // Method precondition and postcondition:
     // next_spk_time must be neither infinite nor negative
-    vector<spike_t> stochastic_spike_generation(unsigned long out_neu_idx, double input_val, CImg<double>::iterator next_spk_time_it);
+    vector<spike_t> stochastic_spike_generation(unsigned long out_neu_idx, double input_val, CImg<double>::iterator next_spk_time_it, CImg<double>::iterator last_spk_time_it, CImg<double>::iterator curr_ref_period_it);
 
     // This method randomizes the state of the spike generator for all the outputs so that
     // each neuron will start firing at random times (from 0 to the initial firing period)

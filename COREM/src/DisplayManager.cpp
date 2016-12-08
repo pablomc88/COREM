@@ -15,14 +15,46 @@ DisplayManager::DisplayManager(int x, int y){
     numberModules = 0;
     valuesAllocated = false;
 
+    // Indicate to destructor that these variables have not been allocated yet:
+    intermediateImages = NULL;
+    inputImage = NULL;
+    templateBar = NULL;
+    bars = NULL;
 }
 
 DisplayManager::DisplayManager(const DisplayManager& copy){
-
+    cout << "Internal error: called DisplayManager copy method" << endl;
 }
 
 DisplayManager::~DisplayManager(void){
+    // Free memory allocated in several parts of the class
+    while(!displays.empty()) {
+        delete displays.back();
+        displays.pop_back();
+    }
+    
+    while(!multimeters.empty()) {
+        delete multimeters.back();
+        multimeters.pop_back();
+    }
 
+    if(intermediateImages != NULL){
+        for (int i=0;i<numberModules-1;i++)
+            delete intermediateImages[i];
+        delete[] intermediateImages;
+    }
+
+    if(bars != NULL){
+        for (int i=0;i<numberModules-1;i++)
+            delete bars[i];
+        delete[] bars;
+    }
+
+    if(inputImage != NULL)
+        delete inputImage;
+        
+    if(templateBar != NULL)
+        delete templateBar;
 }
 
 void DisplayManager::setLNFile(const char *file, double ampl){
@@ -42,7 +74,6 @@ void DisplayManager::reset(){
     imagesPerRow=4;
 
     valuesAllocated = false;
-
 }
 
 //------------------------------------------------------------------------------//
@@ -50,7 +81,6 @@ void DisplayManager::reset(){
 bool DisplayManager::allocateValues(int number, double tstep){
 
     if(valuesAllocated == false){
-
         simStep = tstep;
         numberModules = number;
 
@@ -206,16 +236,16 @@ void DisplayManager::modifyLN(string moduleID, double start, double stop){
 void DisplayManager::addModule(int pos,string ID){
 
     // Input
-    if(displays.size()==0){
+    if(displays.size() == 0){
 
         // black image
         double newX = (double)sizeX * displayZoom;
         double newY = (double)sizeY * displayZoom;
-        CImg <double> *image = new CImg <double>((int)newY,(int)newX,1,1,0.0);
+        CImg <double> image ((int)newY,(int)newX,1,1,0.0);
 
         // create input display
         if(isShown.size() > 0 && isShown[0]){
-            CImgDisplay *input = new CImgDisplay(*image,"Norm. input",0);
+            CImgDisplay *input = new CImgDisplay(image,"Norm. input",0);
             input->move(0,0);
             displays.push_back(input);
             inputImage = new CImg <double>(sizeY,sizeX,1,1,0.0);
@@ -224,33 +254,33 @@ void DisplayManager::addModule(int pos,string ID){
         }
 
         // initialize intermediate images at the first call
-        if(numberModules>1){
+        if(numberModules > 1){
             intermediateImages = new CImg<double>*[numberModules-1];
             for (int i=0;i<numberModules-1;i++)
-              intermediateImages[i]=new CImg<double> (sizeY,sizeX,1,1,0.0);
+              intermediateImages[i] = new CImg<double> (sizeY,sizeX,1,1,0.0);
         }
     }
 
-    if(pos>0 && isShown.size() > (size_t)pos) { // display for pos==0 (Input) is create above
+    if(pos > 0 && isShown.size() > (size_t)pos) { // display for pos==0 (Input) is create above
         if(isShown[pos]){
 
             // black image
             double newX = (double)sizeX * displayZoom;
             double newY = (double)sizeY * displayZoom;
-            CImg <double> *image = new CImg <double>((int)newY,(int)newX,1,1,0.0);
+            CImg <double> image((int)newY,(int)newX,1,1,0.0);
 
             // Color Bar
-            CImg <double> *bar = new CImg <double>(50,(int)newX, 1, 1);
-            cimg_forXY(*(bar),x,y) {
-                (*bar)(x,(int)newX-y-1,0,0)=255*((double)y/newX);
+            CImg <double> bar(50,(int)newX, 1, 1);
+            cimg_forXY(bar,x,y) {
+                bar(x,(int)newX-y-1,0,0)=255*((double)y/newX);
             }
-            bar->map(CImg<double>::jet_LUT256());
+            bar.map(CImg<double>::jet_LUT256());
 
             // Create window
             const char * WindowName = (ID).c_str();
-            CImgDisplay *disp = new CImgDisplay((*image,*bar),WindowName,0);
+            CImgDisplay *disp = new CImgDisplay((image,bar),WindowName,0);
             // Display
-            (*image,*bar).display(*disp);
+            (image,bar).display(*disp);
 
             // new row of the display
             int capacity = int((CImgDisplay::screen_width()-newY-100) / (newY+50));
@@ -267,7 +297,6 @@ void DisplayManager::addModule(int pos,string ID){
 
             // Save display
             displays.push_back(disp);
-
         }else
             displays.push_back(new CImgDisplay());
     }
@@ -434,7 +463,7 @@ void DisplayManager::updateDisplay(CImg <double> *input, Retina &retina, int sim
     }
 
     // display temporal and LN multimeters for the last simulation step
-    if(simTime==totalSimTime-simStep || input == NULL) {
+    if(valuesAllocated && (simTime==totalSimTime-simStep || input == NULL)) { // if time to show or end of input:
         int LNMultimeters = 0;
         for(size_t i=0;i<multimeters.size();i++){
             multimeter *m = multimeters[i];
