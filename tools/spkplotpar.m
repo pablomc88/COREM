@@ -13,10 +13,16 @@
 %   the spikes of neurons from neu_ini to neu_end and in time from t_ini
 %   to t_end.
 %   mode specifies how the activity will be plotted:
-%   var_type must be: ra
-%    ra: Plots a normal raster plot of the activity
+%   var_type must be:
+%    ra: Plots a normal raster plot of the activity using thin marks
 %        (the specified period of the simulation is plotted)
+%    rf: Plots a normal raster plot of the activity using thik marks
+%        This mode is faster than ra mode when many spikes are loaded
 %    hi: Plots a histogram of the firing periods of all the neurons
+%    ph: Plots a histogram of first spike time of all the neurons
+%    rs: Plots a normal raster plot of the activity and zooms in a window
+%        which is then scrolled from the beginning to the end, creating a
+%        video named raster.avi
 %    specifed.
 %   example to generate a raster plot of simulation activity in the time interval 0 1:
 %      retspkplotpar ra spikes.spk 0 1
@@ -24,7 +30,7 @@
 %   See also SPKPLOT.
 
 %   Copyright (C) 2016 by Richard R. Carrillo 
-%   $Revision: 1.5 $  $Date: 2/11/2016 $
+%   $Revision: 1.6 $  $Date: 9/12/2016 $
 %   (adapted from noout2par from EDLUT repository)
 
 %   This program is free software; you can redistribute it and/or modify
@@ -203,7 +209,8 @@ case 'hi' % Histogram plot
     display(['Mean interspike interval: ' num2str(mean(spk_periods))]);
     display(['Std. dev. of interspike interval: ' num2str(std(spk_periods))]);
     display(['Gamma dist. param. fit of interspike interval (k, theta): ' num2str(gamfit(spk_periods))]);
-
+    [muhat,sigmahat]=normfit(spk_periods);
+    display(['Normal dist. param. fit of interspike interval (mu, sigma): ' num2str([muhat,sigmahat])]);
 
 case 'ph' % PHase plot
     spk_phases=[];
@@ -237,7 +244,7 @@ display(['Number of spiking neurons: ' num2str(length(unique(activity_list(:,1))
 display(['First neuron index: ' num2str(min(activity_list(:,1))) ' Last neuron index: ' num2str(max(activity_list(:,1)))])
 
 if isequal(plot_mode,'rs') % Raster scroll
-    title('Ganglion cells')
+    title('Spike raster plot')
     set(gca, 'Ydir', 'reverse')
     scroll_wnd=1;
     scroll_step=0.05;

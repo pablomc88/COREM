@@ -148,7 +148,7 @@ bool SpikingOutput::allocateValues(){
     last_spk_time->assign(sizeY, sizeX, 1, 1, -numeric_limits<double>::infinity());
     curr_ref_period->assign(sizeY, sizeX, 1, 1, Min_period/1000.0);
 
-    initialize_state();
+    initialize_state(); // Set ref. period and unwarped first spike time
 
     if(Random_init != 0.0) // If parameter Random_init is differnt from 0, init the state of outputs randomly
         randomize_state();
@@ -343,22 +343,16 @@ double SpikingOutput::inp_pixel_to_period(double pixel_value){
 }
 
 // All times in this fn are relative to current sim. slot start time
-double SpikingOutput::apply_ref_period(double new_spk_time, double last_spk_time){
-    double cur_min_period_sec; // Current (used for this calculation) firing period in seconds (refractory period)
+// cur_min_period is the current (used for this calculation) firing period in seconds (refractory period)
+double SpikingOutput::apply_ref_period(double new_spk_time, double last_spk_time, double cur_min_period){
     double ref_spk_time; // New spike time with refractory period applied
     double new_firing_period; // New inter-spike period
-
-    if(Min_period_std_dev > 0.0) // Soft Min_period limit chosen
-        // Add Gaussian white noise. We should divide by sqrt(step/1000) to make the noise independent of the time step length (As in DOI:10.1523/JNEUROSCI.3305-05.2005)
-        cur_min_period_sec = norm_dist(rand_gen); // / sqrt(step/1000.0); TODO: make ref. period completely indempendent of sim. slot length. A new image buffer is required storing last calculated ref. period
-    else // No noise in freq limit: use hard limits
-        cur_min_period_sec = Min_period/1000.0;
 
     new_firing_period = new_spk_time - last_spk_time;
     
     // Firing rate is saturated
-    if(new_firing_period < cur_min_period_sec) // In refractory period
-        ref_spk_time = last_spk_time + cur_min_period_sec;
+    if(new_firing_period < cur_min_period) // In refractory period
+        ref_spk_time = last_spk_time + cur_min_period;
     else // Not in refractory period
         ref_spk_time = new_spk_time;
 
@@ -366,6 +360,12 @@ double SpikingOutput::apply_ref_period(double new_spk_time, double last_spk_time
         ref_spk_time = 0;
 
     return(ref_spk_time);
+}
+
+void SpikingOutput::renew_ref_period_val(CImg<double>::iterator curr_ref_period_it){
+    if(Min_period_std_dev > 0.0) // Add Gaussian white noise to the ref. period: Stochastic Min_period limit chosen
+        *curr_ref_period_it = norm_dist(rand_gen); // We only renew the refractory period time after the neuron fires. Since only one realization of the period is considered the distribution std. dev. does not need to be adjusted, as it is in DOI:10.1523/JNEUROSCI.3305-05.2005
+    // Else: no noise in freq limit.: fixed limit already set
 }
 
 // time of next spike (*next_spk_time_it) is relative to slot start time and corresponding to a input rate of value 1.
@@ -392,11 +392,10 @@ vector<spike_t> SpikingOutput::stochastic_spike_generation(unsigned long out_neu
 
         new_spk.neuron = out_neu_idx; // Index of output neuron are assigned in the same way as Cimg pixel offsets
         // We can have several spikes in a single simulation time slot: iterate
-        while((new_spk_time = apply_ref_period(*next_spk_time_it * inp_pix_per, *last_spk_time_it - tslot_start)) < slot_len){ // warp next spike time accoring to input rate to get the desired firing rate and apply ref. period
+        while((new_spk_time = apply_ref_period(*next_spk_time_it * inp_pix_per, *last_spk_time_it - tslot_start, *curr_ref_period_it)) < slot_len){ // warp next spike time accoring to input rate to get the desired firing rate and apply ref. period
             double firing_period;
 
             new_spk.time = tslot_start + new_spk_time; // Time of next spike
-
             // These conditions should never be met:
             if(new_spk.time < tslot_start)
                 cout << "Internal error: a spike for a previous simulation step has been generated. current step [" << tslot_start << "," << tslot_start + slot_len << ") spike time:" << new_spk.time << "s" << endl;
@@ -405,6 +404,7 @@ vector<spike_t> SpikingOutput::stochastic_spike_generation(unsigned long out_neu
 
             slot_spks.push_back(new_spk); // Insert spike in list
             *last_spk_time_it = new_spk.time; // Update last spike time
+            renew_ref_period_val(curr_ref_period_it);
             
             // Determine firing period in the "unwarped" time slot
             if(isfinite(Spike_dist_shape)) // Select stochastic or deterministic spike times

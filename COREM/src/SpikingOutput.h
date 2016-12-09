@@ -109,7 +109,10 @@ public:
     double inp_pixel_to_period(double pixel_value);
     
     // Apply refractory period effect to a new spike time
-    double apply_ref_period(double new_spk_time, double last_spk_time);
+    double apply_ref_period(double new_spk_time, double last_spk_time, double cur_min_period);
+
+    // Renew the value of the refractory periodof a neuron
+    void renew_ref_period_val(CImg<double>::iterator curr_ref_period_it);
 
     // This method basically gerates spike times during current simulation time slot for one neuron.
     // For this, this method calculates the firing period (ISI) corresponding to the current input and
