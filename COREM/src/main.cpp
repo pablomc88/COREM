@@ -20,6 +20,7 @@ using namespace cimg_library;
 using namespace std;
 
 #define LN_OUT_FILENAME_TAIL "_output_LN.txt"
+
 // main
 int main(int argc, char *argv[])
 {
@@ -149,5 +150,5 @@ int main(int argc, char *argv[])
             cout << "Execute '" << argv[0] << " -h' for more help" << endl;
         }
     }    
-   return(!got_script_file); // Returns 0 when input arguments are ok
+   return(!got_script_file); // Returns 0 when input retina script file is provided
 }

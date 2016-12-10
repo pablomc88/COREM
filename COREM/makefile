@@ -7,9 +7,9 @@ EXE = corem
 all: release
 
 CPP = g++
-CPP_FLAGS = -m64 -pipe -fopenmp -std=c++0x -Wall -Wno-unused-parameter -W -D_REENTRANT -fPIE 
+CPP_FLAGS = -m64 -pipe -fopenmp -std=c++0x -Wall -Wno-unused-parameter -W -fPIE -D_REENTRANT -Dcimg_use_png
 LINKER = g++ -o
-LFLAGS = -Wall -lX11 -lpthread -lpng -fopenmp 
+LFLAGS = -Wall -lX11 -lpthread -lpng -fopenmp
 
 # Declaration of variables
 SRCDIR = src
@@ -17,6 +17,8 @@ OBJDIR = build
 EXEDIR = .
 
 debug: CPP_FLAGS += -g
+# -fsanitize=undefined -fno-omit-frame-pointer
+#debug: LFLAGS += -fsanitize=undefined
 debug: $(EXE)
 
 release: CPP_FLAGS += -O2

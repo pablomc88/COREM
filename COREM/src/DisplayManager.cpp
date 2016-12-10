@@ -23,7 +23,7 @@ DisplayManager::DisplayManager(int x, int y){
 }
 
 DisplayManager::DisplayManager(const DisplayManager& copy){
-    cout << "Internal error: called DisplayManager copy method" << endl;
+    cout << "Internal error: empty DisplayManager copy constructor has been called" << endl;
 }
 
 DisplayManager::~DisplayManager(void){

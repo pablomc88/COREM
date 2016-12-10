@@ -24,11 +24,15 @@ StreamingInput::StreamingInput(int x, int y, double temporal_step, string conn_u
     // Default input parameters
     connection_url = conn_url;    
     SkipNInitFrames = 0; // No frame skipped by default
+    RepeatLastFrame = false; // Sim. is terminted after end of input
+    InputFramePeriod = 1; // by default one new frame is used each simulation millisecond
 
     // Allocate image buffers buffer
     outputImage = new CImg<double> (sizeY, sizeX, 1, 1, 0);
     receiver_vars.buffer_img = new CImg<double> (sizeY, sizeX, 1, 1, 0);
 
+    // Init. internal vars
+    NextFrameTime = 0; // First frame must be received at time 0
     socket_fd = -1; // There is no connection at the beginning, so the Sockets and stream are not created yet
     accept_socket_fd = -1;
     receiver_vars.accept_socket_fh = NULL;
@@ -65,6 +69,9 @@ StreamingInput::StreamingInput(const StreamingInput &copy):module(copy){
     receiver_vars.buffer_mutex = copy.receiver_vars.buffer_mutex;
     receiver_vars.reception_mutex = copy.receiver_vars.reception_mutex;
     SkipNInitFrames = copy.SkipNInitFrames;
+    RepeatLastFrame = copy.RepeatLastFrame;
+    InputFramePeriod = copy.InputFramePeriod;
+    NextFrameTime = copy.NextFrameTime;
 
     outputImage=new CImg<double>(*copy.outputImage);
     receiver_vars.buffer_img=new CImg<double>(*copy.receiver_vars.buffer_img);
@@ -92,8 +99,10 @@ bool StreamingInput::allocateValues(){
     bool ret_correct;
     module::allocateValues(); // Call the allocateValues() method of the base class
     
-    ret_correct = openConnetion(); // Set socket to listen
+    ret_correct = openConnetion(); // Set socket to listen and wait for a connection
     if(ret_correct){
+        if(SkipNInitFrames>0)
+            cout << "Skipping " << SkipNInitFrames << " input frames" << endl;
         for(int n_skipped_frames=0;n_skipped_frames<SkipNInitFrames;n_skipped_frames++)
             outputImage->load_png(receiver_vars.accept_socket_fh); // Skip frame
             
@@ -101,6 +110,7 @@ bool StreamingInput::allocateValues(){
         outputImage->load_png(receiver_vars.accept_socket_fh); // Get first valid frame
         sizeY=outputImage->width();
         sizeX=outputImage->height();
+        NextFrameTime=InputFramePeriod; // Next frame must be read at this time
         // output image should have been automatically resized after first frame load
         // Resize buffer image as well
         receiver_vars.buffer_img->assign(sizeY, sizeX, 1, 1, 0);
@@ -115,6 +125,7 @@ bool StreamingInput::allocateValues(){
     return(ret_correct);
 }
 
+//------------------------------------------------------------------------------//
 
 bool StreamingInput::set_SkipNInitFrames(int n_frames){
     bool ret_correct;
@@ -126,6 +137,20 @@ bool StreamingInput::set_SkipNInitFrames(int n_frames){
     return(ret_correct);
 }
 
+bool StreamingInput::set_RepeatLastFrame(bool repeat_flag){
+    RepeatLastFrame = repeat_flag;
+    return(true);
+}
+
+bool StreamingInput::set_InputFramePeriod(double sim_time_period){
+    bool ret_correct;
+    if (sim_time_period>0) {
+        InputFramePeriod = sim_time_period;
+        ret_correct=true;
+    } else
+        ret_correct=false;
+    return(ret_correct);
+}
 
 //------------------------------------------------------------------------------//
 
@@ -136,8 +161,12 @@ bool StreamingInput::setParameters(vector<double> params, vector<string> paramID
     for (vector<double>::size_type i = 0;i < params.size() && correct;i++){
         const char * s = paramID[i].c_str();
 
-        if (strcmp(s,"Par")==0){
+        if (strcmp(s,"SkipNInitFrames")==0){
             correct = set_SkipNInitFrames((int)(params[i]));
+        } else if (strcmp(s,"RepeatLastFrame")==0){
+            correct = set_RepeatLastFrame(params[i] != 0.0);
+        } else if (strcmp(s,"InputFramePeriod")==0){
+            correct = set_InputFramePeriod(params[i]);
         } else{
               correct = false;
         }
@@ -148,7 +177,7 @@ bool StreamingInput::setParameters(vector<double> params, vector<string> paramID
 //------------------------------------------------------------------------------//
 
 // This method can only be used to set the simulation time
-void StreamingInput::feedInput(double sim_time, const CImg<double>& new_input,bool isCurrent,int port){
+void StreamingInput::feedInput(double sim_time, const CImg<double> &new_input, bool isCurrent, int port){
     // Update the current simulation time (although it is currently not used)
     simTime = sim_time;
 }
@@ -156,7 +185,7 @@ void StreamingInput::feedInput(double sim_time, const CImg<double>& new_input,bo
 
 //------------------------------------------------------------------------------//
 
-void StreamingInput::update(){
+void StreamingInput::get_new_frame(){
     if(receiver_vars.buffer_img != NULL) // Don't wait for a frame if input already ended
         pthread_mutex_lock(&receiver_vars.buffer_mutex); // Waits until a new frame is ready
 
@@ -164,10 +193,17 @@ void StreamingInput::update(){
         *outputImage = *receiver_vars.buffer_img; // Get output from buffer
         pthread_mutex_unlock(&receiver_vars.reception_mutex); // Signal the receiver thread that it can update the value of buffer_img buffer with a new frame
     } else { // End of stream
-        if(outputImage != NULL){
+        if(outputImage != NULL && !RepeatLastFrame){
             delete outputImage;
-            outputImage=NULL; // Indicate an end of input
+            outputImage=NULL; // Indicate an end of input ans simulation
         }
+    }
+}
+
+void StreamingInput::update(){
+    while(simTime >= NextFrameTime){ // It is time to get a new frame?:
+        get_new_frame();
+        NextFrameTime += InputFramePeriod; // Update start time of the next frame
     }
 }
 
@@ -276,6 +312,8 @@ void *image_receiver_thread(struct receiver_params *params)
         }
     }
     // The thread will return the error code or 0 if success.
+    if(error_code==EIO)
+        cout << "\rStreaming connection was closed by the other end." << endl;
     // we do not know the sizeof(void *) in principle, so cast to intptr_t which has the same sizer to avoid warning
     return((void *)(intptr_t)error_code);
 }
@@ -307,11 +345,8 @@ bool StreamingInput::stopStreamReception(){
         if(join_err == 0) {// If success joining
             thread_ret = (int)(intptr_t)thread_ret_ptr;
             if(thread_ret != 0){
-                if(thread_ret == EIO)
-                    cout << "Streaming connection was closed by the other peer: Ending simulation..." << endl;
-                else
+                if(thread_ret != EIO)
                     cout << "Frame reception ended anormally. errno: " << thread_ret << "." << endl;
-                
             }
             
             ret_correct = true;

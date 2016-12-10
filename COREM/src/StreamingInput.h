@@ -36,6 +36,7 @@ struct receiver_params {
     pthread_mutex_t buffer_mutex; // This var is locked when the buffer is started to be copied to the output and unlocked when it can be copied agin (new frame received)
     pthread_mutex_t reception_mutex; // This var is locked when the thread starts receiving and unlocked the when can receive again (buffer copied to output)
 };
+
 // Thread function in charge of receiving frames through socket (int)new_socket_fd and
 // storing them in bufferImage.
 // After soreing a frame it signals the completion and waits until the signal is cleared
@@ -44,14 +45,19 @@ void *image_receiver_thread(struct receiver_params *params);
 
 class StreamingInput: public module{
 protected:
-    // image output
+    // Internal variables
     CImg<double> *outputImage; // Buffer where Update() stores the received image for getOutput()
     int socket_fd; // Connection socket file descriptor or -1 if socket has not been creted
     int accept_socket_fd; // Socket fd created when a connection is accepted
     string connection_url; // URL of the connection. It must be 'tcp://localhost:port', where port 
     pthread_t Receiver_thread_id; // ID of the thread created to receive images
     struct receiver_params receiver_vars; // Variables shared between the class object and the thread
+    double NextFrameTime; // Time at which the next frame must be received
+    
+    // StreamingInput operation parameters
     int SkipNInitFrames; // Number of of frames to skip just at the beginning of the stream
+    bool RepeatLastFrame; // If this parameteris true, the last input frame received is repeated until the end of simulation time
+    double InputFramePeriod; // Number of simulation milliseconds that must elapse before a new frame is used. This is an alternative way to specify the FPS of the input.
 public:
     // Constructor, copy, destructor.
     StreamingInput(int x=1, int y=1, double temporal_step=1.0, string conn_url="");
@@ -63,11 +69,18 @@ public:
 
     // These functions are mainly used by setParameters() to set object parameter properties after the object is created
     bool set_SkipNInitFrames(int n_frames);
+    bool set_RepeatLastFrame(bool repeat_flag);
+    bool set_InputFramePeriod(double sim_time_period);
 
     // Get new input
     virtual void feedInput(double sim_time, const CImg<double> &new_input, bool isCurrent, int port);
-    // update of state and write output frame to file
+    
+    // Wait until a new frame is available and update output image buffer
+    void get_new_frame();
+    
+    // update output image according to current sim. time, waiting for a new frame if needed
     virtual void update();
+    
     // set Parameters
     virtual bool setParameters(vector<double> params, vector<string> paramID);
     
