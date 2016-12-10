@@ -54,8 +54,6 @@ protected:
     impulse *imp;
     // input seq
     CImg<double>** inputSeq;
-    // Number of repetitions of each image
-    int repetitions;
 
     // total (end) simulation time and current simulation time
     int totalSimTime, simTime;
@@ -125,10 +123,6 @@ public:
     bool setModuleInput();
     // get number of images
     int getNumberImages();
-    // Set repetitions
-    bool setRepetitions(int r);
-
-
 };
 
 #endif // RETINA_H

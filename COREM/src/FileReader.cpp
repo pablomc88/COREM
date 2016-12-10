@@ -320,9 +320,6 @@ void FileReader::parseFile(Retina &retina, DisplayManager &displayMg){
                         else if( strcmp(token[1], "PixelsPerDegree") == 0 ){
                             action = 4;
                         }
-                        else if( strcmp(token[1], "NRepetitions") == 0 ){
-                            action = 5;
-                        }
                         else if( strcmp(token[1], "DisplayDelay") == 0 ){
                             action = 6;
                         }
@@ -591,25 +588,6 @@ void FileReader::parseFile(Retina &retina, DisplayManager &displayMg){
                 action = 0;
                 break;
 
-            // Number of repetitions
-            case 5:
-
-                if (token[2]){
-                    if (atof(token[2])>0)
-                        retina.setRepetitions(atof(token[2]));
-                    else{
-                        abort(line,"Expected a positive number of repetitions (>0)");
-                        break;
-                    }
-                }else{
-                    abort(line,"Expected value of number of repetitions");
-                    break;
-                }
-
-                if(verbose)cout << "Number of repetitions = "<< atof(token[2]) << endl;
-                action = 0;
-                break;
-
             // Display delay
             case 6:
 
@@ -656,7 +634,6 @@ void FileReader::parseFile(Retina &retina, DisplayManager &displayMg){
 
                         if (strcmp(token[3], "{") == 0 && strcmp(token[4],"type")==0 && strcmp(token[6],"step")==0 && strcmp(token[8],"length1")==0 && strcmp(token[10],"length2")==0 && strcmp(token[12],"length3")==0 && strcmp(token[14],"sizeX")==0 && strcmp(token[16],"sizeY")==0 && strcmp(token[18],"freq")==0 && strcmp(token[20],"period")==0 && strcmp(token[22],"Lum")==0 && strcmp(token[24],"Contr")==0 && strcmp(token[26],"phi_s")==0 && strcmp(token[28],"phi_t")==0 && strcmp(token[30],"orientation")==0 && strcmp(token[32],"red_weight")==0 && strcmp(token[34],"green_weight")==0 && strcmp(token[36],"blue_weight")==0 && strcmp(token[38],"red_phase")==0 && strcmp(token[40],"green_phase")==0 && strcmp(token[42],"blue_phase")==0 && strcmp(token[44],"}")==0){
                             continueReading=retina.generateGrating(atof(token[5]),atof(token[7]),atof(token[9]),atof(token[11]),atof(token[13]),atof(token[15]),atof(token[17]),atof(token[19]),atof(token[21]),atof(token[23]),atof(token[25]),atof(token[27]),atof(token[29]),atof(token[31]),atof(token[33]),atof(token[35]),atof(token[37]),atof(token[39]),atof(token[41]),atof(token[43]));
-                            retina.setRepetitions(1.0);
                             if(verbose)cout << "Grating generated." << endl;
                         }else{
                             abort(line,"Expected parameter list of grating: 'type','step','length1','length2','length3','sizeX','sizeY','freq','period','Lum','Contr','phi_s','phi_t','orientation','red_weight','green_weight','blue_weight','red_phase','green_phase','blue_phase'");
@@ -666,7 +643,6 @@ void FileReader::parseFile(Retina &retina, DisplayManager &displayMg){
 
                         if (strcmp(token[3], "{") == 0 && strcmp(token[4],"sizeX")==0 && strcmp(token[6],"sizeY")==0 && strcmp(token[8],"circle_radius")==0 && strcmp(token[10],"jitter_period")==0 && strcmp(token[12],"spatial_period")==0 && strcmp(token[14],"step_size")==0 && strcmp(token[16],"Lum")==0 && strcmp(token[18],"Contr")==0 && strcmp(token[20],"orientation")==0 && strcmp(token[22],"red_weight")==0 && strcmp(token[24],"green_weight")==0 && strcmp(token[26],"blue_weight")==0 && strcmp(token[28],"type1")==0 && strcmp(token[30],"type2")==0 && strcmp(token[32],"switch")==0 && strcmp(token[34],"}")==0){
                             continueReading=retina.generateFixationalMovGrating(atof(token[5]),atof(token[7]),atof(token[9]),atof(token[11]),atof(token[13]),atof(token[15]),atof(token[17]),atof(token[19]),atof(token[21]),atof(token[23]),atof(token[25]),atof(token[27]),atof(token[29]),atof(token[31]),atof(token[33]));
-                            retina.setRepetitions(1.0);
                             if(verbose)cout << "Grating of fixational movements generated." << endl;
                         }else{
                             abort(line,"Expected parameter list of fixationalMovGrating: 'sizeX','sizeY','circle_radius','jitter_period','spatial_period','step_size','Lum','Contr','orientation','red_weight','green_weight','blue_weight','type1','type2','switch'");
@@ -675,7 +651,6 @@ void FileReader::parseFile(Retina &retina, DisplayManager &displayMg){
                     }else if(strcmp(token[2], "whiteNoise") == 0 ){
                         if (strcmp(token[3], "{") == 0 && strcmp(token[4],"mean")==0 && strcmp(token[6],"contrast1")==0 && strcmp(token[8],"contrast2")==0 && strcmp(token[10],"period")==0 && strcmp(token[12],"switch")==0 && strcmp(token[14],"sizeX")==0 && strcmp(token[16],"sizeY")==0 && strcmp(token[18],"}")==0){
                             continueReading=retina.generateWhiteNoise(atof(token[5]),atof(token[7]),atof(token[9]),atof(token[11]),atof(token[13]),atof(token[15]),atof(token[17]));
-                            retina.setRepetitions(1.0);
                             if(verbose)cout << "White noise generated." << endl;
                         }else{
                             abort(line,"Expected parameter list of whiteNoise: 'mean','contrast1','contrast2','period','switch','sizeX','sizeY'");
@@ -684,7 +659,6 @@ void FileReader::parseFile(Retina &retina, DisplayManager &displayMg){
                     }else if(strcmp(token[2], "impulse") == 0 ){
                         if (strcmp(token[3], "{") == 0 && strcmp(token[4],"start")==0 && strcmp(token[6],"stop")==0 && strcmp(token[8],"amplitude")==0 && strcmp(token[10],"offset")==0 && strcmp(token[12],"sizeX")==0 && strcmp(token[14],"sizeY")==0 && strcmp(token[16],"}")==0){
                             continueReading=retina.generateImpulse(atof(token[5]),atof(token[7]),atof(token[9]),atof(token[11]),atof(token[13]),atof(token[15]));
-                            retina.setRepetitions(1.0);
                             if(verbose)cout << "Impulse generated." << endl;
                         }else{
                             abort(line,"Expected parameter list of impulse: 'start','stop','amplitude','offset','sizeX','sizeY'");

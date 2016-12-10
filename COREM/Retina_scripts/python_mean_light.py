@@ -95,8 +95,6 @@ def generateScript(individual,simParam,ID,root):
 
     "retina.PixelsPerDegree({'1'})\n"+
 
-    "retina.NRepetitions('1')\n"+
-
     "retina.DisplayDelay('0')\n"+
 
     "retina.DisplayZoom({'10.0'})\n"+

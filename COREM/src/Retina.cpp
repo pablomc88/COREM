@@ -8,7 +8,6 @@ Retina::Retina(int x, int y, double temporal_step){
     sizeY=y;
     pixelsPerDegree = 1.0;
     inputType = -1; // Invalid retina input type
-    repetitions = 0;
 
     verbose = false;
 
@@ -41,7 +40,6 @@ Retina::Retina(const Retina& copy){
     sizeY= copy.sizeY;
     pixelsPerDegree = copy.pixelsPerDegree;
     inputType = copy.inputType;
-    repetitions = copy.repetitions;
     verbose = copy.verbose;
 
     modules= copy.modules;
@@ -89,7 +87,6 @@ void Retina::reset(int x,int y,double temporal_step){
     sizeY=y;
     pixelsPerDegree = 1.0;
     inputType = 0;
-    repetitions = 0;
 
     verbose = false;
 
@@ -223,19 +220,6 @@ int Retina::getTotalSimTime(){
 }
 
 //------------------------------------------------------------------------------//
-
-bool Retina::setRepetitions(int r){
-    bool ret_correct;
-    if(r >= 0) {
-        repetitions = r;
-        ret_correct=true;
-    } else
-        ret_correct=false;
-    return(ret_correct);
-}
-
-//------------------------------------------------------------------------------//
-
 
 bool Retina::allocateValues(){
     bool ret_correct;

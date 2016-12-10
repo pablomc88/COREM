@@ -82,7 +82,7 @@ void multimeter::showSpatialProfile(CImg<double> *img,bool rowCol,int number,str
         draw_disp->move(col,row);
 
         if(waitTime == -1){
-            cout << "Close spatial multimeter window to continue..." << endl;
+            cout << "\rClose spatial multimeter window to continue..." << endl;
             while (!draw_disp->is_closed())
                 draw_disp->wait();
         }
@@ -159,7 +159,7 @@ void multimeter::showTemporalProfile(string title,int col,int row, double waitTi
         draw_disp->move(col,row);
 
         if(waitTime == -1){
-            cout << "Close temporal multimeter window to continue..." << endl;
+            cout << "\rClose temporal multimeter window to continue..." << endl;
             while (!draw_disp->is_closed())
                 draw_disp->wait();
         }
@@ -512,7 +512,7 @@ void multimeter::showLNAnalysisAvg(int col, int row, double waitTime,double segm
         draw_disp->move(col,row);
 
         // wait for the user closes display
-        cout << "Close LN analysis multimeter window to continue..." << endl;
+        cout << "\rClose LN analysis multimeter window to continue..." << endl;
         while (!draw_disp->is_closed())
             draw_disp->wait();
 
