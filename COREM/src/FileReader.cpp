@@ -1,5 +1,7 @@
 #include <string.h>
 #include "FileReader.h"
+#include "SequenceInput.h"
+#include "StreamingInput.h"
 
 FileReader::FileReader(int X, int Y, double tstep){
     CorrectFile = true;
@@ -650,15 +652,7 @@ void FileReader::parseFile(Retina &retina, DisplayManager &displayMg){
             case 8:
                 if (token[2] && token[3]){
                     // Input sequence
-                    if (strcmp(token[2], "sequence") == 0 ){
-                        if (strcmp(token[3], "{") == 0){
-                            continueReading=retina.setInputSeq(token[4]);
-                            if(verbose)cout << "Input sequence read." << endl;
-                        } else {
-                            abort(line,"Parameter start token ('{') not found");
-                            break;
-                        }
-                    }else if(strcmp(token[2], "grating") == 0 ){
+                    if(strcmp(token[2], "grating") == 0 ){
 
                         if (strcmp(token[3], "{") == 0 && strcmp(token[4],"type")==0 && strcmp(token[6],"step")==0 && strcmp(token[8],"length1")==0 && strcmp(token[10],"length2")==0 && strcmp(token[12],"length3")==0 && strcmp(token[14],"sizeX")==0 && strcmp(token[16],"sizeY")==0 && strcmp(token[18],"freq")==0 && strcmp(token[20],"period")==0 && strcmp(token[22],"Lum")==0 && strcmp(token[24],"Contr")==0 && strcmp(token[26],"phi_s")==0 && strcmp(token[28],"phi_t")==0 && strcmp(token[30],"orientation")==0 && strcmp(token[32],"red_weight")==0 && strcmp(token[34],"green_weight")==0 && strcmp(token[36],"blue_weight")==0 && strcmp(token[38],"red_phase")==0 && strcmp(token[40],"green_phase")==0 && strcmp(token[42],"blue_phase")==0 && strcmp(token[44],"}")==0){
                             continueReading=retina.generateGrating(atof(token[5]),atof(token[7]),atof(token[9]),atof(token[11]),atof(token[13]),atof(token[15]),atof(token[17]),atof(token[19]),atof(token[21]),atof(token[23]),atof(token[25]),atof(token[27]),atof(token[29]),atof(token[31]),atof(token[33]),atof(token[35]),atof(token[37]),atof(token[39]),atof(token[41]),atof(token[43]));
@@ -696,6 +690,19 @@ void FileReader::parseFile(Retina &retina, DisplayManager &displayMg){
                             abort(line,"Expected parameter list of impulse: 'start','stop','amplitude','offset','sizeX','sizeY'");
                             break;
                         }
+                    }else if(strcmp(token[2], "sequence") == 0 ){
+                        module *new_input_module;
+                        new_input_module = new SequenceInput(retina.getSizeX(), retina.getSizeY(), retina.getStep(), token[3]);
+                        
+                        parseParameterBlock(token+4, new_input_module, line);
+                        
+                        // Add module to the retina
+                        if(continueReading) {
+                            retina.addModule(new_input_module, "Input");
+                            retina.setModuleInput();
+                            if(verbose) cout << "Input configured as streaming video." << endl;
+                        } else 
+                            break;
                     }else if(strcmp(token[2], "streaming") == 0 ){
                         module *new_input_module;
                         new_input_module = new StreamingInput(retina.getSizeX(), retina.getSizeY(), retina.getStep(), token[3]);
@@ -705,7 +712,7 @@ void FileReader::parseFile(Retina &retina, DisplayManager &displayMg){
                         // Add module to the retina
                         if(continueReading) {
                             retina.addModule(new_input_module, "Input");
-                            retina.setStreamingInput();
+                            retina.setModuleInput();
                             if(verbose) cout << "Input configured as streaming video." << endl;
                         } else 
                             break;

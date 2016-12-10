@@ -1,6 +1,4 @@
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
+#include <iostream>
 #include <stdio.h>
 #include "Retina.h"
 
@@ -10,7 +8,6 @@ Retina::Retina(int x, int y, double temporal_step){
     sizeY=y;
     pixelsPerDegree = 1.0;
     inputType = -1; // Invalid retina input type
-    numberImages = 0;
     repetitions = 0;
 
     verbose = false;
@@ -44,7 +41,6 @@ Retina::Retina(const Retina& copy){
     sizeY= copy.sizeY;
     pixelsPerDegree = copy.pixelsPerDegree;
     inputType = copy.inputType;
-    numberImages = copy.numberImages;
     repetitions = copy.repetitions;
     verbose = copy.verbose;
 
@@ -93,7 +89,6 @@ void Retina::reset(int x,int y,double temporal_step){
     sizeY=y;
     pixelsPerDegree = 1.0;
     inputType = 0;
-    numberImages = 0;
     repetitions = 0;
 
     verbose = false;
@@ -302,12 +297,10 @@ CImg<double> *Retina::feedInput(int sim_time){
  
     // Input selection
     switch(inputType){
-    case 0:
-        if (sim_time/repetitions < numberImages)
-            input = inputSeq[sim_time/repetitions];
-        else
-            //input = inputSeq[numberImages-1];
-            input = NULL;
+
+    case 0: // sequence input or streaming input
+        input = modules[0]->getOutput(); // the output of input module does not change if update() is not called
+        // The update of input (modules[0]->update()) is performed later, in Retina::update()
         break;
 
     case 1:
@@ -324,11 +317,6 @@ CImg<double> *Retina::feedInput(int sim_time){
 
     case 4:
         input = updateFixGrating(sim_time);
-        break;
-
-    case 5: // streaming input
-        input = modules[0]->getOutput(); // the output does not change if update() is not called
-        // The update of input (modules[0]->update()) is performed later, in Retina::update()
         break;
 
     default:
@@ -522,107 +510,9 @@ int Retina::getNumberModules(){
 
 //------------------------------------------------------------------------------//
 
-bool Retina::setStreamingInput(){
-    inputType = 5; // Set retina input type=streaming
+bool Retina::setModuleInput(){
+    inputType = 0; // Set retina input type=streaming or sequence
     return(true);
-}
-
-//------------------------------------------------------------------------------//
-
-
-bool Retina::setInputSeq(string s){
-
-    bool valueToReturn = false;
-    struct stat input_seq_path_stat;
-    
-    // Check if the specified input-sequence path is a directory or a movie file
-    if(stat(s.c_str(), &input_seq_path_stat) == 0){
-        if(verbose)
-            cout << "Loading image sequence from: " << s << "..." << endl;
-        if(S_ISDIR(input_seq_path_stat.st_mode)){ // The user has specified a directory as input sequence: load all the directory files
-            std::vector <std::string> result;
-            DIR* dp=opendir(s.c_str());
-
-            if (dp){
-                dirent* de;
-                do{ // For each directory entry:
-                    de = readdir(dp);
-                    if (de != NULL){ // We got a valid entry
-                        std::string curr_input_file_path(s + de->d_name); // Compose the entire current dir entry path
-                    
-                        if(stat(curr_input_file_path.c_str(), &input_seq_path_stat) == 0){ // Try to get information about the de->d_name
-                            if(!S_ISDIR(input_seq_path_stat.st_mode)){ // Directories (including . and ..) are not included in the input file sequence
-                                result.push_back( curr_input_file_path );
-                                valueToReturn = true; // At least one image was found, proceed
-                            }
-                        }else
-                            perror("Error accessing the specified input sequence directory: ");
-                    }
-                }while (de != NULL); // Continue while we get valid directory entries
-                closedir(dp);
-            }else{
-                cout << "Error reading retina script: Cannot open input sequence directory " << s << endl;
-            }
-
-            if (valueToReturn){
-                CImg <double> image(result[0].c_str());  // First file of the sequence. result[1] and result[0] are current and up direcgory
-                sizeX = image.height();
-                sizeY = image.width();
-
-                std::sort( result.begin(), result.end() );
-
-                numberImages = result.size();
-                inputSeq = new CImg<double>*[numberImages];
-
-                for (int i=0;i<numberImages;i++){
-                    inputSeq[i]=new CImg <double>(sizeY,sizeX,1,3);
-                }
-
-                for(int i=0;i<numberImages;i++){
-                    CImg <double> image(result[i].c_str());
-                    *(inputSeq[i])=image;
-                }
-
-                if(verbose) cout << numberImages << " images read from " << s << endl;
-                inputType = 0;
-
-              }
-        } else { // The user has specified a file as input sequence: load all the movie file
-        
-            CImg <double> inp_movie(s.c_str()); // We assume that the specified file is a sequence of images
-            sizeX = inp_movie.height();
-            sizeY = inp_movie.width();
-            numberImages = inp_movie.depth();
-
-            inputSeq = new CImg<double>*[numberImages];
-
-            for (int i=0;i<numberImages;i++){
-                inputSeq[i]=new CImg <double>(sizeY,sizeX,1,3);
-            }
-
-            for(int i=0;i<numberImages;i++)
-                *(inputSeq[i])=inp_movie.get_slice(i);
-
-            if(verbose) cout << numberImages << " frames read from " << s << endl;
-            inputType = 0;
-            valueToReturn = true;
-        }
-    } else
-        perror("Error accessing the specified input sequence: ");
-    return valueToReturn;
-}
-
-//------------------------------------------------------------------------------//
-
-bool Retina::setStreamingInput(string connect_url){
-    bool ret_ok;
-    
-    ret_ok=true;
-    return(ret_ok);
-}
-
-int Retina::getNumberImages(){
-    return numberImages;
 }
 
 //------------------------------------------------------------------------------//

@@ -72,7 +72,7 @@ public:
     bool set_RepeatLastFrame(bool repeat_flag);
     bool set_InputFramePeriod(double sim_time_period);
 
-    // Get new input
+    // Only used to update the object simulation time
     virtual void feedInput(double sim_time, const CImg<double> &new_input, bool isCurrent, int port);
     
     // Wait until a new frame is available and update output image buffer
@@ -97,7 +97,7 @@ public:
     // This method closes the streaming connection
     bool closeConnection();
     
-    // Get output image (y(k)) (not used)
+    // Get image (y(k))
     virtual CImg<double>* getOutput();
     
     // Returns false to indicate that this class performs computation

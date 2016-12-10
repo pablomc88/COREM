@@ -13,8 +13,6 @@
  * SeeAlso: module, GratingGenerator, fixationalMovGrating, impulse, whiteNoise
  */
 
-#include <dirent.h>
-#include <algorithm>
 
 #include "module.h"
 #include "LinearFilter.h"
@@ -50,15 +48,12 @@ protected:
     int inputType;
 
     // Inputs
-    vector < CImg<double> > sequence;
     GratingGenerator *g;
     fixationalMovGrating *fg;
     whiteNoise *WN;
     impulse *imp;
     // input seq
     CImg<double>** inputSeq;
-    // Number of images in the input seq
-    int numberImages;
     // Number of repetitions of each image
     int repetitions;
 
@@ -123,15 +118,11 @@ public:
     // Impulse
     bool generateImpulse(double start, double stop, double amplitude, double offset, int X, int Y);
     CImg<double> *updateImpulse(double t);
-    // Use streaming video as retina input
-    // A valid (non-dummy) Input module must be inserted in the retina to use streaming input
-    // We need this method to distingish the different retina input types since not all of them
-    // are implemented as modules. Returns true on success.
-    bool setStreamingInput();
-    // Input Sequence
-    bool setInputSeq(string s);
-    // Video streaming input
-    bool setStreamingInput(string connect_url);
+    // Use streaming video or sequence as retina input
+    // A valid (non-dummy) Input module must be inserted in the retina to use these inputs
+    // We need this method to distingish the other retina input types from the others implemented as modules
+    // Returns true on success.
+    bool setModuleInput();
     // get number of images
     int getNumberImages();
     // Set repetitions
