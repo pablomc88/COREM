@@ -12,7 +12,6 @@ Retina::Retina(int x, int y, double temporal_step){
     inputType = -1; // Invalid retina input type
     numberImages = 0;
     repetitions = 0;
-    currentRep = 0;
 
     verbose = false;
 
@@ -47,7 +46,6 @@ Retina::Retina(const Retina& copy){
     inputType = copy.inputType;
     numberImages = copy.numberImages;
     repetitions = copy.repetitions;
-    currentRep = copy.currentRep;
     verbose = copy.verbose;
 
     modules= copy.modules;
@@ -450,13 +448,7 @@ CImg<double> *Retina::feedInput(int sim_time){
 //------------------------------------------------------------------------------//
 
 void Retina::update(){
-    if(currentRep == 0)
-        modules[0]->update(); // We only update() the Input module once each 'repetitions' times, so each Input image is repeated
-    currentRep++; // Times that Input image is currently repeated
-    if(currentRep >= repetitions)
-        currentRep = 0;
-
-    for (size_t i=1;i<modules.size();i++){ // Update all modules, including Output and Input modules
+    for (size_t i=0;i<modules.size();i++){ // Update all modules, including Output and Input modules
         module* m = modules[i];
         m->update();
     }
