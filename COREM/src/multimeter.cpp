@@ -361,6 +361,10 @@ void multimeter::showLNAnalysisAvg(int col, int row, double waitTime,double segm
             min_value1 = F[2*k+1]/numberTrials;
     }
 
+    if(min_value1 == max_value1){ // Prevent min and max from being equal since values are later normalized to max-min
+        min_value1-=0.5;
+        max_value1+=0.5;
+    }
 
     // remove LN file and save new file
     removeFile(LNFile);
@@ -415,6 +419,11 @@ void multimeter::showLNAnalysisAvg(int col, int row, double waitTime,double segm
             min_valuey = (*staticProfile)(l,0,0,0);
         if((*staticProfile)(l,0,0,0)>max_valuey && abs((*staticProfile)(l,0,0,0)) > 0)
             max_valuey = (*staticProfile)(l,0,0,0);
+    }
+
+    if(min_valuey == max_valuey){ // Prevent min and max from being equal
+        min_valuey-=0.5;
+        max_valuey+=0.5;
     }
 
     (*staticProfile)(399,0,0,0) = (*staticProfile)(398,0,0,0);

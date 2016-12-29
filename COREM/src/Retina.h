@@ -52,8 +52,6 @@ protected:
     fixationalMovGrating *fg;
     whiteNoise *WN;
     impulse *imp;
-    // input seq
-    CImg<double>** inputSeq;
 
     // total (end) simulation time and current simulation time
     int totalSimTime, simTime;

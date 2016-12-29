@@ -674,7 +674,7 @@ void FileReader::parseFile(Retina &retina, DisplayManager &displayMg){
                         if(continueReading) {
                             retina.addModule(new_input_module, "Input");
                             retina.setModuleInput();
-                            if(verbose) cout << "Input configured as streaming video." << endl;
+                            if(verbose) cout << "Input configured as sequence of frames." << endl;
                         } else 
                             break;
                     }else if(strcmp(token[2], "streaming") == 0 ){
