@@ -29,8 +29,6 @@ protected:
     bool isThreshold;
     // STP parameters
     double kf,kd,tau;
-    // Simulation step
-    double step;
 
     // Buffers
     CImg<double> **inputImage;

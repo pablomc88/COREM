@@ -93,6 +93,11 @@ bool ShortTermPlasticity::setTau(double p3){
 //------------------------------------------------------------------------------//
 
 bool ShortTermPlasticity::allocateValues(){
+    // Resize buffer images to current retina size
+    for (int i=0;i<7;i++)
+        inputImage[i]->assign(sizeY, sizeX, 1, 1, 0);
+    outputImage->assign(sizeY, sizeX, 1, 1, 0);
+    
     // exp(-step/tau)
     inputImage[5]->fill(-step/tau);
     inputImage[5]->exp();
@@ -106,7 +111,6 @@ void ShortTermPlasticity::feedInput(double sim_time, const CImg<double>& new_inp
 }
 
 void ShortTermPlasticity::update(){
-
     // kmInf = (kd/(abs(input)))
     // km(t+1) = kmInf + [km(t) - kmInf]*exp(-step/tau)
     // P = P + kf*(km*abs(input) - P)
@@ -153,7 +157,6 @@ void ShortTermPlasticity::update(){
         }
     }
 
-
     // slope, constant offset and exponent
     (*inputImage[0])*=slope;
     (*inputImage[0])+=offset;
@@ -173,11 +176,13 @@ bool ShortTermPlasticity::setParameters(vector<double> params, vector<string> pa
         const char * s = paramID[i].c_str();
 
         if (strcmp(s,"slope")==0){
-            slope = params[i];
-        }else if (strcmp(s,"offset")==0){
-            offset = params[i];
-        }else if (strcmp(s,"exponent")==0){
-            exponent = params[i];
+            correct = setSlope(params[i]);
+        }
+        else if (strcmp(s,"offset")==0){
+            correct = setOffset(params[i]);
+        }
+        else if (strcmp(s,"exponent")==0){
+            correct = setExponent(params[i]);
         }
         else if (strcmp(s,"threshold")==0){
             correct = setThreshold(params[i]);

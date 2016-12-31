@@ -109,8 +109,8 @@ void InterfaceNEST::update(){
     CImg<double> *input;
     
     input = retina.feedInput(SimTime);
-    displayMg.updateDisplay(input, retina, SimTime, totalSimTime, CurrentTrial, totalNumberTrials);
     retina.update(); // This call updates all the modules, so since input is a pointer the content may be modified
+    displayMg.updateDisplay(input, retina, SimTime, totalSimTime, CurrentTrial, totalNumberTrials);
     SimTime+=step;
     if(input == NULL) // If this is the end of input, terminate simulation
         abortExecution=true;

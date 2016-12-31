@@ -129,12 +129,12 @@ void multimeter::showTemporalProfile(string title,int col,int row, double waitTi
         max_value+=1;
         min_value-=1;
     }
-
+/*
     if(min_value>0)
         min_value = 0;
     if(max_value<0)
         max_value = 0;
-
+*/
     // remove file and save new file
     removeFile(TempFile);
     saveArray(temp,temporal.size(),TempFile);

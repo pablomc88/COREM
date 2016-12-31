@@ -119,7 +119,6 @@ void StaticNonLinearity::update(){
     }
 
     *outputImage = *inputImage;
-
 }
 
 //------------------------------------------------------------------------------//
@@ -152,11 +151,9 @@ bool StaticNonLinearity::setParameters(vector<double> params, vector<string> par
         else{
               correct = false;
         }
-
     }
 
     return correct;
-
 }
 
 void StaticNonLinearity::clearParameters(vector<string> paramID){
@@ -181,12 +178,7 @@ void StaticNonLinearity::clearParameters(vector<string> paramID){
         else if (strcmp(s,"end")==0){
             end.clear();
         }
-
-
     }
-
-
-
 }
 
 //------------------------------------------------------------------------------//

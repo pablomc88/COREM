@@ -165,12 +165,11 @@ bool LinearFilter::setParameters(vector<double> params, vector<string> paramID){
 }
 
 //------------------------------------------------------------------------------//
-
+#include <iostream>
 
 void LinearFilter::feedInput(double sim_time, const CImg<double>& new_input, bool isCurrent, int port){
 
     *(last_inputs[0])=new_input;
-
 }
 
 //------------------------------------------------------------------------------//
@@ -179,7 +178,7 @@ void LinearFilter::update(){
 
     // Rotation on addresses of the last_values.
     CImg<double>* fakepoint=last_values[N];
-    for(int i=1;i<N+1;++i)
+    for(int i=1;i<N+1;++i) // last_values has N+1 elements (image pointers)
       last_values[N+1-i]=last_values[N-i];
     last_values[0]=fakepoint;
 
@@ -200,8 +199,6 @@ void LinearFilter::update(){
           last_inputs[M-i]=last_inputs[M-i-1];
       }
 //      last_inputs[0]->fill(0.0);
-
-
 }
 
 //------------------------------------------------------------------------------//

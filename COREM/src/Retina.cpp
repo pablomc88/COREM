@@ -381,7 +381,6 @@ CImg<double> *Retina::feedInput(int sim_time){
                         string cellName2 = n->getModuleID();
                         if (cellName1.compare(cellName2)==0){
                             *accumulator = *(n->getOutput());
-                            //cout << "acc " << cellName2 << " x: " << accumulator->width() << endl;
                             break;
                         }
                     }
