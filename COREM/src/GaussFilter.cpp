@@ -12,8 +12,8 @@ GaussFilter::GaussFilter(int x, int y, double ppd):module(x,y,1.0){
     else
         buffSizeY=3;
         
-    inputImage=new CImg<double> (buffSizeY, buffSizeX,1,1,0.0);
-    outputImage=new CImg<double> (buffSizeY, sizeX,1,1,0.0);
+    inputImage = new CImg<double>(buffSizeY, buffSizeX,1,1,0.0);
+    outputImage = new CImg<double>(sizeY, sizeX,1,1,0.0);
     buffer = new double[(buffSizeX+buffSizeY)*omp_get_max_threads()];
 
     // Some default values, just in case
@@ -33,8 +33,8 @@ GaussFilter::GaussFilter(const GaussFilter &copy):module(copy){
     buffSizeX = copy.buffSizeX;
     buffSizeY = copy.buffSizeY;
 
-    inputImage=new CImg<double>(*(copy.inputImage));
-    outputImage=new CImg<double>(*(copy.outputImage));
+    inputImage = new CImg<double>(*(copy.inputImage));
+    outputImage = new CImg<double>(*(copy.outputImage));
     buffer = new double[(buffSizeX+buffSizeY)*omp_get_max_threads()];
     
     allocateValues();
@@ -62,7 +62,7 @@ bool GaussFilter::allocateValues(){
     sigma*=pixelsPerDegree;
     // Resize images
     inputImage->assign(buffSizeY, buffSizeX, 1, 1, 0);
-    outputImage->assign(buffSizeY, buffSizeX, 1, 1, 0);
+    outputImage->assign(sizeY, sizeX, 1, 1, 0);
 
     // reallocate space for all possible threads
     delete[] buffer;
@@ -196,12 +196,11 @@ void GaussFilter::gaussVertical(CImg<double> &src){
         temp2[buffSizeX-2] = B * temp2[buffSizeX-2] + b1*temp2[buffSizeX-1] + b2*temp2W + b3*temp2Wp1;
         temp2[buffSizeX-3] = B * temp2[buffSizeX-3] + b1*temp2[buffSizeX-2] + b2*temp2[buffSizeX-1] + b3*temp2W;
 
-            for (int j=buffSizeX-4; j>=0; j--)
-                temp2[j] = B * temp2[j] + b1*temp2[j+1] + b2*temp2[j+2] + b3*temp2[j+3];
-            for (int j=0; j<buffSizeX; j++)
-                src(i,j,0) = (double)temp2[j];
-        }
-
+        for (int j=buffSizeX-4; j>=0; j--)
+            temp2[j] = B * temp2[j] + b1*temp2[j+1] + b2*temp2[j+2] + b3*temp2[j+3];
+        for (int j=0; j<buffSizeX; j++)
+            src(i,j,0) = (double)temp2[j];
+    }
 }
 
 //------------------------------------------------------------------------------//
@@ -229,12 +228,11 @@ void GaussFilter::gaussHorizontal(CImg<double> &src){
         temp2[buffSizeY-2] = B * temp2[buffSizeY-2] + b1*temp2[buffSizeY-1] + b2*temp2W + b3*temp2Wp1;
         temp2[buffSizeY-3] = B * temp2[buffSizeY-3] + b1*temp2[buffSizeY-2] + b2*temp2[buffSizeY-1] + b3*temp2W;
 
-            for (int j=buffSizeY-4; j>=0; j--)
-                temp2[j] = B * temp2[j] + b1*temp2[j+1] + b2*temp2[j+2] + b3*temp2[j+3];
-            for (int j=0; j<buffSizeY; j++)
-                src(j,i,0) = (double)temp2[j];
-
-        }
+        for (int j=buffSizeY-4; j>=0; j--)
+            temp2[j] = B * temp2[j] + b1*temp2[j+1] + b2*temp2[j+2] + b3*temp2[j+3];
+        for (int j=0; j<buffSizeY; j++)
+            src(j,i,0) = (double)temp2[j];
+    }
 }
 
 //------------------------------------------------------------------------------//
@@ -269,13 +267,12 @@ void GaussFilter::spaceVariantGaussHorizontal(CImg<double> &src){
         temp2[buffSizeY-2] = B_m(buffSizeY-2,i,0) * temp2[buffSizeY-2] + b1_m(buffSizeY-2,i,0)*temp2[buffSizeY-1] + b2_m(buffSizeY-2,i,0)*temp2W + b3_m(buffSizeY-2,i,0)*temp2Wp1;
         temp2[buffSizeY-3] = B_m(buffSizeY-3,i,0) * temp2[buffSizeY-3] + b1_m(buffSizeY-3,i,0)*temp2[buffSizeY-2] + b2_m(buffSizeY-3,i,0)*temp2[buffSizeY-1] + b3_m(buffSizeY-3,i,0)*temp2W;
 
-            for (int j=buffSizeY-4; j>=0; j--)
-                temp2[j] = B_m(j,i,0) * temp2[j] + b1_m(j,i,0)*temp2[j+1] + b2_m(j,i,0)*temp2[j+2] + b3_m(j,i,0)*temp2[j+3];
-            for (int j=0; j<buffSizeY; j++)
-                src(j,i,0) = (double)temp2[j];
+        for (int j=buffSizeY-4; j>=0; j--)
+            temp2[j] = B_m(j,i,0) * temp2[j] + b1_m(j,i,0)*temp2[j+1] + b2_m(j,i,0)*temp2[j+2] + b3_m(j,i,0)*temp2[j+3];
+        for (int j=0; j<buffSizeY; j++)
+            src(j,i,0) = (double)temp2[j];
 
-        }
-
+    }
 }
 
 //------------------------------------------------------------------------------//
@@ -303,11 +300,11 @@ void GaussFilter::spaceVariantGaussVertical(CImg<double> &src){
         temp2[buffSizeX-2] = B_m(i,buffSizeX-2,0) * temp2[buffSizeX-2] + b1_m(i,buffSizeX-2,0)*temp2[buffSizeX-1] + b2_m(i,buffSizeX-2,0)*temp2W + b3_m(i,buffSizeX-2,0)*temp2Wp1;
         temp2[buffSizeX-3] = B_m(i,buffSizeX-3,0) * temp2[buffSizeX-3] + b1_m(i,buffSizeX-3,0)*temp2[buffSizeX-2] + b2_m(i,buffSizeX-3,0)*temp2[buffSizeX-1] + b3_m(i,buffSizeX-3,0)*temp2W;
 
-            for (int j=buffSizeX-4; j>=0; j--)
-                temp2[j] = B_m(i,j,0) * temp2[j] + b1_m(i,j,0)*temp2[j+1] + b2_m(i,j,0)*temp2[j+2] + b3_m(i,j,0)*temp2[j+3];
-            for (int j=0; j<buffSizeX; j++)
-                src(i,j,0) = (double)temp2[j];
-        }
+        for (int j=buffSizeX-4; j>=0; j--)
+            temp2[j] = B_m(i,j,0) * temp2[j] + b1_m(i,j,0)*temp2[j+1] + b2_m(i,j,0)*temp2[j+2] + b3_m(i,j,0)*temp2[j+3];
+        for (int j=0; j<buffSizeX; j++)
+            src(i,j,0) = (double)temp2[j];
+    }
 }
 
 //------------------------------------------------------------------------------//
@@ -321,8 +318,9 @@ void GaussFilter::spaceVariantGaussFiltering(CImg<double> &src){
 //------------------------------------------------------------------------------//
 
 void GaussFilter::feedInput(double sim_time, const CImg<double> &new_input, bool isCurrent, int port){
-    // copy input image
-    *inputImage=new_input;
+    // copy input image in buffer maintaining the buffer size and filling the unused space with 0
+    inputImage->fill(0.0);
+    inputImage->draw_image(0,0,0,0,new_input);
 }
 
 //------------------------------------------------------------------------------//
@@ -333,8 +331,9 @@ void GaussFilter::update(){
         spaceVariantGaussFiltering(*inputImage);
     else
         gaussFiltering(*inputImage);
-
-    *outputImage = *inputImage;
+    // Copy buffer image to output image maintaining dimensions of both images, so
+    // resulting output iamge may be a cropped version of input image
+    outputImage->draw_image(0,0,0,0,*inputImage);
 }
 
 //------------------------------------------------------------------------------//
