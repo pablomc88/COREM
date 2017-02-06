@@ -159,12 +159,12 @@ void multimeter::showTemporalProfile(string title,int col,int row, double waitTi
         draw_disp->move(col,row);
 
         if(waitTime == -1){
-            cout << "\rClose temporal multimeter window to continue..." << endl;
+            cout << "\rClose last temporal multimeter window to continue..." << endl;
             while (!draw_disp->is_closed())
                 draw_disp->wait();
         }
         
-        delete draw_disp;
+        //delete draw_disp; // These objects should be deleted somewhere else in order to allow several temporal multimeter to remain open simultaneously
         delete profile;
     }
     delete temporalProfilet;
@@ -525,7 +525,7 @@ void multimeter::showLNAnalysisAvg(int col, int row, double waitTime,double segm
         while (!draw_disp->is_closed())
             draw_disp->wait();
 
-        delete draw_disp;
+        //delete draw_disp; // Window is closed when this object is deleted
         delete nonlinearity;
         delete profile;
     }

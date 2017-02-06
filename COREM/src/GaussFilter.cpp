@@ -271,7 +271,6 @@ void GaussFilter::spaceVariantGaussHorizontal(CImg<double> &src){
             temp2[j] = B_m(j,i,0) * temp2[j] + b1_m(j,i,0)*temp2[j+1] + b2_m(j,i,0)*temp2[j+2] + b3_m(j,i,0)*temp2[j+3];
         for (int j=0; j<buffSizeY; j++)
             src(j,i,0) = (double)temp2[j];
-
     }
 }
 
@@ -312,7 +311,6 @@ void GaussFilter::spaceVariantGaussVertical(CImg<double> &src){
 void GaussFilter::spaceVariantGaussFiltering(CImg<double> &src){
     spaceVariantGaussVertical(src);
     spaceVariantGaussHorizontal(src);
-
 }
 
 //------------------------------------------------------------------------------//
@@ -378,5 +376,4 @@ bool GaussFilter::setParameters(vector<double> params, vector<string> paramID){
     }
 
     return correct;
-
 }

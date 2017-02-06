@@ -19,7 +19,7 @@
 using namespace cimg_library;
 using namespace std;
 
-#define LN_OUT_FILENAME_TAIL "_output_LN.txt"
+#define LN_OUT_FILENAME_TAIL "_output_multimeter.txt"
 
 // main
 int main(int argc, char *argv[])
@@ -45,14 +45,14 @@ int main(int argc, char *argv[])
             if(d_name_len >= fn_tail_len && strcmp(ent->d_name+d_name_len-fn_tail_len, LN_OUT_FILENAME_TAIL)==0) {
                 string removed_fn_path = resdir + ent->d_name;
                 if(remove(removed_fn_path.c_str()) == -1)
-                    perror("Error while deleting old LN files");
+                    perror("Error while deleting old multimeter files");
                 files_deleted=true;                
             }
         
         }
         closedir (dir);
         if(files_deleted)
-            cout << "Deleted previous *" LN_OUT_FILENAME_TAIL " LN files of ./results/ directory." << endl;
+            cout << "Deleted previous *" LN_OUT_FILENAME_TAIL " files of ./results/ directory." << endl;
     }else{
         string tocreate = currentDirRoot+"results";
         cout << "Creating results/ directory" << endl;

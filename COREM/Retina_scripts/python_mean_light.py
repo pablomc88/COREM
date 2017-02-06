@@ -17,7 +17,7 @@ import sys
 import os
 
 ### root path ###
-root = "/home/pablo/Desktop/COREM_local/"
+root = "/home/yo/Desktop/projects/COREM/COREM/"
 
 ### folder for retina scripts ###
 os.system("mkdir "+root+"Retina_scripts/scripts")
@@ -172,23 +172,23 @@ def retina_luminance(individual,ID,sel):
 
 
     # run simulation
-    call = "corem scripts/retina"+str(ID)+".py "
+    call = "./corem Retina_scripts/scripts/retina"+str(ID)+".py "
     os.system(call)
 
     # return simulated values
     cnt = True
 
     try:
-        tmp = numpy.float64(numpy.loadtxt(root+'Retina_scripts/results/output'))
+        tmp = numpy.float64(numpy.loadtxt(root+'results/_output_multimeter.txt'))
         cnt = False
     except IOError:
         cnt = True
 
     if(cnt==False):
-        # V - V_dark
-        Vdark = tmp[499]
+        # V - V_0
+        V_0 = tmp[499]
         for i in range(0,len(tmp)):
-                tmp[i] = tmp[i] - Vdark
+                tmp[i] = tmp[i] - V_0
 
 
         vector_to_return = tmp[499:800]
