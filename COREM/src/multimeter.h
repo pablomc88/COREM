@@ -39,6 +39,8 @@ class multimeter{
 protected:
     // Image size
     int sizeX, sizeY;
+    // Image display for the multimeter (windows destroyed when object deleted)
+    CImgDisplay *draw_disp;
     // temporal registers
     vector <double> temporal;
     vector <double> input;

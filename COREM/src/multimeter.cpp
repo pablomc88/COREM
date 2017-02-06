@@ -6,15 +6,18 @@ multimeter::multimeter(int x, int y){
     sizeX = x;
     sizeY = y;
     simStep=1.0;
+    draw_disp = new CImgDisplay();
 }
 
-
 multimeter::multimeter(const multimeter& copy){
-
+    sizeX=copy.sizeX;
+    sizeY=copy.sizeY;
+    simStep=copy.simStep;
+    draw_disp = new CImgDisplay(*copy.draw_disp);
 }
 
 multimeter::~multimeter(){
-
+    delete draw_disp;
 }
 
 void multimeter::setSimStep(double value){
@@ -71,7 +74,7 @@ void multimeter::showSpatialProfile(CImg<double> *img,bool rowCol,int number,str
         CImg <unsigned char> *profile = new CImg <unsigned char>(400,256,1,3,0);
         profile->fill(*back_color);
         const char * titleChar = (title).c_str();
-        CImgDisplay *draw_disp = new CImgDisplay(*profile,titleChar);
+        draw_disp->assign(*profile,titleChar);
 
         profile->draw_graph(SpatialProfile1->get_crop(0,0,0,0,dim-1,0,0,0)*255/(max_value1-min_value1) - min_value1*255/(max_value1-min_value1),color1,1,1,4,255,0).display(*draw_disp);
         profile->draw_axes(0.0,dim,max_value1,min_value1,color2,1,-80,-80,0,0,~0U,~0U,20).display(*draw_disp);
@@ -86,7 +89,6 @@ void multimeter::showSpatialProfile(CImg<double> *img,bool rowCol,int number,str
             while (!draw_disp->is_closed())
                 draw_disp->wait();
         }
-        delete draw_disp;
         delete profile;
     }
 
@@ -148,7 +150,7 @@ void multimeter::showTemporalProfile(string title,int col,int row, double waitTi
         CImg <unsigned char> *profile = new CImg <unsigned char>(400,256,1,3,0);
         profile->fill(*back_color);
         const char * titleChar = (title).c_str();
-        CImgDisplay *draw_disp = new CImgDisplay(*profile,titleChar);
+        draw_disp->assign(*profile,titleChar); // // This object must not be deleted (it is static) in order to allow several temporal multimeter to remain open simultaneously
 
         profile->draw_graph(temporalProfilet->get_crop(0,0,0,0,temporal.size()-1,0,0,0)*255/(max_value-min_value) - min_value*255/(max_value-min_value),color1,1,1,1,255,0).display(*draw_disp);
         profile->draw_axes(0.0,temporal.size()*simStep,max_value,min_value,color2,1,-80,-80,0,0,~0U,~0U,20).display(*draw_disp);
@@ -164,7 +166,6 @@ void multimeter::showTemporalProfile(string title,int col,int row, double waitTi
                 draw_disp->wait();
         }
         
-        //delete draw_disp; // These objects should be deleted somewhere else in order to allow several temporal multimeter to remain open simultaneously
         delete profile;
     }
     delete temporalProfilet;
@@ -504,7 +505,7 @@ void multimeter::showLNAnalysisAvg(int col, int row, double waitTime,double segm
         profile->fill(*back_color);
         nonlinearity->fill(*back_color);
 
-        CImgDisplay *draw_disp = new CImgDisplay((*profile,*nonlinearity),"LN analysis averaged");
+        draw_disp->assign((*profile,*nonlinearity),"LN analysis averaged"); // Window is closed when this object is deleted
         profile->draw_graph(temporalProfile->get_crop(0,0,0,0,segment-1,0,0,0)*255/(max_value1-min_value1) - min_value1*255/(max_value1-min_value1),color1,1,1,4,255,0);
         nonlinearity->draw_graph(staticProfile->get_crop(0,0,0,0,400-1,0,0,0)*255/(max_valuey-min_valuey) - min_valuey*255/(max_valuey-min_valuey),color1,1,1,4,255,0);
         profile->draw_text(320,200,"time (ms)",color2,back_color,1,20).display(*draw_disp);
@@ -515,8 +516,6 @@ void multimeter::showLNAnalysisAvg(int col, int row, double waitTime,double segm
         (profile->draw_axes(0,segment*simStep,max_value1,min_value1,color2,1,-80,-80,0,0,~0U,~0U,20),nonlinearity->draw_axes(min_valuex,max_valuex,max_valuey,min_valuey,color2,1,-40,-20,0,0,~0U,~0U,13)).display(*draw_disp);
 
 
-
-
         // move display
         draw_disp->move(col,row);
 
@@ -525,7 +524,6 @@ void multimeter::showLNAnalysisAvg(int col, int row, double waitTime,double segm
         while (!draw_disp->is_closed())
             draw_disp->wait();
 
-        //delete draw_disp; // Window is closed when this object is deleted
         delete nonlinearity;
         delete profile;
     }
@@ -721,7 +719,7 @@ void multimeter::showLNAnalysis(string title, int col, int row, double waitTime,
 //        CImg <unsigned char> *profile = new CImg <unsigned char>(400,256,1,3,0);
 //        profile->fill(*back_color);
 //        const char * titleChar = (title).c_str();
-//        CImgDisplay *draw_disp = new CImgDisplay(*profile,titleChar);
+//        draw_disp->assign(*profile,titleChar);
 
 //        profile->draw_graph(temporalProfile->get_crop(0,0,0,0,segment-1,0,0,0)*255/(max_value1-min_value1) - min_value1*255/(max_value1-min_value1),color1,1,1,4,255,0);
 //        profile->draw_axes(0.0,segment*simStep,max_value1,min_value1,color2,1,-80,-80,0,0,~0U,~0U,20).display(*draw_disp);
