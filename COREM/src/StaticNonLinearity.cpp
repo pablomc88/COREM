@@ -1,20 +1,27 @@
 #include "StaticNonLinearity.h"
 
-StaticNonLinearity::StaticNonLinearity(int x, int y, double temporal_step, int t){
-    sizeX = x;
-    sizeY = y;
-    step = temporal_step;
-
+StaticNonLinearity::StaticNonLinearity(int x, int y, double temporal_step, int t):module(x,y,temporal_step){
     type = t;
     isThreshold = false;
+    
+    inputImage=new CImg<double> (sizeY,sizeX,1,1,0.0);
+    outputImage=new CImg<double> (sizeY,sizeX,1,1,0.0);
+    markers=new CImg<double> (sizeY,sizeX,1,1,0.0);
 }
 
-StaticNonLinearity::StaticNonLinearity(const StaticNonLinearity& copy){
-
+StaticNonLinearity::StaticNonLinearity(const StaticNonLinearity& copy):module(copy){
+    type = copy.type;
+    isThreshold = copy.isThreshold;
+    
+    inputImage=new CImg<double>(*(copy.inputImage));
+    outputImage=new CImg<double>(*(copy.outputImage));
+    markers=new CImg<double>(*(copy.markers));
 }
 
 StaticNonLinearity::~StaticNonLinearity(void){
-
+    delete inputImage;
+    delete outputImage;
+    delete markers;
 }
 
 //------------------------------------------------------------------------------//
@@ -44,14 +51,14 @@ void StaticNonLinearity::setType(int t){
 
 //------------------------------------------------------------------------------//
 
-void StaticNonLinearity::allocateValues(){
-    inputImage=new CImg<double> (sizeY,sizeX,1,1,0.0);
-    outputImage=new CImg<double> (sizeY,sizeX,1,1,0.0);
-    markers=new CImg<double> (sizeY,sizeX,1,1,0.0);
-
+bool StaticNonLinearity::allocateValues(){
+    inputImage->assign(sizeY,sizeX,1,1,0.0);
+    outputImage->assign(sizeY,sizeX,1,1,0.0);
+    markers->assign(sizeY,sizeX,1,1,0.0);
+    return(true);
 }
 
-void StaticNonLinearity::feedInput(const CImg<double>& new_input, bool isCurrent, int port){
+void StaticNonLinearity::feedInput(double sim_time, const CImg<double>& new_input, bool isCurrent, int port){
     // copy input image
     *inputImage = new_input;
 }
@@ -77,7 +84,7 @@ void StaticNonLinearity::update(){
     // piecewise function
     else if(type==1){
             markers->fill(0.0);
-            for(int k=0;k<slope.size();k++){
+            for(size_t k=0;k<slope.size();k++){
                 cimg_forXY((*inputImage),x,y) {
                     if((*inputImage)(x,y,0,0) >= start[k] && (*inputImage)(x,y,0,0) < end[k] && (*markers)(x,y,0,0)==0.0){
                         (*inputImage)(x,y,0,0)*=slope[k];
@@ -112,7 +119,6 @@ void StaticNonLinearity::update(){
     }
 
     *outputImage = *inputImage;
-
 }
 
 //------------------------------------------------------------------------------//
@@ -121,7 +127,7 @@ bool StaticNonLinearity::setParameters(vector<double> params, vector<string> par
 
     bool correct = true;
 
-    for (int i = 0;i<params.size();i++){
+    for (vector<double>::size_type i = 0;i < params.size() && correct;i++){
         const char * s = paramID[i].c_str();
 
         if (strcmp(s,"slope")==0){
@@ -145,16 +151,14 @@ bool StaticNonLinearity::setParameters(vector<double> params, vector<string> par
         else{
               correct = false;
         }
-
     }
 
     return correct;
-
 }
 
 void StaticNonLinearity::clearParameters(vector<string> paramID){
 
-    for (int i = 0;i<paramID.size();i++){
+    for (size_t i = 0;i<paramID.size();i++){
         const char * s = paramID[i].c_str();
 
         if (strcmp(s,"slope")==0){
@@ -174,12 +178,7 @@ void StaticNonLinearity::clearParameters(vector<string> paramID){
         else if (strcmp(s,"end")==0){
             end.clear();
         }
-
-
     }
-
-
-
 }
 
 //------------------------------------------------------------------------------//

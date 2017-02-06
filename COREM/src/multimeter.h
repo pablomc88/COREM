@@ -39,6 +39,8 @@ class multimeter{
 protected:
     // Image size
     int sizeX, sizeY;
+    // Image display for the multimeter (windows destroyed when object deleted)
+    CImgDisplay *draw_disp;
     // temporal registers
     vector <double> temporal;
     vector <double> input;
@@ -59,7 +61,7 @@ public:
     ~multimeter(void);
 
     // Spatial multimeter
-    void showSpatialProfile(CImg<double> img,bool rowCol,int number,string title,int col,int row,double waitTime);
+    void showSpatialProfile(CImg<double> *img,bool rowCol,int number,string title,int col,int row,double waitTime);
 
     // Temporal multimeter
     void recordValue(double value);
@@ -69,10 +71,12 @@ public:
     void recordInput(double value);
     void showLNAnalysis(string title, int col, int row, double waitTime, double segment,double interval, double start, double stop, double numberTrials,const char * LNFile);
     void showLNAnalysisAvg(int col, int row,double waitTime, double segment, double start, double stop, double numberTrials, const char * LNFile, double ampl);
-    void saveArray(double* array, int arraySize, string fileID);
+    // Save array in a text file with nama fileID. One value per file. If file already exit,
+    // add each each value of array to each value in the file and save the resulting values.
+    void saveArray(double* array, size_t arraySize, string fileID);
     void getSwitchTime(double t){switchTime=t;}
-    string getDir();
-    string readFile(const char * File);
+    string getWorkingDir();
+    string composeResultsPath(const char * File);
     void removeFile(const char * File);
 
     vector<double> readSeq(const char *LNFile);

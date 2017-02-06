@@ -5,8 +5,8 @@
  * Name: singleCompartment
  *
  * Description: generic single-compartment model of the membrane potential,
- * updated by Euler's method. The membrane potential is driven by conductance
- * and current inputs
+ * updated by First-order forward Euler exponential integrator. The membrane
+ * potential is driven by conductance and current inputs
  *
  * Author: Pablo Martinez Cañada. University of Granada. CITIC-UGR. Spain.
  * <pablomc@ugr.es>
@@ -31,7 +31,7 @@ protected:
     int number_current_ports;
     int number_conductance_ports;
     // Nernst potentials
-    vector <double> E;
+    vector <double> E; // As many vector elements as number_conductance_ports
     // membrane capacitance, resistance and tau
     double Cm, Rm, taum, El;
     // membrane potential
@@ -44,21 +44,19 @@ public:
     ~SingleCompartment(void);
 
     // Allocate values and set protected parameters
-    virtual void allocateValues();
-    virtual void setX(int x){sizeX=x;}
-    virtual void setY(int y){sizeY=y;}
+    virtual bool allocateValues();
 
-    SingleCompartment& set_Cm(double capacitance);
-    SingleCompartment& set_Rm(double resistance);
-    SingleCompartment& set_taum(double temporal_constant);
-    SingleCompartment& set_El(double Nerst_l);
+    bool set_Cm(double capacitance);
+    bool set_Rm(double resistance);
+    bool set_taum(double temporal_constant);
+    bool set_El(double Nerst_l);
 
-    SingleCompartment& set_E(double NernstPotential, int port);
-    SingleCompartment& set_number_current_ports(int number);
-    SingleCompartment& set_number_conductance_ports(int number);
+    bool set_E(double NernstPotential, int port);
+    bool set_number_current_ports(int number);
+    bool set_number_conductance_ports(int number);
 
     // New input and update of equations
-    virtual void feedInput(const CImg<double> &new_input, bool isCurrent, int port);
+    virtual void feedInput(double sim_time, const CImg<double> &new_input, bool isCurrent, int port);
     virtual void update();
     // set Parameters
     virtual bool setParameters(vector<double> params, vector<string> paramID);

@@ -78,11 +78,11 @@ public:
     void reset();
 
     // Allocate values
-    void allocateValues(int number,double tstep);
+    bool allocateValues(int number,double tstep);
 
     // Set X and Y
-    void setX(int x);
-    void setY(int y);
+    bool setSizeX(int x);
+    bool setSizeY(int y);
 
     // other Set functions
     void setZoom(double zoom);
@@ -110,8 +110,7 @@ public:
     double findMax(CImg<double> *input);
 
     // Set Sim step
-    void setSimStep(double value);
-
+    bool setSimStep(double value);
 
 };
 

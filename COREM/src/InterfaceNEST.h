@@ -14,8 +14,8 @@
  * module, Retina, ShortTermPlasticity, SingleCompartment, StaticNonLinearity
  */
 
-#include "iostream"
-#include "vector"
+#include <iostream>
+#include <vector>
 
 #include "DisplayManager.h"
 #include "FileReader.h"
@@ -28,7 +28,7 @@ class InterfaceNEST{
 protected:
     // Image size (sizeY = width, sizeX = height)
     int sizeX, sizeY;
-    // simulation step
+    // Length of one simulation step
     double step;
     // Number of repetitions of each image (for a sequence)
     int repetitions;
@@ -55,15 +55,16 @@ public:
     ~InterfaceNEST(void);
 
     double getTotalNumberTrials();
-    int getSimTime();
+    int getTotalSimTime();
 
     void reset(int X, int Y, double tstep,int rep);
-    void allocateValues(const char * retinaPath, const char * outputFile, double outputfactor, double currentRep);
+    bool allocateValues(const char * retinaPath, const char * outputFile, double outputfactor, double currentRep);
     void update();
     double getValue(double cell);
-    bool getAbortExecution(){return abortExecution;}
-    Retina& getRetina(){return retina;}
+    bool getAbortExecution();
+    Retina& getRetina();
     double getSimStep();
+    void setVerbosity(bool verbose_flag);
 
     // modification of generators (for optimization)
     void setWhiteNoise(double mean, double contrast1,double contrast2, double period, double switchT,string id,double start, double stop);

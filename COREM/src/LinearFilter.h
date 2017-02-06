@@ -46,16 +46,14 @@ public:
     ~LinearFilter(void);
 
     // Allocate values and set protected parameters
-    virtual void allocateValues();
-    virtual void setX(int x){sizeX=x;}
-    virtual void setY(int y){sizeY=y;}
+    virtual bool allocateValues();
 
     // Exponential and gamma filter
-    LinearFilter& Exp(double tau);
-    LinearFilter& Gamma(double tau,int n);
+    bool Exp(double tau);
+    bool Gamma(double tau,int n);
 
     // New input and update of equations
-    virtual void feedInput(const CImg<double> &new_input, bool isCurrent, int port);
+    virtual void feedInput(double sim_time, const CImg<double> &new_input, bool isCurrent, int port);
     virtual void update();
 
     // Get output image (y(k))

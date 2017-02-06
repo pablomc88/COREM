@@ -1,18 +1,23 @@
+#include <algorithm> // for std::min
+#include <cstring> // for size_t
 #include "multimeter.h"
 
 multimeter::multimeter(int x, int y){
     sizeX = x;
     sizeY = y;
     simStep=1.0;
+    draw_disp = new CImgDisplay();
 }
 
-
 multimeter::multimeter(const multimeter& copy){
-
+    sizeX=copy.sizeX;
+    sizeY=copy.sizeY;
+    simStep=copy.simStep;
+    draw_disp = new CImgDisplay(*copy.draw_disp);
 }
 
 multimeter::~multimeter(){
-
+    delete draw_disp;
 }
 
 void multimeter::setSimStep(double value){
@@ -21,16 +26,15 @@ void multimeter::setSimStep(double value){
 
 //------------------------------------------------------------------------------//
 
-void multimeter::showSpatialProfile(CImg<double> img,bool rowCol,int number,string title,int col,int row,double waitTime){
+void multimeter::showSpatialProfile(CImg<double> *img,bool rowCol,int number,string title,int col,int row,double waitTime){
 
     double dim = 0.0;
 
     if(rowCol == true){
-        dim = img.height();
+        dim = img->width();
     }else{
-        dim = img.width();
+        dim = img->height();
     }
-
 
     CImg <double> *SpatialProfile1 = new CImg <double>(dim,1,1,1,0);
 
@@ -39,9 +43,9 @@ void multimeter::showSpatialProfile(CImg<double> img,bool rowCol,int number,stri
 
     for(int k=0;k<dim;k++){
         if(rowCol == true){
-            (*SpatialProfile1)(k,0,0,0)=img(k,number,0,0);
+            (*SpatialProfile1)(k,0,0,0)=(*img)(k,number,0,0);
         }else{
-            (*SpatialProfile1)(k,0,0,0)=img(number,k,0,0);
+            (*SpatialProfile1)(k,0,0,0)=(*img)(number,k,0,0);
         }
 
         if ((*SpatialProfile1)(k,0,0,0)>max_value1)
@@ -70,7 +74,7 @@ void multimeter::showSpatialProfile(CImg<double> img,bool rowCol,int number,stri
         CImg <unsigned char> *profile = new CImg <unsigned char>(400,256,1,3,0);
         profile->fill(*back_color);
         const char * titleChar = (title).c_str();
-        CImgDisplay *draw_disp = new CImgDisplay(*profile,titleChar);
+        draw_disp->assign(*profile,titleChar);
 
         profile->draw_graph(SpatialProfile1->get_crop(0,0,0,0,dim-1,0,0,0)*255/(max_value1-min_value1) - min_value1*255/(max_value1-min_value1),color1,1,1,4,255,0).display(*draw_disp);
         profile->draw_axes(0.0,dim,max_value1,min_value1,color2,1,-80,-80,0,0,~0U,~0U,20).display(*draw_disp);
@@ -81,13 +85,14 @@ void multimeter::showSpatialProfile(CImg<double> img,bool rowCol,int number,stri
         draw_disp->move(col,row);
 
         if(waitTime == -1){
-            while (!draw_disp->is_closed()) {
+            cout << "\rClose spatial multimeter window to continue..." << endl;
+            while (!draw_disp->is_closed())
                 draw_disp->wait();
-            }
         }
+        delete profile;
     }
 
-
+    delete SpatialProfile1;
 }
 
 //------------------------------------------------------------------------------//
@@ -112,7 +117,7 @@ void multimeter::showTemporalProfile(string title,int col,int row, double waitTi
     double max_value = DBL_EPSILON;
     double min_value = DBL_INF;
 
-    for(int k=0;k<temporal.size();k++){
+    for(size_t k=0;k<temporal.size();k++){
         (*temporalProfilet)(k,0,0,0)=temporal[k];
         temp[k] = temporal[k];
 
@@ -126,12 +131,12 @@ void multimeter::showTemporalProfile(string title,int col,int row, double waitTi
         max_value+=1;
         min_value-=1;
     }
-
+/*
     if(min_value>0)
         min_value = 0;
     if(max_value<0)
         max_value = 0;
-
+*/
     // remove file and save new file
     removeFile(TempFile);
     saveArray(temp,temporal.size(),TempFile);
@@ -145,7 +150,7 @@ void multimeter::showTemporalProfile(string title,int col,int row, double waitTi
         CImg <unsigned char> *profile = new CImg <unsigned char>(400,256,1,3,0);
         profile->fill(*back_color);
         const char * titleChar = (title).c_str();
-        CImgDisplay *draw_disp = new CImgDisplay(*profile,titleChar);
+        draw_disp->assign(*profile,titleChar); // // This object must not be deleted (it is static) in order to allow several temporal multimeter to remain open simultaneously
 
         profile->draw_graph(temporalProfilet->get_crop(0,0,0,0,temporal.size()-1,0,0,0)*255/(max_value-min_value) - min_value*255/(max_value-min_value),color1,1,1,1,255,0).display(*draw_disp);
         profile->draw_axes(0.0,temporal.size()*simStep,max_value,min_value,color2,1,-80,-80,0,0,~0U,~0U,20).display(*draw_disp);
@@ -156,12 +161,14 @@ void multimeter::showTemporalProfile(string title,int col,int row, double waitTi
         draw_disp->move(col,row);
 
         if(waitTime == -1){
-            while (!draw_disp->is_closed()) {
+            cout << "\rClose last temporal multimeter window to continue..." << endl;
+            while (!draw_disp->is_closed())
                 draw_disp->wait();
-            }
         }
+        
+        delete profile;
     }
-
+    delete temporalProfilet;
 }
 
 //------------------------------------------------------------------------------//
@@ -171,37 +178,39 @@ void multimeter::showLNAnalysisAvg(int col, int row, double waitTime,double segm
     // normalize input
     double mean_value1 = 0;
 
-    for(int k=0;k<input.size();k++){
+    for(size_t k=0;k<input.size();k++){
         mean_value1+= input[k];
     }
 
     mean_value1 /= input.size();
 
-    for(int k=0;k<input.size();k++){
+    for(size_t k=0;k<input.size();k++){
         input[k] = (input[k] - mean_value1);
     }
 
     // read values from file
-    string sto_file = readFile(LNFile);
-    const char* to_file = sto_file.c_str();
+    string sto_file = composeResultsPath(LNFile);
+	const char* to_file = sto_file.c_str();    
+	vector<double> F;
 
     std::ifstream fin;
-    fin.open(to_file);
-    vector<double> F;
-
-    while (!fin.eof())
+    fin.open(to_file, std::ifstream::in);
+    if(fin.is_open())
     {
-      char buf[1000];
-      fin.getline(buf,1000);
-      const char* token[1] = {};
-      token[0] = strtok(buf, "\n");
 
-      F.push_back(atof(token[0]));
+        while (!fin.eof())
+        {
+          char buf[1000];
+          fin.getline(buf,1000);
+          const char* token[1] = {};
+          token[0] = strtok(buf, "\n");
+          if(token[0] != NULL)
+             F.push_back(atof(token[0]));
 
+        }
+
+        fin.close(); 
     }
-
-    fin.close(); 
-
     // Non-linearity: The stimulus is convolved with the filter.
     // g = S*F
 
@@ -354,15 +363,19 @@ void multimeter::showLNAnalysisAvg(int col, int row, double waitTime,double segm
             min_value1 = F[2*k+1]/numberTrials;
     }
 
+    if(min_value1 == max_value1){ // Prevent min and max from being equal since values are later normalized to max-min
+        min_value1-=0.5;
+        max_value1+=0.5;
+    }
 
     // remove LN file and save new file
     removeFile(LNFile);
     saveArray(auxF,int(segment),LNFile);
 
     // discard the beginning of the sequence to plot g
-    int begin = start;
-    if(length > 300)
-        begin = start+200;
+    //int begin = start;
+    //if(length > 300)
+    //    begin = start+200;
 
     // Plot of the response vs g
 
@@ -391,6 +404,10 @@ void multimeter::showLNAnalysisAvg(int col, int row, double waitTime,double segm
         }
     }
 
+    free(newF);
+    free(newS);
+    free(g);
+    
     double auxSP[400];
     double auxSP2[400];
 
@@ -404,6 +421,11 @@ void multimeter::showLNAnalysisAvg(int col, int row, double waitTime,double segm
             min_valuey = (*staticProfile)(l,0,0,0);
         if((*staticProfile)(l,0,0,0)>max_valuey && abs((*staticProfile)(l,0,0,0)) > 0)
             max_valuey = (*staticProfile)(l,0,0,0);
+    }
+
+    if(min_valuey == max_valuey){ // Prevent min and max from being equal
+        min_valuey-=0.5;
+        max_valuey+=0.5;
     }
 
     (*staticProfile)(399,0,0,0) = (*staticProfile)(398,0,0,0);
@@ -449,6 +471,8 @@ void multimeter::showLNAnalysisAvg(int col, int row, double waitTime,double segm
         auxSP[l] = (*staticProfile)(l,0,0,0);
     }
 
+    delete newStaticProfile;
+
 
     // Remove and save new static NL
     const char * SNL = "SNL";
@@ -474,36 +498,39 @@ void multimeter::showLNAnalysisAvg(int col, int row, double waitTime,double segm
 
     if(waitTime > -2){
 
-    const unsigned char color1[] = {255,0,0};
-    const unsigned char color2[] = {0,0,255};
-    unsigned char back_color[] = {255,255,255};
-    CImg <unsigned char> *profile = new CImg <unsigned char>(400,256,1,3,0);
-    CImg <unsigned char> *nonlinearity = new CImg <unsigned char>(400,256,1,3,0);
-    profile->fill(*back_color);
-    nonlinearity->fill(*back_color);
+        const unsigned char color1[] = {255,0,0};
+        const unsigned char color2[] = {0,0,255};
+        unsigned char back_color[] = {255,255,255};
+        CImg <unsigned char> *profile = new CImg <unsigned char>(400,256,1,3,0);
+        CImg <unsigned char> *nonlinearity = new CImg <unsigned char>(400,256,1,3,0);
+        profile->fill(*back_color);
+        nonlinearity->fill(*back_color);
 
-    CImgDisplay *draw_disp = new CImgDisplay((*profile,*nonlinearity),"LN analysis averaged");
-    profile->draw_graph(temporalProfile->get_crop(0,0,0,0,segment-1,0,0,0)*255/(max_value1-min_value1) - min_value1*255/(max_value1-min_value1),color1,1,1,4,255,0);
-    nonlinearity->draw_graph(staticProfile->get_crop(0,0,0,0,400-1,0,0,0)*255/(max_valuey-min_valuey) - min_valuey*255/(max_valuey-min_valuey),color1,1,1,4,255,0);
-    profile->draw_text(320,200,"time (ms)",color2,back_color,1,20).display(*draw_disp);
-    profile->draw_text(40,5,"Linear Filter",color2,back_color,1,20).display(*draw_disp);
-    nonlinearity->draw_text(320,200,"Input",color2,back_color,1,20).display(*draw_disp);
-    nonlinearity->draw_text(10,5,"Static NonLinearity",color2,back_color,1,20).display(*draw_disp);
+        draw_disp->assign((*profile,*nonlinearity),"LN analysis averaged"); // Window is closed when this object is deleted
+        profile->draw_graph(temporalProfile->get_crop(0,0,0,0,segment-1,0,0,0)*255/(max_value1-min_value1) - min_value1*255/(max_value1-min_value1),color1,1,1,4,255,0);
+        nonlinearity->draw_graph(staticProfile->get_crop(0,0,0,0,400-1,0,0,0)*255/(max_valuey-min_valuey) - min_valuey*255/(max_valuey-min_valuey),color1,1,1,4,255,0);
+        profile->draw_text(320,200,"time (ms)",color2,back_color,1,20).display(*draw_disp);
+        profile->draw_text(40,5,"Linear Filter",color2,back_color,1,20).display(*draw_disp);
+        nonlinearity->draw_text(320,200,"Input",color2,back_color,1,20).display(*draw_disp);
+        nonlinearity->draw_text(10,5,"Static NonLinearity",color2,back_color,1,20).display(*draw_disp);
 
-    (profile->draw_axes(0,segment*simStep,max_value1,min_value1,color2,1,-80,-80,0,0,~0U,~0U,20),nonlinearity->draw_axes(min_valuex,max_valuex,max_valuey,min_valuey,color2,1,-40,-20,0,0,~0U,~0U,13)).display(*draw_disp);
-
-
+        (profile->draw_axes(0,segment*simStep,max_value1,min_value1,color2,1,-80,-80,0,0,~0U,~0U,20),nonlinearity->draw_axes(min_valuex,max_valuex,max_valuey,min_valuey,color2,1,-40,-20,0,0,~0U,~0U,13)).display(*draw_disp);
 
 
-    // move display
-    draw_disp->move(col,row);
+        // move display
+        draw_disp->move(col,row);
 
-    // wait for the user closes display
-        while (!draw_disp->is_closed()) {
+        // wait for the user closes display
+        cout << "\rClose LN analysis multimeter window to continue..." << endl;
+        while (!draw_disp->is_closed())
             draw_disp->wait();
-        }
+
+        delete nonlinearity;
+        delete profile;
     }
 
+    delete temporalProfile;
+    delete staticProfile;    
 }
 
 //------------------------------------------------------------------------------//
@@ -520,7 +547,7 @@ void multimeter::showLNAnalysis(string title, int col, int row, double waitTime,
     double mean_value1 = 0;
     double mean_value2 = 0;
 
-    for(int k=0;k<input.size();k++){
+    for(size_t k=0;k<input.size();k++){
         mean_value1+= input[k];
         mean_value2+= temporal[k];
     }
@@ -528,7 +555,7 @@ void multimeter::showLNAnalysis(string title, int col, int row, double waitTime,
     mean_value1 /= input.size();
     mean_value2 /= temporal.size();
 
-    for(int k=0;k<input.size();k++){
+    for(size_t k=0;k<input.size();k++){
         if(k>temporal.size()/100){
             newInput.push_back(input[k] - mean_value1);
     //        input[k] = (input[k] - mean_value1);
@@ -693,7 +720,7 @@ void multimeter::showLNAnalysis(string title, int col, int row, double waitTime,
 //        CImg <unsigned char> *profile = new CImg <unsigned char>(400,256,1,3,0);
 //        profile->fill(*back_color);
 //        const char * titleChar = (title).c_str();
-//        CImgDisplay *draw_disp = new CImgDisplay(*profile,titleChar);
+//        draw_disp->assign(*profile,titleChar);
 
 //        profile->draw_graph(temporalProfile->get_crop(0,0,0,0,segment-1,0,0,0)*255/(max_value1-min_value1) - min_value1*255/(max_value1-min_value1),color1,1,1,4,255,0);
 //        profile->draw_axes(0.0,segment*simStep,max_value1,min_value1,color2,1,-80,-80,0,0,~0U,~0U,20).display(*draw_disp);
@@ -710,6 +737,12 @@ void multimeter::showLNAnalysis(string title, int col, int row, double waitTime,
 
     }
 
+    free(F);
+    free(denominator);
+    free(numerator);
+    free(S_conj);
+    free(S);
+    free(R);
 }
 
 //------------------------------------------------------------------------------//
@@ -796,7 +829,7 @@ void multimeter::conj(double data[], double copy[], int NFFT){
 
 //------------------------------------------------------------------------------//
 
-string multimeter::getDir(){
+string multimeter::getWorkingDir(){
 
     char* cwd;
     char buff[PATH_MAX + 1];
@@ -816,10 +849,10 @@ string multimeter::getDir(){
 
 //------------------------------------------------------------------------------//
 
-string multimeter::readFile(const char * File){
+string multimeter::composeResultsPath(const char * File){
 
     string sFile = (string) File; 
-    string stringResult = getDir()+ "results/" + sFile;
+    string stringResult = getWorkingDir()+ "results/" + sFile;
 
     return stringResult;
 }
@@ -829,7 +862,7 @@ string multimeter::readFile(const char * File){
 
 void multimeter::removeFile(const char *File){
 
-    string stringResult = getDir()+ "results/";
+    string stringResult = getWorkingDir()+ "results/";
     const char * root = (stringResult).c_str();
     char result[1000];
 
@@ -849,9 +882,8 @@ vector<double> multimeter::readSeq(const char * LNFile){
     strcpy(seqFile,seq);
     strcat(seqFile,LNFile);
 
-    string sto_file = readFile((const char *)seqFile);
-    const char* to_file = sto_file.c_str();
-
+    string sto_file = composeResultsPath((const char *)seqFile);
+	const char* to_file = sto_file.c_str();
     std::ifstream fin;
     fin.open(to_file);
     vector<double> F;
@@ -859,28 +891,22 @@ vector<double> multimeter::readSeq(const char * LNFile){
     if (fin.good()) {
         while (!fin.eof())
         {
-
-          char buf[1000];
-          fin.getline(buf,1000);
-          const char* token[1] = {};
-          token[0] = strtok(buf, "\n");
-
-          F.push_back(atof(token[0]));
-
+            char buf[1000];
+            fin.getline(buf,1000);
+            const char* token[1] = {};
+            token[0] = strtok(buf, "\n");
+            if(token[0] != NULL)
+                F.push_back(atof(token[0]));
         }
+        fin.close();
     }
-
-
-    fin.close();
-
     return F;
-
 }
 
 //------------------------------------------------------------------------------//
 
 
-void multimeter::saveSeq(vector<double> newSeq,const char * LNFile,double maxSize){
+void multimeter::saveSeq(vector<double> newSeq, const char *LNFile, double maxSize){
 
     // read first
     vector<double> FileSeq = readSeq(LNFile);
@@ -895,10 +921,12 @@ void multimeter::saveSeq(vector<double> newSeq,const char * LNFile,double maxSiz
 
         // save new array
         double *F = (double *) malloc((newSeq.size()) * sizeof(double));
-        for(int k=0;k<newSeq.size();k++)
-            F[k]=newSeq[k];
-        saveArray(F, newSeq.size(), (const char *)seqFile);
-
+        if(F != NULL) {
+            for(size_t k=0;k<newSeq.size();k++)
+                F[k]=newSeq[k];
+            saveArray(F, newSeq.size(), (const char *)seqFile);
+            free(F);
+        } else perror("saving new multimeter array");
     // another seq
     }else{
 
@@ -908,34 +936,33 @@ void multimeter::saveSeq(vector<double> newSeq,const char * LNFile,double maxSiz
 
             // save new array
             double *F = (double *) malloc((FileSeq.size() + newSeq.size() ) * sizeof(double));
-            for(int k=0;k<FileSeq.size() + newSeq.size();k++){
-                if(k<FileSeq.size()){
-                    F[k] = FileSeq[k];
-                }else{
-                    F[k] = newSeq[k-FileSeq.size()];
+            if(F != NULL) {
+                for(size_t k=0;k<FileSeq.size() + newSeq.size();k++){
+                    if(k<FileSeq.size()){
+                        F[k] = FileSeq[k];
+                    }else{
+                        F[k] = newSeq[k-FileSeq.size()];
+                    }
                 }
-            }
 
-            saveArray(F, FileSeq.size() + newSeq.size(),(const char *)seqFile);
+                saveArray(F, FileSeq.size() + newSeq.size(),(const char *)seqFile);
+                free(F);
+            } else perror("saving new multimeter array (another seq)");
         }
-
-
     }
-
-
 }
 
 //------------------------------------------------------------------------------//
 
-void multimeter::saveArray(double* array, int arraySize, string fileID){
+void multimeter::saveArray(double* array, size_t arraySize, string fileID){
 
       // read file
       std::vector <std::string> files;
       dirent* de;
 
-      string stringResult = getDir()+ "results/";
+      string stringResult = getWorkingDir()+ "results/";
       const char * currentDir = (stringResult).c_str();
-      DIR* dp=opendir (currentDir);
+      DIR* dp=opendir(currentDir);
 
       if (dp){
           while (true)
@@ -943,9 +970,8 @@ void multimeter::saveArray(double* array, int arraySize, string fileID){
               de = readdir( dp );
               if (de == NULL)
                   break;
-              files.push_back( std::string( de->d_name ) );
+              files.push_back(std::string(de->d_name));
           }
-
         closedir( dp );
         std::sort( files.begin(), files.end() );
       }else{
@@ -954,7 +980,7 @@ void multimeter::saveArray(double* array, int arraySize, string fileID){
 
       bool fileFound = false;
 
-      for(int k=0;k<files.size();k++){
+      for(size_t k=0;k<files.size();k++){
 
           const char * f1 = (files[k]).c_str();
           const char * f2 = fileID.c_str();
@@ -963,39 +989,41 @@ void multimeter::saveArray(double* array, int arraySize, string fileID){
               fileFound = true;
               // Read current value
               const char * fileName = (fileID).c_str();
-	      string sto_file = readFile(fileName);
-    	      const char* to_file = sto_file.c_str();
-
-              fin.open(to_file);
+              string sto_file = composeResultsPath(fileName);
+				const char* to_file = sto_file.c_str();
               fin.precision(64);
-              vector <string> fileValues;
+              fin.open(to_file);
+              if (fin.good()) {
+                  vector <string> fileValues;
 
-              while (!fin.eof())
-              {
-                char buf[1000];
-                fin.getline(buf,1000);
-                const char* token[1] = {};
-                token[0] = strtok(buf, "\n");
-                fileValues.push_back(token[0]);
+                  while (!fin.eof())
+                  {
+                    char buf[1000];
+                    fin.getline(buf,1000);
+                    const char* token[1] = {};
+                    token[0] = strtok(buf, "\n");
+                    if(token[0] != NULL) // If the last line ends with \n, we may have an extra loop iteration with token[0] == NULL
+                        fileValues.push_back(token[0]);
+                  }
 
+                  fin.close();
+
+                  // update values and write to file
+                  fout.open(to_file);
+                  if (fout.good()) {
+                      const char * add_value;
+                      for(size_t l=0;l<min(arraySize,fileValues.size());l++){
+                          add_value = (fileValues[l]).c_str();
+                          fout.precision(64);
+                          if(l<arraySize-1)
+                              fout << (array[l]+atof(add_value)) << endl;
+                          else
+                              fout << (array[l]+atof(add_value));
+                      }
+                      
+                      fout.close();
+                  }
               }
-
-              fin.close();
-
-              // update values and write to file
-              fout.open(to_file);
-              const char * add_value;
-              for(int l=0;l<arraySize;l++){
-                  add_value = (fileValues[l]).c_str();
-                  fout.precision(64);
-                  if(l<arraySize-1)
-                      fout << (array[l]+atof(add_value)) << endl;
-                  else
-                      fout << (array[l]+atof(add_value));
-
-              }
-              fout.close();
-
           }
       }
 
@@ -1004,20 +1032,20 @@ void multimeter::saveArray(double* array, int arraySize, string fileID){
 
           // Read current value
           const char * fileName = (fileID).c_str();
-          string sto_file = readFile(fileName);
-    	  const char* to_file = sto_file.c_str();
-
+          string sto_file = composeResultsPath(fileName);
+const 		char* to_file = sto_file.c_str();
           // write new file
           fout.open(to_file);
-          for(int l=0;l<arraySize;l++){
-              fout.precision(64);
-              if(l<arraySize-1)
-                  fout << array[l] << endl;
-              else
-                  fout << array[l];
+          if (fout.good()) {
+              for(size_t l=0;l<arraySize;l++){
+                  fout.precision(64);
+                  if(l<arraySize-1)
+                      fout << array[l] << endl;
+                  else
+                      fout << array[l];
+              }
+              fout.close();
           }
-          fout.close();
-
       }
 }
 

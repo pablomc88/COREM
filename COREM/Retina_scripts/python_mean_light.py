@@ -95,8 +95,6 @@ def generateScript(individual,simParam,ID,root):
 
     "retina.PixelsPerDegree({'1'})\n"+
 
-    "retina.NRepetitions('1')\n"+
-
     "retina.DisplayDelay('0')\n"+
 
     "retina.DisplayZoom({'10.0'})\n"+
@@ -181,7 +179,7 @@ def retina_luminance(individual,ID,sel):
     cnt = True
 
     try:
-        tmp = numpy.float64(numpy.loadtxt(root+'results/output'))
+        tmp = numpy.float64(numpy.loadtxt(root+'results/_output_multimeter.txt'))
         cnt = False
     except IOError:
         cnt = True

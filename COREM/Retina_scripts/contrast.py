@@ -19,7 +19,6 @@ retina.TempStep('5') # simulation step (in ms)
 retina.SimTime('40000') # simulation time (in ms)
 retina.NumTrials('30') # number of trials
 retina.PixelsPerDegree({'1'}) # pixels per degree of visual angle
-retina.NRepetitions('1') # number of simulation steps every image in the input sequence is repeated
 retina.DisplayDelay('0') # display delay
 retina.DisplayZoom({'10.0'}) # display zoom
 retina.DisplayWindows('3') # Displays per row

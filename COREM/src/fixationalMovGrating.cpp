@@ -66,8 +66,7 @@ fixationalMovGrating::fixationalMovGrating(int X,int Y,double radius,double jitt
     jitter1 = 0.0;
     jitter2 = 0.0;
     j1 = -step_size;
-    value1,value2,value3 = 0.0;
-
+    value1=value2=value3 = 0.0;
 }
 
 fixationalMovGrating::fixationalMovGrating(const fixationalMovGrating& copy){

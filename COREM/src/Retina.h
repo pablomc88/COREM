@@ -14,10 +14,6 @@
  */
 
 
-#include "dirent.h"
-#include <algorithm>
-
-
 #include "module.h"
 #include "LinearFilter.h"
 #include "SingleCompartment.h"
@@ -26,6 +22,9 @@
 #include "fixationalMovGrating.h"
 #include "whiteNoise.h"
 #include "impulse.h"
+#include "SpikingOutput.h"
+#include "SequenceOutput.h"
+#include "StreamingInput.h"
 
 using namespace cimg_library;
 using namespace std;
@@ -34,35 +33,28 @@ class Retina{
 protected:
     // Image size
     int sizeX, sizeY;
-    // simulation step and ppd
+    // simulation step time length and ppd
     double step;
     double pixelsPerDegree;
 
     // Retina output and accumulator of intermediate images
     CImg <double> *output;
-    CImg <double> accumulator;
+    CImg <double> *accumulator;
     // retina input channels (for color conversion)
-    CImg<double> RGBred,RGBgreen,RGBblue,ch1,ch2,ch3,rods,X_mat,Y_mat,Z_mat;
+    CImg<double> *RGBred, *RGBgreen, *RGBblue, *ch1, *ch2, *ch3, *rods, *X_mat, *Y_mat, *Z_mat;
     // vector of retina modules
     vector <module*> modules;
     // Type of input
     int inputType;
 
     // Inputs
-    vector < CImg<double> > sequence;
     GratingGenerator *g;
     fixationalMovGrating *fg;
     whiteNoise *WN;
     impulse *imp;
-    // input seq
-    CImg<double>** inputSeq;
-    // Number of images in the input seq
-    int numberImages;
-    // Number of repetitions of each image
-    int repetitions;
 
-    // Simulation time
-    int SimTime;
+    // total (end) simulation time and current simulation time
+    int totalSimTime, simTime;
     // Current and total number of trials
     double CurrentTrial,totalNumberTrials;
 
@@ -78,29 +70,30 @@ public:
     void reset(int x=1,int y=1,double temporal_step=1.0);
 
     // Allocate values and set protected parameters
-    void allocateValues();
-    Retina& setSizeX(int x);
-    Retina& setSizeY(int y);
-    Retina& set_step(double temporal_step);
+    bool allocateValues();
+    bool setSizeX(int x);
+    bool setSizeY(int y);
+    bool set_step(double temporal_step);
     int getSizeX();
     int getSizeY();
     double getStep();
-    void setSimCurrentRep(double r);
-    void setSimTotalRep(double r);
-    void setSimTime(int t);
-    double getSimCurrentRep();
-    double getSimTotalRep();
-    int getSimTime();
+    bool setVerbosity(bool verbose_flag);
+    bool setSimCurrentTrial(double r);
+    bool setSimTotalTrials(double r);
+    bool setTotalSimTime(int t);
+    double getSimCurrentTrial();
+    double getSimTotalTrials();
+    int getTotalSimTime();
 
     // set and get pixelsPerDegree
-    Retina& setPixelsPerDegree(double ppd);
+    bool setPixelsPerDegree(double ppd);
     double getPixelsPerDegree();
     // New input and update of equations
     CImg<double> *feedInput(int step);
     void update();
 
     // New module
-    void addModule(module* m, string ID);
+    bool addModule(module* m, string ID);
     // Get module
     module* getModule(int ID);
     // get number of modules
@@ -121,14 +114,13 @@ public:
     // Impulse
     bool generateImpulse(double start, double stop, double amplitude, double offset, int X, int Y);
     CImg<double> *updateImpulse(double t);
-    // Input Sequence
-    bool setInputSeq(string s);
+    // Use streaming video or sequence as retina input
+    // A valid (non-dummy) Input module must be inserted in the retina to use these inputs
+    // We need this method to distingish the other retina input types from the others implemented as modules
+    // Returns true on success.
+    bool setModuleInput();
     // get number of images
     int getNumberImages();
-    // Set repetitions
-    void setRepetitions(int r);
-
-
 };
 
 #endif // RETINA_H

@@ -33,6 +33,9 @@ using namespace cimg_library;
 
 class GaussFilter:public module{
 protected:
+    // Input image size for this module
+    int buffSizeX, buffSizeY;
+
     // Filter parameters
     double sigma;
     double* buffer;
@@ -58,10 +61,8 @@ public:
     ~GaussFilter(void);
 
     // Allocate values and set protected parameters
-    virtual void allocateValues();
-    virtual void setX(int x){sizeX=x;}
-    virtual void setY(int y){sizeY=y;}
-    GaussFilter& setSigma(double sigm);
+    virtual bool allocateValues();
+    bool setSigma(double sigm);
 
     // Fast filtering with constant sigma
     void gaussHorizontal(CImg<double> &src);
@@ -75,7 +76,7 @@ public:
     double density(double r);
 
     // New input and update of equations
-    virtual void feedInput(const CImg<double> &new_input, bool isCurrent, int port);
+    virtual void feedInput(double sim_time, const CImg<double> &new_input, bool isCurrent, int port);
     virtual void update();
     // set Parameters
     virtual bool setParameters(vector<double> params, vector<string> paramID);

@@ -23,7 +23,6 @@ retina.TempStep('1') # simulation step (in ms)
 retina.SimTime('1200') # simulation time (in ms)
 retina.NumTrials('1') # number of trials
 retina.PixelsPerDegree({'4.5070'}) # pixels per degree of visual angle
-retina.NRepetitions('1') # number of simulation steps every image in the input sequence is repeated
 retina.DisplayDelay('0') # display delay
 retina.DisplayZoom({'10.0'}) # display zoom
 retina.DisplayWindows('3') # Display windows per row
@@ -113,3 +112,4 @@ retina.multimeter('temporal','ON_Bip','ON_Bip',{'x','12','y','12'},'Show','True'
 retina.multimeter('temporal','OFF_Bip','OFF_Bip',{'x','12','y','12'},'Show','True')
 retina.multimeter('temporal','ON_Bip_rectification','ON_Bip_rectification',{'x','12','y','12'},'Show','True')
 retina.multimeter('temporal','OFF_Bip_rectification','OFF_Bip_rectification',{'x','12','y','12'},'Show','True')
+
