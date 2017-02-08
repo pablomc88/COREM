@@ -106,7 +106,7 @@ int main(int argc, char *argv[])
 
         // Simulation
         // Using a do loop we ensure that the InterfaceNEST is created at least one time, and
-        // only one time if the number of trails is 1
+        // only one time if the number of trials is 1
         trial_ind=0;
         do {
             // Create new retina interface for every trial (reset values)

@@ -22,8 +22,14 @@
 // numerical constants
 #define PI	M_PI
 #define TWOPI	(2.0*PI)
+
+#ifndef DBL_EPSILON
 #define DBL_EPSILON 1.0e-9
+#endif
+
+#ifndef DBL_INF
 #define DBL_INF 1.0e9
+#endif
 
 namespace constants{
     extern std::string retinaFolder;
