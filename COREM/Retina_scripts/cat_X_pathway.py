@@ -37,7 +37,6 @@ retina.Input('impulse',{'start','300.0','stop','900.0','amplitude','0.4','offset
 retina.Create('LinearFilter','tmp_OPL_center',{'type','Gamma','tau','10.0','n','0.0'})
 retina.Create('LinearFilter','tmp_OPL_surround',{'type','Gamma','tau','5.0','n','0.0'})
 retina.Create('LinearFilter','tmp_OPL_undershoot',{'type','Gamma','tau','100.0','n','0.0'})
-# Rm and tau are not used because number_conductance_ports is 1.0. Cm is simplified to 1.0 and reversal potential E to 0.0.
 retina.Create('SingleCompartment','V_bipolar',{'number_current_ports','1.0','number_conductance_ports','2.0','Rm','0.0','Cm','1.0','E',{'0.0','0.0'}})
 retina.Create('LinearFilter','tmp_Contrast_feedback',{'type','Gamma','tau','5.0','n','0.0'})
 retina.Create('LinearFilter','tmp_IPL_undershoot',{'type','Gamma','tau','20.0','n','0.0'})
