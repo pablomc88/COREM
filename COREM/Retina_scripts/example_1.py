@@ -33,7 +33,7 @@ retina.Input('sequence','input_sequences/Weberlaw/0_255/',{'InputFramePeriod','1
 # Temporal modules
 retina.Create('LinearFilter','tmp_photoreceptors',{'type','Gamma','tau','30.0','n','10.0'})
 retina.Create('LinearFilter','tmp_horizontal',{'type','Gamma','tau','20.0','n','1.0'})
-retina.Create('SingleCompartment','tmp_bipolar',{'number_current_ports','1.0','number_conductance_ports','1.0','Rm','1.0','tau','10.0','Cm','100.0','E','0.0'})
+retina.Create('SingleCompartment','tmp_bipolar',{'number_current_ports','1.0','number_conductance_ports','2.0','Rm','0.0','Cm','100.0','E',{'0.0','0.0'}})
 retina.Create('LinearFilter','tmp_amacrine',{'type','Gamma','tau','10.0','n','1.0'})
 
 # Spatial filters

@@ -134,11 +134,8 @@ bool SingleCompartment::set_taum(double temporal_constant){
 
 bool SingleCompartment::set_El(double Nerst_l){
     bool ret_correct;
-    if (Nerst_l>=0) {
-        El = Nerst_l;
-        ret_correct=true;
-    } else
-        ret_correct=false;
+    El = Nerst_l;
+    ret_correct=true;
     return(ret_correct);
 }
 
@@ -185,7 +182,7 @@ bool SingleCompartment::set_number_conductance_ports(int number){
     }
         ret_correct=true;
     } else
-        ret_correct=false;
+        ret_correct=true;
     return(ret_correct);
 }
 
@@ -195,8 +192,11 @@ bool SingleCompartment::setParameters(vector<double> params, vector<string> para
 
     bool correct = true;
 
+    int g_port = 0;
+
     for (vector<double>::size_type i = 0;i < params.size() && correct;i++){
         const char * s = paramID[i].c_str();
+
 
         if (strcmp(s,"number_current_ports")==0){
             correct = set_number_current_ports((int)params[i]);
@@ -211,9 +211,17 @@ bool SingleCompartment::setParameters(vector<double> params, vector<string> para
             correct = set_Cm(params[i]);
         }
         else if (strcmp(s,"E")==0){
-            correct = set_El(params[i]);
-            for(size_t j=0;j<E.size();j++)
-                set_E(params[i],j);
+            if(number_conductance_ports == 0)
+                correct = set_El(params[i]);
+            else if(number_conductance_ports > 1){
+                if(g_port < E.size())
+                    set_E(params[i],g_port);
+                else
+                    correct = false;
+            }else
+                correct = false;
+
+            g_port+=1;
         }
         else{
               correct = false;
@@ -276,9 +284,12 @@ void SingleCompartment::update(){
     if (number_conductance_ports>0){
 
         (*total_cond) = (*(conductances[0]));
-        for(int k=1;k<number_conductance_ports;k++){
+        for(int k=1;k<number_conductance_ports-1;k++){
             (*total_cond) += (*(conductances[k]));
         }
+        // g_L
+        if(Rm > 0.0)
+            (*total_cond) += 1.0 / Rm;
         // in case total_cond = 0
         (*total_cond) += DBL_EPSILON;
 
@@ -289,9 +300,13 @@ void SingleCompartment::update(){
      // potential at infinity
         (*potential_inf) = (*(conductances[0]))*E[0];
 
-        for(int k=1;k<number_conductance_ports;k++){
+        for(int k=1;k<number_conductance_ports-1;k++){
             (*potential_inf) += (*(conductances[k]))*E[k];
         }
+        // E_L
+        if(Rm > 0.0)
+            (*potential_inf) += (1.0 / Rm)*E[number_conductance_ports-1];
+
         for(int k=0;k<number_current_ports;k++){
             (*potential_inf) += (*(currents[k]));
         }

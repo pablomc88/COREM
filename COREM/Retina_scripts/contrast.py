@@ -32,7 +32,7 @@ retina.Input('whiteNoise',{'mean','0.5','contrast1','0.5','contrast2','0.1','per
 # Temporal modules
 retina.Create('LinearFilter','photoreceptors',{'type','Gamma','tau','75.68','n','9.74'})
 retina.Create('LinearFilter','horizontal',{'type','Gamma','tau','45.49','n','6.37'})
-retina.Create('SingleCompartment','bipolar',{'number_current_ports','1.0','number_conductance_ports','1.0','Rm','1.0','tau','10.0','Cm','1200.0','E','0.0'})
+retina.Create('SingleCompartment','bipolar',{'number_current_ports','1.0','number_conductance_ports','2.0','Rm','0.0','Cm','1200.0','E',{'0.0','0.0'}})
 retina.Create('LinearFilter','conductance',{'type','Gamma','tau','31.0','n','5.0'})
 
 # Nonlinearities

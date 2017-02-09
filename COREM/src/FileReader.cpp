@@ -427,6 +427,13 @@ void FileReader::parseFile(Retina &retina, DisplayManager &displayMg){
                                     if (strcmp(token[i], "type") == 0 || strcmp(token[i], "spaceVariantSigma") == 0){
                                         pid.push_back(token[i+1]);
                                         p.push_back(0.0);
+                                    // Several values of E
+                                    }else if( strcmp(token[i], "E") == 0 && strcmp(token[i+1], "{") == 0){
+                                        while(strcmp(token[i+2], "}") != 0 ){
+                                            pid.push_back("E");
+                                            p.push_back(atof(token[i+2]));
+                                            i+=1;
+                                        }
                                     }else{
                                         pid.push_back(token[i]);
                                         p.push_back(atof(token[i+1]));

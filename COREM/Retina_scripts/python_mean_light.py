@@ -17,7 +17,7 @@ import sys
 import os
 
 ### root path ###
-root = "/home/pablo/Desktop/COREM_local/"
+root = "/home/pablo/Desktop/COREM_v2/COREM/"
 
 ### folder for retina scripts ###
 os.system("mkdir "+root+"Retina_scripts/scripts")
@@ -105,10 +105,10 @@ def generateScript(individual,simParam,ID,root):
 
     "retina.Create('LinearFilter','phototransduction',{'type','Gamma','tau','"+str(individual[0])+"','n','"+str(individual[1])+"'})\n"+
 
-    "retina.Create('SingleCompartment','conductanceCalciumFeedback',{'number_current_ports','1.0','number_conductance_ports','1.0','Rm','1.0','tau','10.0','Cm','"+str(individual[2])+"','E','0.0'})\n"+
+    "retina.Create('SingleCompartment','conductanceCalciumFeedback',{'number_current_ports','1.0','number_conductance_ports','2.0','Rm','0.0','Cm','"+str(individual[2])+"','E',{'0.0','0.0'}})\n"+
     "retina.Create('LinearFilter','calciumFeedback',{'type','Gamma','tau','"+str(individual[3])+"','n','"+str(individual[4])+"'})\n"+
 
-    "retina.Create('SingleCompartment','conductanceInnerSegment',{'number_current_ports','1.0','number_conductance_ports','1.0','Rm','1.0','tau','10.0','Cm','"+str(individual[5])+"','E','0.0'})\n"+
+    "retina.Create('SingleCompartment','conductanceInnerSegment',{'number_current_ports','1.0','number_conductance_ports','2.0','Rm','0.0','Cm','"+str(individual[5])+"','E',{'0.0','0.0'}})\n"+
     "retina.Create('LinearFilter','innerSegmentFeedback',{'type','Gamma','tau','"+str(individual[6])+"','n','"+str(individual[7])+"'})\n"+
 
     "retina.Create('LinearFilter','horizontal',{'type','Gamma','tau','"+str(individual[8])+"','n','"+str(individual[9])+"'})\n"+
