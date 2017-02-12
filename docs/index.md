@@ -13,5 +13,5 @@
     The code has been extensively tested in Linux. The software can be also adapted to Mac OS. Installation instructions as well
     as the user manual can be found in the wiki. COREM is the result of a research work and its associated publication is:
     
-    **Martínez-Cañada, P., Morillas, C., Pino, B., Ros, E., & Pelayo, F. (2016). A Computational Framework for Realistic Retina 
-    Modeling. International Journal of Neural Systems, 26(07), 1650030.**
+    Martínez-Cañada, P., Morillas, C., Pino, B., Ros, E., and Pelayo, F. (2016). A Computational Framework for Realistic Retina 
+    Modeling. International Journal of Neural Systems, 26(07), 1650030.
