@@ -11,3 +11,5 @@
 *.gch
 *.pch
 
+# project web page
+_site/
