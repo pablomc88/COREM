@@ -15,7 +15,7 @@
  */
 
 #include <iostream>
-#include "vector"
+#include <vector>
 
 #include "module.h"
 #include "constants.h"
@@ -51,7 +51,7 @@ public:
     bool set_taum(double temporal_constant);
     bool set_El(double Nerst_l);
 
-    bool set_E(double NernstPotential, int port);
+    bool set_E(double NernstPotential, size_t port);
     bool set_number_current_ports(int number);
     bool set_number_conductance_ports(int number);
 
