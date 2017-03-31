@@ -1,7 +1,7 @@
 ###################################################################################
 ##                                                                               ##
 ## Model of primate cones and horizontal cells adapted from the model by van     ##
-## Hateren [1]. This example shows the response of the model to a a 100-ms step  ##
+## Hateren [1]. This script shows the response of the model to a a 100-ms step   ##
 ## of contrast 2 at a background illuminance of 100 td (see Fig. 6 in [1]).      ##
 ##                                                                               ##
 ## Parameters (default from Van Hateren's model):                                ##
@@ -15,7 +15,7 @@
 ## nc = 4.0                                                                      ##
 ## taum = 4.0                                                                    ##
 ## ais = 7.09 * 10**(-2)                                                         ##
-## gamma = 1.0 (instead of 0.678 in the original model)                          ##
+## gamma = 0.678                                                                 ##
 ## tauis = 56.9                                                                  ##
 ## gs = 0.5 (instead of 8.81)                                                    ##
 ## tau1 = 4.0                                                                    ##
@@ -63,12 +63,10 @@ retina.Create('StaticNonLinearity','beta',{'slope','0.000163','offset','0.0028',
 retina.Create('StaticNonLinearity','X',{'slope','1.0','offset','0.0','exponent','1.0'})
 retina.Create('StaticNonLinearity','1_div_alpha',{'slope','0.0908','offset','1.0','exponent','4.0'})
 retina.Create('StaticNonLinearity','alpha',{'slope','1.0','offset','0.0001','exponent','-1.0'})
-retina.Create('StaticNonLinearity','ais',{'slope','0.0709','offset','0.0','exponent','1.0'})
-# to avoid division by 0 in the inner segment
-retina.Create('StaticNonLinearity','ais_2',{'slope','1.0','offset','0.1','exponent','1.0'})
+retina.Create('StaticNonLinearity','ais',{'slope','0.0709','offset','0.0','exponent','0.678'})
 # Constant calculated by using a dark stimulus: (bkg_illuminance = pulse_amplitude = 0)
-# Vis_dark = 13.3 mV
-retina.Create('StaticNonLinearity','Vis',{'slope','1.0','offset','-13.3','exponent','1.0'})
+# Vis_dark = 13.9 mV
+retina.Create('StaticNonLinearity','Vis',{'slope','1.0','offset','-13.9','exponent','1.0'})
 retina.Create('StaticNonLinearity','gs',{'slope','0.5','offset','0.0','exponent','1.0'})
 
 ### Connections ###
@@ -87,10 +85,9 @@ retina.Connect('tmp_tauC','1_div_alpha','Current')
 retina.Connect('1_div_alpha','alpha','Current')
 
 # Inner segment
-retina.Connect({'X',/,'ais_2'},'tmp_taum','Current')
+retina.Connect({'X',/,'tmp_tauis'},'tmp_taum','Current')
 retina.Connect('tmp_taum','ais','Current')
 retina.Connect('ais','tmp_tauis','Current')
-retina.Connect('tmp_tauis','ais_2','Current')
 
 # Vis - Vis_dark
 retina.Connect('tmp_taum','Vis','Current')
