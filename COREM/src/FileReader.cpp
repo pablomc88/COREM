@@ -498,9 +498,11 @@ void FileReader::parseFile(Retina &retina, DisplayManager &displayMg){
                                     operations.push_back(0);
                                 }else if(strcmp(token[i],"-")==0){
                                     operations.push_back(1);
+                                }else if(strcmp(token[i],"/")==0){
+                                    operations.push_back(2);
                                 }else
                                 {
-                                    abort(line,"Neither '+' nor '-' operator found");
+                                    abort(line,"'+', '-', '/' operator found");
                                     continueReading=false;
                                     break;
                                 }

@@ -393,13 +393,16 @@ CImg<double> *Retina::feedInput(int sim_time){
                         module* n = modules[m];
                         string cellName1 = l[k];
                         string cellName2 = n->getModuleID();
+
                         if (cellName1.compare(cellName2)==0){
 
                            if (p[k-1]==0){
                                 *accumulator += *(n->getOutput());
-                            }else{
+                            }else if(p[k-1]==1){
                                 *accumulator -= *(n->getOutput());
-                            }
+                            }else{
+                               *accumulator /= *(n->getOutput());
+                           }
                            break;
                         }
                     }
