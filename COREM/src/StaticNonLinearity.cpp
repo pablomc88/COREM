@@ -52,9 +52,9 @@ void StaticNonLinearity::setType(int t){
 //------------------------------------------------------------------------------//
 
 bool StaticNonLinearity::allocateValues(){
-    inputImage->assign(sizeY,sizeX,1,1,0.0);
-    outputImage->assign(sizeY,sizeX,1,1,exponent[0]);
-    markers->assign(sizeY,sizeX,1,1,0.0);
+    inputImage->assign(sizeY,sizeX,1,1,0.1);
+    outputImage->assign(sizeY,sizeX,1,1,0.1);
+    markers->assign(sizeY,sizeX,1,1,0.1);
     return(true);
 }
 

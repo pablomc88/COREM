@@ -61,8 +61,8 @@ bool GaussFilter::allocateValues(){
     // transform sigma to pixels
     sigma*=pixelsPerDegree;
     // Resize images
-    inputImage->assign(buffSizeY, buffSizeX, 1, 1, 0);
-    outputImage->assign(sizeY, sizeX, 1, 1, 0);
+    inputImage->assign(buffSizeY, buffSizeX, 1, 1, 0.1);
+    outputImage->assign(sizeY, sizeX, 1, 1, 0.1);
 
     // reallocate space for all possible threads
     delete[] buffer;
@@ -108,13 +108,13 @@ bool GaussFilter::allocateValues(){
         //double rmax;
 
         // initialize matrices
-        q_m.assign(sizeY, sizeX, 1, 1, 0);
-        b0_m.assign(sizeY, sizeX, 1, 1, 0);
-        b1_m.assign(sizeY, sizeX, 1, 1, 0);
-        b2_m.assign(sizeY, sizeX, 1, 1, 0);
-        b3_m.assign(sizeY, sizeX, 1, 1, 0);
-        B_m.assign(sizeY, sizeX, 1, 1, 0);
-        M_m.assign(sizeY, sizeX, 9, 1, 0);
+        q_m.assign(sizeY, sizeX, 1, 1, 0.1);
+        b0_m.assign(sizeY, sizeX, 1, 1, 0.1);
+        b1_m.assign(sizeY, sizeX, 1, 1, 0.1);
+        b2_m.assign(sizeY, sizeX, 1, 1, 0.1);
+        b3_m.assign(sizeY, sizeX, 1, 1, 0.1);
+        B_m.assign(sizeY, sizeX, 1, 1, 0.1);
+        M_m.assign(sizeY, sizeX, 9, 1, 0.1);
 
         for(int i=0;i<sizeY;i++){
             for(int j=0;j<sizeX;j++){

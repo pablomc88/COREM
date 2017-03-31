@@ -72,11 +72,11 @@ bool LinearFilter::allocateValues(){
     last_inputs = new CImg<double>*[M];
     last_values = new CImg<double>*[N+1];
 
-    last_inputs[0]=new CImg<double> (sizeY,sizeX,1,1,0.0);
+    last_inputs[0]=new CImg<double> (sizeY,sizeX,1,1,0.1);
     for (int i=1;i<M;i++)
-        last_inputs[i]=new CImg<double> (sizeY,sizeX,1,1,initial_input_value);
+        last_inputs[i]=new CImg<double> (sizeY,sizeX,1,1,0.1);
     for (int j=0;j<N+1;j++)
-        last_values[j]=new CImg<double> (sizeY,sizeX,1,1,0.0);
+        last_values[j]=new CImg<double> (sizeY,sizeX,1,1,0.1);
     return(true);
 }
 

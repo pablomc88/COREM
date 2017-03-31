@@ -95,8 +95,8 @@ bool ShortTermPlasticity::setTau(double p3){
 bool ShortTermPlasticity::allocateValues(){
     // Resize buffer images to current retina size
     for (int i=0;i<7;i++)
-        inputImage[i]->assign(sizeY, sizeX, 1, 1, 0);
-    outputImage->assign(sizeY, sizeX, 1, 1, 0);
+        inputImage[i]->assign(sizeY, sizeX, 1, 1, 0.1);
+    outputImage->assign(sizeY, sizeX, 1, 1, 0.1);
     
     // exp(-step/tau)
     inputImage[5]->fill(-step/tau);

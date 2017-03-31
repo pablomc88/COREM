@@ -87,17 +87,17 @@ bool SingleCompartment::allocateValues(){
     currents = new CImg<double>*[number_current_ports];
 
     for (int i=0;i<number_conductance_ports;i++)
-        conductances[i]=new CImg<double> (sizeY,sizeX,1,1,0.0);
+        conductances[i]=new CImg<double> (sizeY,sizeX,1,1,0.1);
     for (int j=0;j<number_current_ports;j++)
-        currents[j]=new CImg<double> (sizeY,sizeX,1,1,0.0);
+        currents[j]=new CImg<double> (sizeY,sizeX,1,1,0.1);
         
     // Ajust image sizes to new dimensions (just in case they have chanded)
-    current_potential->assign(sizeY, sizeX, 1, 1, 0);
-    last_potential->assign(sizeY, sizeX, 1, 1, 0);
-    total_cond->assign(sizeY, sizeX, 1, 1, 0);
-    potential_inf->assign(sizeY, sizeX, 1, 1, 0);
-    tau->assign(sizeY, sizeX, 1, 1, 0);
-    exp_term->assign(sizeY, sizeX, 1, 1, 0);
+    current_potential->assign(sizeY, sizeX, 1, 1, 0.1);
+    last_potential->assign(sizeY, sizeX, 1, 1, 0.1);
+    total_cond->assign(sizeY, sizeX, 1, 1, 0.1);
+    potential_inf->assign(sizeY, sizeX, 1, 1, 0.1);
+    tau->assign(sizeY, sizeX, 1, 1, 0.1);
+    exp_term->assign(sizeY, sizeX, 1, 1, 0.1);
 
     return(true);
 }
