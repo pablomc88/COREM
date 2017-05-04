@@ -139,9 +139,9 @@ bool SingleCompartment::set_El(double Nerst_l){
     return(ret_correct);
 }
 
-bool SingleCompartment::set_E(double NernstPotential, int port){
+bool SingleCompartment::set_E(double NernstPotential, size_t port){
     bool ret_correct;
-    if (port>=0 && number_conductance_ports>0) {
+    if (number_conductance_ports>0) {
         E[port]=NernstPotential;
         ret_correct=true;
     } else
@@ -192,7 +192,7 @@ bool SingleCompartment::setParameters(vector<double> params, vector<string> para
 
     bool correct = true;
 
-    int g_port = 0;
+    size_t g_port = 0;
 
     for (vector<double>::size_type i = 0;i < params.size() && correct;i++){
         const char * s = paramID[i].c_str();

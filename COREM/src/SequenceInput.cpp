@@ -21,6 +21,7 @@ SequenceInput::SequenceInput(int x, int y, double temporal_step, string input_fi
 
     // Init. internal vars
     NextFrameTime = 0; // First frame must be received at time 0
+    endOfInput = false;
 }
 
 // This method will probably not be used
@@ -195,22 +196,20 @@ void SequenceInput::get_new_frame(){
         if(CurrentInFrameInd < (unsigned long)inputMovie.depth()) // Some frames still availables to be read
             *outputImage = inputMovie.get_slice(CurrentInFrameInd++);
         else
-            if(outputImage != NULL && !RepeatLastFrame){
+            if(!endOfInput && !RepeatLastFrame){
                 if(verbose)
-                    cout << "\rNo more input files: terminating simulation" << endl;
-                delete outputImage;
-                outputImage=NULL; // Indicate an end of input and simulation
+                    cout << "\rNo more input frames: terminating simulation" << endl;
+                endOfInput=true; // Indicate an end of input and simulation
             }
     
     } else { // Input was a directory
         if(CurrentInFrameInd < inputFileList.size()) // Some files still availables to be read
             outputImage->load(inputFileList.at(CurrentInFrameInd++).c_str());
         else {
-            if(outputImage != NULL && !RepeatLastFrame){
+            if(!endOfInput && !RepeatLastFrame){
                 if(verbose)
-                    cout << "\rNo more input frames: terminating simulation" << endl;
-                delete outputImage;
-                outputImage=NULL; // Indicate an end of input and simulation
+                    cout << "\rNo more input images: terminating simulation" << endl;
+                endOfInput=true; // Indicate an end of input and simulation
             }
         }
     }
@@ -227,7 +226,10 @@ void SequenceInput::update(){
 
 // This method returns the last received image which is stored in the output buffer
 CImg<double>* SequenceInput::getOutput(){
-    return outputImage;
+    if(endOfInput)
+        return NULL;
+    else
+        return outputImage;
 }
 
 //------------------------------------------------------------------------------//

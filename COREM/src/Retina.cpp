@@ -274,7 +274,7 @@ bool Retina::allocateValues(){
 
 CImg<double> *Retina::feedInput(int sim_time){
     CImg <double> *input;
-    
+
     // Update Retina current simulation time from InterfaceNEST current simulation time
     simTime = sim_time;
     modules[0]->feedInput(sim_time, *accumulator, true, 0); // Inform input module about current simulation time (accumulator is not really used)

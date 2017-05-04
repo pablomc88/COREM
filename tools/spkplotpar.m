@@ -95,6 +95,9 @@ else % only a part of the file must be loaded
         fseek(fid,fix(filelength*(start_time/last_file_time)),'bof');
         findline_backwards(fid);
         % load spikes in the specified time interval
+        if isinf(end_time) % if Inf has been specified, set end_time to file end time
+           end_time=last_file_time;
+        end
         activity_list=read_file_part(fid,start_time,end_time);
         fclose(fid);
         if last_file_time < start_time

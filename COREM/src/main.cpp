@@ -46,7 +46,8 @@ int main(int argc, char *argv[])
                 string removed_fn_path = resdir + ent->d_name;
                 if(remove(removed_fn_path.c_str()) == -1)
                     perror("Error while deleting old multimeter files");
-                files_deleted=true;                
+                else
+                    files_deleted=true;                
             }
         
         }

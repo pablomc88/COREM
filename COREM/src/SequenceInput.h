@@ -30,6 +30,7 @@ protected:
     unsigned long CurrentInFrameInd; // Number (index) of the input frame to load next
     vector<string> inputFileList; // List of input-file names
     CImg<double> inputMovie; // Volumetric image containing all the input frames
+    bool endOfInput; // Indicates that the end if input file (or directory) has been reached. Next module output should be NULL
     
     // SequenceInput operation parameters
     int SkipNInitFrames; // Number of of frames to skip just at the beginning of the stream
