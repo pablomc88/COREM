@@ -219,7 +219,7 @@ bool SingleCompartment::setParameters(vector<double> params, vector<string> para
                 else
                     correct = false;
             }else
-                correct = false;
+                correct = false; // If number_conductance_ports <> 0, then at least two reversal potential must specified (number_conductance_ports>0), a conductance channel and the leaking reversal potential
 
             g_port+=1;
         }

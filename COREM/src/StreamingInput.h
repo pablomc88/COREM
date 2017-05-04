@@ -53,6 +53,7 @@ protected:
     pthread_t Receiver_thread_id; // ID of the thread created to receive images
     struct receiver_params receiver_vars; // Variables shared between the class object and the thread
     double NextFrameTime; // Time at which the next frame must be received
+    bool endOfInput; // Indicates that the end of input has been reached (connection closed by other end), sext module output should be NULL
     
     // StreamingInput operation parameters
     int SkipNInitFrames; // Number of of frames to skip just at the beginning of the stream

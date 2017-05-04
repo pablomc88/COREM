@@ -33,6 +33,7 @@ StreamingInput::StreamingInput(int x, int y, double temporal_step, string conn_u
 
     // Init. internal vars
     NextFrameTime = 0; // First frame must be received at time 0
+    endOfInput = false;
     socket_fd = -1; // There is no connection at the beginning, so the Sockets and stream are not created yet
     accept_socket_fd = -1;
     receiver_vars.accept_socket_fh = NULL;
@@ -72,6 +73,7 @@ StreamingInput::StreamingInput(const StreamingInput &copy):module(copy){
     RepeatLastFrame = copy.RepeatLastFrame;
     InputFramePeriod = copy.InputFramePeriod;
     NextFrameTime = copy.NextFrameTime;
+    endOfInput = copy.endOfInput;
 
     outputImage=new CImg<double>(*copy.outputImage);
     receiver_vars.buffer_img=new CImg<double>(*copy.receiver_vars.buffer_img);
@@ -193,9 +195,8 @@ void StreamingInput::get_new_frame(){
         *outputImage = *receiver_vars.buffer_img; // Get output from buffer
         pthread_mutex_unlock(&receiver_vars.reception_mutex); // Signal the receiver thread that it can update the value of buffer_img buffer with a new frame
     } else { // End of stream
-        if(outputImage != NULL && !RepeatLastFrame){
-            delete outputImage;
-            outputImage=NULL; // Indicate an end of input ans simulation
+        if(!endOfInput && !RepeatLastFrame){
+            endOfInput=true; // Indicate an end of input (and simulation)
         }
     }
 }
@@ -383,11 +384,14 @@ bool StreamingInput::closeConnection(){
 
 // This method returns the last received image which is stored in the output buffer
 CImg<double>* StreamingInput::getOutput(){
-    return outputImage;
+    if(endOfInput)
+        return NULL;
+    else
+        return outputImage; // outputImage is a pointer wich may have been already returned, so it should not be freed since its content may be accessed
 }
 
 //------------------------------------------------------------------------------//
 
 bool StreamingInput::isDummy() {
     return false;
-    };
+};

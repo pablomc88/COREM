@@ -34,6 +34,7 @@ SequenceInput::SequenceInput(const SequenceInput &copy):module(copy){
     CurrentInFrameInd = copy.CurrentInFrameInd;
     inputFileList = copy.inputFileList;
     inputMovie = copy.inputMovie;
+    endOfInput = copy.endOfInput;
 
     outputImage=new CImg<double>(*copy.outputImage);
 }
