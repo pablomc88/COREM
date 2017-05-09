@@ -60,7 +60,7 @@ public:
     // update of state and write output frame to file
     virtual void update();
     // set Parameters
-    virtual bool setParameters(vector<double> params, vector<string> paramID);
+    virtual int setParameters(vector<double> params, vector<string> paramID);
     
     // Return a pointer to a string identifying the endianness of the architecture in which
     // the method is being executed: "pc" or "sun"

@@ -127,8 +127,8 @@ CImg<double>* module::getOutput(){
     return(NULL);
     }
     
-bool module::setParameters(vector<double> params, vector<string> paramID){
-    return(true);
+int module::setParameters(vector<double> params, vector<string> paramID){
+    return(0);
     }
     
 void module::clearParameters(vector<string> paramID){

@@ -83,7 +83,7 @@ public:
     virtual void update();
     
     // set Parameters
-    virtual bool setParameters(vector<double> params, vector<string> paramID);
+    virtual int setParameters(vector<double> params, vector<string> paramID);
     
     // This method creates a socket (used for streaming) and bind it to a local port
     bool openConnetion();

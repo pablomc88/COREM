@@ -62,7 +62,7 @@ public:
     virtual void feedInput(double sim_time, const CImg<double> &new_input, bool isCurrent, int port);
     virtual void update();
     // set Parameters
-    virtual bool setParameters(vector<double> params, vector<string> paramID);
+    virtual int setParameters(vector<double> params, vector<string> paramID);
     virtual void clearParameters(vector<string> paramID);
     // Get output image (y(k))
     virtual CImg<double>* getOutput();

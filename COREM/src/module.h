@@ -80,8 +80,14 @@ public:
     virtual void update();
     // Get output image (y(k))
     virtual CImg<double>* getOutput();
-    // set Parameters
-    virtual bool setParameters(vector<double> params, vector<string> paramID);
+    // set module configuration parameters
+    // each paramID string specifies the parameter name to set and
+    // params are their corresponding values
+    // This method returns 0 if all the specified paramters could be set correctly.
+    // otherwise it returns the number of parameter (starting from 1) which could not
+    // be set because its name was unknown. The method returns q negative value, if the
+    // parameter name was correct but the provided value was invalid.
+    virtual int setParameters(vector<double> params, vector<string> paramID);
     virtual void clearParameters(vector<string> paramID);
     // This method can be called to find out if an object derived from class module performs
     // any usefull computation or it does not (and therefore can be deleted).

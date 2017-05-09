@@ -121,14 +121,14 @@ bool LinearFilter::Gamma(double tau,int n){
 
 //------------------------------------------------------------------------------//
 
-bool LinearFilter::setParameters(vector<double> params, vector<string> paramID){
+int LinearFilter::setParameters(vector<double> params, vector<string> paramID){
 
-    bool correct = true;
+    int err_param_num=0; // default, no error
     double tau = 0.0;
     int n = 0;
     int type = 0;
 
-    for (vector<double>::size_type i = 0;i < params.size() && correct;i++){
+    for (vector<double>::size_type i = 0;i < params.size() && err_param_num==0;i++){
         const char * s = paramID[i].c_str();
 
         if (strcmp(s,"tau")==0){
@@ -141,11 +141,11 @@ bool LinearFilter::setParameters(vector<double> params, vector<string> paramID){
             type = 1;
         }
         else{
-              correct = false;
+              err_param_num = i+1;
         }
     }
 
-    if(correct){
+    if(err_param_num==0){
 
         switch(type){
         case 0:
@@ -154,13 +154,10 @@ bool LinearFilter::setParameters(vector<double> params, vector<string> paramID){
         case 1:
             Gamma(tau,n);
             break;
-        default:
-            correct = false;
-            break;
         }
     }
 
-    return correct;
+    return err_param_num;
 
 }
 

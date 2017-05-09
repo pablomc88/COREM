@@ -101,7 +101,7 @@ public:
     virtual void update();
     
     // set Parameters
-    virtual bool setParameters(vector<double> params, vector<string> paramID);
+    virtual int setParameters(vector<double> params, vector<string> paramID);
     
     // This method uses the user parameter (Max_freq, Min_freq, Input_threshold and
     // Spks_per_inp) to convert the magnitude of an input pixel into an instant

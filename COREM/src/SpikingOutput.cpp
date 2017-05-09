@@ -272,43 +272,56 @@ bool SpikingOutput::set_Total_inputs(double num_inputs){
 
 //------------------------------------------------------------------------------//
 
-bool SpikingOutput::setParameters(vector<double> params, vector<string> paramID){
+int SpikingOutput::setParameters(vector<double> params, vector<string> paramID){
 
-    bool correct = true;
+    int err_param_num=0; // default value, no error
 
-    for (vector<double>::size_type i = 0;i<params.size() && correct;i++){
+    for (vector<double>::size_type i = 0;i<params.size() && err_param_num==0;i++){
         const char * s = paramID[i].c_str();
 
         if (strcmp(s,"Min_period")==0){
-            correct = set_Min_period(params[i]);
+            if(!set_Min_period(params[i]))
+                err_param_num = -(i+1);
         } else if (strcmp(s,"Longest_sustained_period")==0){
-            correct = set_Longest_sustained_period(params[i]);
+            if(!set_Longest_sustained_period(params[i]))
+                err_param_num = -(i+1);
         } else if (strcmp(s,"Input_threshold")==0){
-            correct = set_Input_threshold(params[i]);
+            if(!set_Input_threshold(params[i]))
+                err_param_num = -(i+1);
         } else if (strcmp(s,"Freq_per_inp")==0){
-            correct = set_Freq_per_inp(params[i]);
+            if(!set_Freq_per_inp(params[i]))
+                err_param_num = -(i+1);
         } else if (strcmp(s,"Spike_dist_shape")==0){
-            correct = set_Spike_dist_shape(params[i]);
+            if(!set_Spike_dist_shape(params[i]))
+                err_param_num = -(i+1);
         } else if (strcmp(s,"Min_period_std_dev")==0){
-            correct = set_Min_period_std_dev(params[i]);
+            if(!set_Min_period_std_dev(params[i]))
+                err_param_num = -(i+1);
         } else if (strcmp(s,"Start_time")==0){
-            correct = set_Start_time(params[i]);
+            if(!set_Start_time(params[i]))
+                err_param_num = -(i+1);
         } else if (strcmp(s,"End_time")==0){
-            correct = set_End_time(params[i]);
+            if(!set_End_time(params[i]))
+                err_param_num = -(i+1);
         } else if (strcmp(s,"Random_init")==0){
-            correct = set_Random_init(params[i]);
+            if(!set_Random_init(params[i]))
+                err_param_num = -(i+1);
         } else if (strcmp(s,"First_spk_delay")==0){
-            correct = set_First_spk_delay(params[i]);
+            if(!set_First_spk_delay(params[i]))
+                err_param_num = -(i+1);
         } else if (strcmp(s,"First_inp_ind")==0){
-            correct = set_First_inp_ind(params[i]);
+            if(!set_First_inp_ind(params[i]))
+                err_param_num = -(i+1);
         } else if (strcmp(s,"Inp_ind_inc")==0){
-            correct = set_Inp_ind_inc(params[i]);
+            if(!set_Inp_ind_inc(params[i]))
+                err_param_num = -(i+1);
         } else if (strcmp(s,"Total_inputs")==0){
-            correct = set_Total_inputs(params[i]);
+            if(!set_Total_inputs(params[i]))
+                err_param_num = -(i+1);
         } else
-            correct = false;
+            err_param_num = i+1;
     }
-    return correct;
+    return err_param_num;
 }
 
 //------------------------------------------------------------------------------//

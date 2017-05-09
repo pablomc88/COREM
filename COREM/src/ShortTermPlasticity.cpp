@@ -168,41 +168,46 @@ void ShortTermPlasticity::update(){
 
 //------------------------------------------------------------------------------//
 
-bool ShortTermPlasticity::setParameters(vector<double> params, vector<string> paramID){
+int ShortTermPlasticity::setParameters(vector<double> params, vector<string> paramID){
 
-    bool correct = true;
+    int err_param_num=0; // default, no error
 
-    for (vector<double>::size_type i = 0;i < params.size() && correct;i++){
+    for (vector<double>::size_type i = 0;i < params.size() && err_param_num==0;i++){
         const char * s = paramID[i].c_str();
 
         if (strcmp(s,"slope")==0){
-            correct = setSlope(params[i]);
+            if(!setSlope(params[i]))
+                err_param_num = -(i+1);
         }
         else if (strcmp(s,"offset")==0){
-            correct = setOffset(params[i]);
+            if(!setOffset(params[i]))
+                err_param_num = -(i+1);
         }
         else if (strcmp(s,"exponent")==0){
-            correct = setExponent(params[i]);
+            if(!setExponent(params[i]))
+                err_param_num = -(i+1);
         }
         else if (strcmp(s,"threshold")==0){
-            correct = setThreshold(params[i]);
+            if(!setThreshold(params[i]))
+                err_param_num = -(i+1);
         }
         else if (strcmp(s,"kf")==0){
-            correct = setkf(params[i]);
+            if(!setkf(params[i]))
+                err_param_num = -(i+1);
         }
         else if (strcmp(s,"kd")==0){
-            correct = setkd(params[i]);
+            if(!setkd(params[i]))
+                err_param_num = -(i+1);
         }
         else if (strcmp(s,"tau")==0){
-            correct = setTau(params[i]);
+            if(!setTau(params[i]))
+                err_param_num = -(i+1);
         }
         else{
-              correct = false;
+              err_param_num = i+1;
         }
-
     }
-
-    return correct;
+    return err_param_num;
 }
 
 //------------------------------------------------------------------------------//

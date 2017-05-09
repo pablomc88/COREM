@@ -1,3 +1,6 @@
+#include <stdarg.h> // for abort() fn args
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "FileReader.h"
 #include "SequenceInput.h"
@@ -274,9 +277,11 @@ void FileReader::parseParameterBlock(char **block_tokens, module *new_module, in
     }
     // Set parsed module parameters
     if(continueReading) {
-        continueReading = new_module->setParameters(param_values, param_ids);
-        if(!continueReading)
-            abort(file_line,"Error setting specified module parameters (incorrect parameter name or invalid value)");
+        int err_param_num = new_module->setParameters(param_values, param_ids);
+        if(err_param_num != 0){            
+            abort(file_line,"Error setting specified module parameters (incorrect %s of parameter number %i)", (err_param_num>0)?"name":"value", abs(err_param_num));
+            continueReading = false;
+        }
     }
 }
 
@@ -451,12 +456,12 @@ void FileReader::parseFile(Retina &retina, DisplayManager &displayMg){
                             }
                             // Add module to the retina
                             if(continueReading){
-                                continueReading=newModule->setParameters(p,pid);
-
-                                if(continueReading){
+                                int err_param_num = newModule->setParameters(p,pid);
+                                if(err_param_num == 0){
                                     retina.addModule(newModule,token[3]);
                                 }else{
-                                    abort(line,"Error setting specified parameters (incorrect name or value)");
+                                    abort(line,"Error setting specified module parameters (incorrect %s of parameter number %i)", (err_param_num>0)?"name":"value", abs(err_param_num));
+                                    continueReading = false;
                                     break;
                                 }
                             }
@@ -1012,11 +1017,17 @@ void FileReader::parseFile(Retina &retina, DisplayManager &displayMg){
 
 //-------------------------------------------------//
 
-void FileReader::abort(int line, const char *error_msg){
-    cout << "Incorrect syntax in line " << line << ": " << error_msg << endl;
-    cout << "Aborting parsing of retina file." << endl;
-    continueReading = false;
+void FileReader::abort(int line, const char *error_msg, ...){
+    va_list args;
+    va_start(args, error_msg);
 
+    cout << "Incorrect syntax in line " << line << ": ";
+
+    vprintf(error_msg, args);
+    
+    cout << endl << "Aborting parsing of retina file." << endl;
+    continueReading = false;
+    va_end(args);
 }
 
 

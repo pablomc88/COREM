@@ -351,11 +351,11 @@ double GaussFilter::density(double r){
 //------------------------------------------------------------------------------//
 
 
-bool GaussFilter::setParameters(vector<double> params, vector<string> paramID){
+int GaussFilter::setParameters(vector<double> params, vector<string> paramID){
 
-    bool correct = true;
+    int err_param_num=0; // default, no error
 
-    for (vector<double>::size_type i = 0;i<params.size() && correct;i++){
+    for (vector<double>::size_type i = 0;i<params.size() && err_param_num==0;i++){
         const char * s = paramID[i].c_str();
 
         if (strcmp(s,"sigma")==0){
@@ -370,10 +370,8 @@ bool GaussFilter::setParameters(vector<double> params, vector<string> paramID){
             R0 = params[i];
         }
         else{
-              correct = false;
+              err_param_num = i+1; // return number of erroneous parameter
         }
-
     }
-
-    return correct;
+    return err_param_num;
 }
