@@ -468,10 +468,12 @@ void SpikingOutput::update(){
         curr_ref_period_it+=Inp_ind_inc;
         out_neu_idx++;
     }
-    cout << "["<< simTime << ", " << simTime+step << "] ";
-for(vector<spike_t>::const_iterator i=slot_spks.begin();i!=slot_spks.end(); i++)
-    cout << i->time << " ";
-    cout << endl;
+
+    //cout << "["<< simTime << ", " << simTime+step << "] ";
+    //for(vector<spike_t>::const_iterator i=slot_spks.begin();i!=slot_spks.end(); i++)
+    //   cout << i->time << " ";
+    //cout << endl;
+
     // Some programs may require that the spikes are issued in time order
     // So, sort the spikes of current sim. slot before inserting them in the class
     // output spike list
