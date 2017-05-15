@@ -240,6 +240,11 @@ if fid ~= -1 % Valid file identifier
         header.read_error='The format of specified file is unknown';
     end
     if isempty(header.read_error) % Header successfully read
+        if length(fieldnames(header)) == 1
+            header.read_error='The header of the specified file is empty';
+        end
+    end    
+    if isempty(header.read_error) % Header successfully read
         % Translate INR data type name into Matlab data type name
         if isfield(header, 'data_type') && isfield(header, 'data_size')
             data_type_inr=[header.data_type '_' num2str(header.data_size)]; % Compose a data type name just to be used in switch statement
