@@ -70,7 +70,7 @@ public:
     virtual void update();
     
     // set Parameters
-    virtual bool setParameters(vector<double> params, vector<string> paramID);
+    virtual int setParameters(vector<double> params, vector<string> paramID);
     
     // Get image (y(k))
     virtual CImg<double> *getOutput();

@@ -161,24 +161,27 @@ bool SequenceInput::set_InputFramePeriod(double sim_time_period){
 
 //------------------------------------------------------------------------------//
 
-bool SequenceInput::setParameters(vector<double> params, vector<string> paramID){
+int SequenceInput::setParameters(vector<double> params, vector<string> paramID){
 
-    bool correct = true;
+    int err_param_num=0; // default, no error
 
-    for (vector<double>::size_type i = 0;i < params.size() && correct;i++){
+    for (vector<double>::size_type i = 0;i < params.size() && err_param_num==0;i++){
         const char * s = paramID[i].c_str();
 
         if (strcmp(s,"SkipNInitFrames")==0){
-            correct = set_SkipNInitFrames((int)(params[i]));
+            if(!set_SkipNInitFrames((int)(params[i])))
+                err_param_num = -(i+1); // Error: invalid value of parameter i+1
         } else if (strcmp(s,"RepeatLastFrame")==0){
-            correct = set_RepeatLastFrame(params[i] != 0.0);
+            if(!set_RepeatLastFrame(params[i] != 0.0))
+                err_param_num = -(i+1);
         } else if (strcmp(s,"InputFramePeriod")==0){
-            correct = set_InputFramePeriod(params[i]);
+            if(!set_InputFramePeriod(params[i]))
+                err_param_num = -(i+1);
         } else{
-              correct = false;
+              err_param_num = i+1; // Error: unknown name of parameter i+1
         }
     }
-    return correct;
+    return err_param_num;
 }
 
 //------------------------------------------------------------------------------//

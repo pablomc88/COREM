@@ -188,48 +188,53 @@ bool SingleCompartment::set_number_conductance_ports(int number){
 
 //------------------------------------------------------------------------------//
 
-bool SingleCompartment::setParameters(vector<double> params, vector<string> paramID){
+int SingleCompartment::setParameters(vector<double> params, vector<string> paramID){
 
-    bool correct = true;
+    int err_param_num=0; // default, no error
 
     size_t g_port = 0;
 
-    for (vector<double>::size_type i = 0;i < params.size() && correct;i++){
+    for (vector<double>::size_type i = 0;i < params.size() && err_param_num==0;i++){
         const char * s = paramID[i].c_str();
 
 
         if (strcmp(s,"number_current_ports")==0){
-            correct = set_number_current_ports((int)params[i]);
+            if(!set_number_current_ports((int)params[i]))
+                err_param_num = -(i+1); // Invalid parameter value
         }else if (strcmp(s,"number_conductance_ports")==0){
-            correct = set_number_conductance_ports((int)params[i]);
+            if(!set_number_conductance_ports((int)params[i]))
+                err_param_num = -(i+1);
         }else if (strcmp(s,"Rm")==0){
-            correct = set_Rm(params[i]);
+            if(!set_Rm(params[i]))
+                err_param_num = -(i+1);
         }else if (strcmp(s,"tau")==0){
-            correct = set_taum(params[i]);
+            if(!set_taum(params[i]))
+                err_param_num = -(i+1);
         }
         else if (strcmp(s,"Cm")==0){
-            correct = set_Cm(params[i]);
+            if(!set_Cm(params[i]))
+                err_param_num = -(i+1);
         }
         else if (strcmp(s,"E")==0){
-            if(number_conductance_ports == 0)
-                correct = set_El(params[i]);
-            else if(number_conductance_ports > 1){
-                if(g_port < E.size())
-                    set_E(params[i],g_port);
-                else
-                    correct = false;
+            if(number_conductance_ports == 0){
+                if(!set_El(params[i]))
+                    err_param_num = -(i+1);
+            }else if(number_conductance_ports > 1){
+                if(g_port < E.size()){
+                    if(!set_E(params[i],g_port))
+                        err_param_num = -(i+1);
+                }else
+                    err_param_num = -(i+1);
             }else
-                correct = false; // If number_conductance_ports <> 0, then at least two reversal potential must specified (number_conductance_ports>0), a conductance channel and the leaking reversal potential
+                err_param_num = -(i+2); // If number_conductance_ports <> 0, then at least two reversal potential must specified (number_conductance_ports>0), a conductance channel and the leaking reversal potential
 
             g_port+=1;
         }
         else{
-              correct = false;
+              err_param_num = i+1; // Uknown parameter name
         }
-
     }
-
-    return correct;
+    return err_param_num;
 
 }
 

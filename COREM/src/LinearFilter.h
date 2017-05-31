@@ -60,7 +60,7 @@ public:
     virtual CImg<double>* getOutput();
 
     // set Parameters
-    virtual bool setParameters(vector<double> params, vector<string> paramID);
+    virtual int setParameters(vector<double> params, vector<string> paramID);
 
     // Combinatorials of gamma function:
     inline int arrangement(int n, int k)

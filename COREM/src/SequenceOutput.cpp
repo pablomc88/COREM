@@ -125,28 +125,33 @@ bool SequenceOutput::set_InFramesPerOut(unsigned int n_frames){
 
 //------------------------------------------------------------------------------//
 
-bool SequenceOutput::setParameters(vector<double> params, vector<string> paramID){
+int SequenceOutput::setParameters(vector<double> params, vector<string> paramID){
 
-    bool correct = true;
+    int err_param_num=0; // default, no error
 
-    for (vector<double>::size_type i = 0;i < params.size() && correct;i++){
+    for (vector<double>::size_type i = 0;i < params.size() && err_param_num==0;i++){
         const char * s = paramID[i].c_str();
 
         if (strcmp(s,"Voxel_X_size")==0){
-            correct = set_Voxel_X_size(params[i]);
+            if(!set_Voxel_X_size(params[i]))
+                err_param_num = -(i+1); // If parameter value could not be set, return the number of problematic parameter (negated)
         }else if (strcmp(s,"Voxel_Y_size")==0){
-            correct = set_Voxel_Y_size(params[i]);
+            if(!set_Voxel_Y_size(params[i]))
+                err_param_num = -(i+1);
         }else if (strcmp(s,"Start_time")==0){
-            correct = set_Start_time(params[i]);
+            if(!set_Start_time(params[i]))
+                err_param_num = -(i+1);
         }else if (strcmp(s,"End_time")==0){
-            correct = set_End_time(params[i]);
+            if(!set_End_time(params[i]))
+                err_param_num = -(i+1);
         }else if (strcmp(s,"InFramesPerOut")==0){
-            correct = set_InFramesPerOut((unsigned int)(params[i]));
+            if(!set_InFramesPerOut((unsigned int)(params[i])))
+                err_param_num = -(i+1);
         } else{
-              correct = false;
+              err_param_num = i+1;
         }
     }
-    return correct;
+    return err_param_num;
 }
 
 //------------------------------------------------------------------------------//

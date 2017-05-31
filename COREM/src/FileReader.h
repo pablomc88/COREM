@@ -100,7 +100,11 @@ public:
     // parsing of retina script and initialization of retina modules
     void parseFile(Retina &retina,DisplayManager &displayMg);
     bool getContReading(){return continueReading;}
-    void abort(int line, const char *error_msg);
+    // Abort parsing the retina file and print error info
+    // line must be the file line which contains the error
+    // error_msg is the custom error message string with the printf format, which can
+    // contain a variable number of arguments
+    void abort(int line, const char *error_msg, ...);
 };
 
 #endif // FILEREADER_H
