@@ -1,8 +1,8 @@
-#ifndef INTERFACENEST_H
-#define INTERFACENEST_H
+#ifndef RetinaInterface_H
+#define RetinaInterface_H
 
 /* BeginDocumentation
- * Name: InterfaceNEST
+ * Name: RetinaInterface
  *
  * Description: Interface with NEST. Functions update (integrate spatiotemporal equations)
  * and getValue (return membrane potential of neurons) allow communication with NEST.
@@ -24,7 +24,7 @@
 using namespace cimg_library;
 using namespace std;
 
-class InterfaceNEST{
+class RetinaInterface{
 protected:
     // Image size (sizeY = width, sizeX = height)
     int sizeX, sizeY;
@@ -50,9 +50,9 @@ protected:
 
 public:
     // Constructor, copy, destructor.
-    InterfaceNEST(void);
-    InterfaceNEST(const InterfaceNEST& copy);
-    ~InterfaceNEST(void);
+    RetinaInterface(void);
+    RetinaInterface(const RetinaInterface& copy);
+    ~RetinaInterface(void);
 
     double getTotalNumberTrials();
     int getTotalSimTime();
@@ -73,4 +73,4 @@ public:
 
 };
 
-#endif // INTERFACENEST_H
+#endif // RetinaInterface_H

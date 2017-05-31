@@ -8,12 +8,12 @@
  * Author: Pablo Martinez Cañada. University of Granada. CITIC-UGR. Spain.
  * <pablomc@ugr.es>
  *
- * SeeAlso:InterfaceNEST
+ * SeeAlso:RetinaInterface
  */
 
 #include <dirent.h>
 #include "../CImg-1.6.0_rolling141127/CImg.h"
-#include "InterfaceNEST.h"
+#include "RetinaInterface.h"
 #include "constants.h"
 
 using namespace cimg_library;
@@ -106,12 +106,12 @@ int main(int argc, char *argv[])
         const char *retinaSim = retinaString.c_str();
 
         // Simulation
-        // Using a do loop we ensure that the InterfaceNEST is created at least one time, and
+        // Using a do loop we ensure that the RetinaInterface is created at least one time, and
         // only one time if the number of trials is 1
         trial_ind=0;
         do {
             // Create new retina interface for every trial (reset values)
-            InterfaceNEST interface;
+            RetinaInterface interface;
             interface.setVerbosity(verbose_flag);
             if(!interface.allocateValues(retinaSim, LN_OUT_FILENAME_TAIL, constants::outputfactor, trial_ind)) {
                 cout << "Incorrect parameter/value specified or resorce allocation. Aborting." << endl;

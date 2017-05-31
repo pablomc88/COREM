@@ -1,15 +1,15 @@
-#include "InterfaceNEST.h"
+#include "RetinaInterface.h"
 
-InterfaceNEST::InterfaceNEST(void):retina(1,1,1.0),displayMg(1,1),FileReaderObject(1,1,1.0){
+RetinaInterface::RetinaInterface(void):retina(1,1,1.0),displayMg(1,1),FileReaderObject(1,1,1.0){
     abortExecution = false;
 }
 
-InterfaceNEST::InterfaceNEST(const InterfaceNEST& copy){
+RetinaInterface::RetinaInterface(const RetinaInterface& copy){
     abortExecution = false;
 
 }
 
-InterfaceNEST::~InterfaceNEST(void){
+RetinaInterface::~RetinaInterface(void){
 
 }
 
@@ -17,7 +17,7 @@ InterfaceNEST::~InterfaceNEST(void){
 //------------------------------------------------------------------------------//
 
 
-void InterfaceNEST::reset(int X, int Y, double tstep,int rep){
+void RetinaInterface::reset(int X, int Y, double tstep,int rep){
     abortExecution = false;
     FileReaderObject.reset(1,1,1.0);
     retina.reset(1,1,1.0);
@@ -27,14 +27,14 @@ void InterfaceNEST::reset(int X, int Y, double tstep,int rep){
 //------------------------------------------------------------------------------//
 
 
-double InterfaceNEST::getTotalNumberTrials(){
+double RetinaInterface::getTotalNumberTrials(){
     return totalNumberTrials;
 }
 
 //------------------------------------------------------------------------------//
 
 
-int InterfaceNEST::getTotalSimTime(){
+int RetinaInterface::getTotalSimTime(){
     return totalSimTime;
 }
 
@@ -42,17 +42,17 @@ int InterfaceNEST::getTotalSimTime(){
 
 
 
-double InterfaceNEST::getSimStep(){
+double RetinaInterface::getSimStep(){
     return step;
 }
 
 //------------------------------------------------------------------------------//
 
-void  InterfaceNEST::setVerbosity(bool verbose_flag){
+void  RetinaInterface::setVerbosity(bool verbose_flag){
     retina.setVerbosity(verbose_flag);
 }
 
-bool InterfaceNEST::allocateValues(const char *retinaPath, const char * outputFile,double outputfactor,double currentRep){
+bool RetinaInterface::allocateValues(const char *retinaPath, const char * outputFile,double outputfactor,double currentRep){
     bool ret_correct;
 
     // Set input directory and parse the retina file
@@ -105,7 +105,7 @@ bool InterfaceNEST::allocateValues(const char *retinaPath, const char * outputFi
 //------------------------------------------------------------------------------//
 
 
-void InterfaceNEST::update(){
+void RetinaInterface::update(){
     CImg<double> *input;
     
     input = retina.feedInput(SimTime);
@@ -120,7 +120,7 @@ void InterfaceNEST::update(){
 //------------------------------------------------------------------------------//
 
 
-double InterfaceNEST::getValue(double cell){
+double RetinaInterface::getValue(double cell){
 
     int select_image = int(cell)/(sizeX*sizeY);
     int pos_im = int(cell) - select_image*(sizeX*sizeY);
@@ -166,28 +166,28 @@ double InterfaceNEST::getValue(double cell){
 
 //------------------------------------------------------------------------------//
 
-bool InterfaceNEST::getAbortExecution(){
+bool RetinaInterface::getAbortExecution(){
     return abortExecution;
 }
 
 //------------------------------------------------------------------------------//
 
-Retina& InterfaceNEST::getRetina(){
+Retina& RetinaInterface::getRetina(){
     return retina;
 }
 
 //------------------------------------------------------------------------------//
 
-void InterfaceNEST::setWhiteNoise(double mean, double contrast1, double contrast2, double period, double switchT,string id,double start, double stop){
+void RetinaInterface::setWhiteNoise(double mean, double contrast1, double contrast2, double period, double switchT,string id,double start, double stop){
     retina.generateWhiteNoise(mean, contrast1, contrast2, period,switchT,sizeX, sizeY);
     displayMg.modifyLN(id,start,stop);
 }
 
-void InterfaceNEST::setImpulse(double start, double stop, double amplitude,double offset){
+void RetinaInterface::setImpulse(double start, double stop, double amplitude,double offset){
     retina.generateImpulse(start, stop, amplitude,offset, sizeX, sizeY);
 }
 
-void InterfaceNEST::setGrating(int type,double step,double lengthB,double length,double length2,int X,int Y,double freq,double T,double Lum,double Cont,double phi,double phi_t,double theta,double red, double green, double blue,double red_phi, double green_phi,double blue_phi){
+void RetinaInterface::setGrating(int type,double step,double lengthB,double length,double length2,int X,int Y,double freq,double T,double Lum,double Cont,double phi,double phi_t,double theta,double red, double green, double blue,double red_phi, double green_phi,double blue_phi){
     retina.generateGrating(type, step, lengthB, length, length2, X, Y, freq, T, Lum, Cont, phi, phi_t, theta,red,green,blue,red_phi, green_phi,blue_phi);
 }
 
