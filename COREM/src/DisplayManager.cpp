@@ -444,16 +444,16 @@ void DisplayManager::updateDisplay(CImg <double> *input, Retina &retina, int sim
                         if(strcmp(moduleID, "Input") == 0){
 
                             if(aux[0]>0)
-                                m->showSpatialProfile(input,true,aux[0],multimeterIDs[i],(int)last_col*(newY+80.0),(int)last_row*(newX+80.0),-1);
+                                m->showSpatialProfile(input,true,aux[0],multimeterIDs[i],(int)last_col*(newY+80.0),(int)last_row*(newX+80.0),-1,multimeterIDs[i]);
                             else
-                                m->showSpatialProfile(input,false,-aux[0],multimeterIDs[i],(int)last_col*(newY+80.0),(int)last_row*(newX+80.0),-1);
+                                m->showSpatialProfile(input,false,-aux[0],multimeterIDs[i],(int)last_col*(newY+80.0),(int)last_row*(newX+80.0),-1,multimeterIDs[i]);
                         }else{
                             CImg<double> *module_output = n->getOutput();
                             if(module_output != NULL) {
                                 if(aux[0]>0)
-                                    m->showSpatialProfile(module_output,true,aux[0],multimeterIDs[i],(int)last_col*(newY+80.0),(int)last_row*(newX+80.0),-1);
+                                    m->showSpatialProfile(module_output,true,aux[0],multimeterIDs[i],(int)last_col*(newY+80.0),(int)last_row*(newX+80.0),-1,multimeterIDs[i]);
                                 else
-                                    m->showSpatialProfile(module_output,false,-aux[0],multimeterIDs[i],(int)last_col*(newY+80.0),(int)last_row*(newX+80.0),-1);
+                                    m->showSpatialProfile(module_output,false,-aux[0],multimeterIDs[i],(int)last_col*(newY+80.0),(int)last_row*(newX+80.0),-1,multimeterIDs[i]);
                             }
                         }
                     }
@@ -485,32 +485,32 @@ void DisplayManager::updateDisplay(CImg <double> *input, Retina &retina, int sim
 
                 if(isShown[numberModules+i]==true){
                     if (i<multimeters.size()-1)
-                        m->showTemporalProfile(multimeterIDs[i],(int)last_col*(newY+80.0),(int)last_row*(newX+80.0),delay,LNFile);
+                        m->showTemporalProfile(multimeterIDs[i],(int)last_col*(newY+80.0),(int)last_row*(newX+80.0),delay,multimeterIDs[i]);
                     else
-                        m->showTemporalProfile(multimeterIDs[i],(int)last_col*(newY+80.0),(int)last_row*(newX+80.0),-1,LNFile);
+                        m->showTemporalProfile(multimeterIDs[i],(int)last_col*(newY+80.0),(int)last_row*(newX+80.0),-1,multimeterIDs[i]);
 
                 }else{
-                    m->showTemporalProfile(multimeterIDs[i],(int)last_col*(newY+80.0),(int)last_row*(newX+80.0),-2,LNFile);
+                    m->showTemporalProfile(multimeterIDs[i],(int)last_col*(newY+80.0),(int)last_row*(newX+80.0),-2,multimeterIDs[i]);
                 }
 
             // LN mult.
             }else if(multimeterType[i]==2){
                 if(isShown[numberModules+i]==false){
-                    m->showLNAnalysis(multimeterIDs[i],(int)last_col*(newY+80.0),(int)last_row*(newX+80.0),-2,LNSegment[LNMultimeters]/simStep,LNInterval[LNMultimeters]/simStep,LNStart[LNMultimeters]/simStep,LNStop[LNMultimeters]/simStep,totalNumberTrials,LNFile);
+                    m->showLNAnalysis(multimeterIDs[i],(int)last_col*(newY+80.0),(int)last_row*(newX+80.0),-2,LNSegment[LNMultimeters]/simStep,LNInterval[LNMultimeters]/simStep,LNStart[LNMultimeters]/simStep,LNStop[LNMultimeters]/simStep,totalNumberTrials,multimeterIDs[i]);
                 }else{
                     if (i<multimeters.size()-1)
-                        m->showLNAnalysis(multimeterIDs[i],(int)last_col*(newY+80.0),(int)last_row*(newX+80.0),delay,LNSegment[LNMultimeters]/simStep,LNInterval[LNMultimeters]/simStep,LNStart[LNMultimeters]/simStep,LNStop[LNMultimeters]/simStep,totalNumberTrials,LNFile);
+                        m->showLNAnalysis(multimeterIDs[i],(int)last_col*(newY+80.0),(int)last_row*(newX+80.0),delay,LNSegment[LNMultimeters]/simStep,LNInterval[LNMultimeters]/simStep,LNStart[LNMultimeters]/simStep,LNStop[LNMultimeters]/simStep,totalNumberTrials,multimeterIDs[i]);
                     else
-                        m->showLNAnalysis(multimeterIDs[i],(int)last_col*(newY+80.0),(int)last_row*(newX+80.0),-1,LNSegment[LNMultimeters]/simStep,LNInterval[LNMultimeters]/simStep,LNStart[LNMultimeters]/simStep,LNStop[LNMultimeters]/simStep,totalNumberTrials,LNFile);
+                        m->showLNAnalysis(multimeterIDs[i],(int)last_col*(newY+80.0),(int)last_row*(newX+80.0),-1,LNSegment[LNMultimeters]/simStep,LNInterval[LNMultimeters]/simStep,LNStart[LNMultimeters]/simStep,LNStop[LNMultimeters]/simStep,totalNumberTrials,multimeterIDs[i]);
                 }
 
                 // check last trial to show average results
                 if(numberTrials == totalNumberTrials-1){
                     m->getSwitchTime(retina.getWhiteNoise()->getSwitchTime());
                     if(isShown[numberModules+i]==false){
-                        m->showLNAnalysisAvg((int)last_col*(newY+80.0),(int)last_row*(newX+80.0),-2,LNSegment[LNMultimeters]/simStep,LNStart[LNMultimeters]/simStep, LNStop[LNMultimeters]/simStep,totalNumberTrials,LNFile,LNfactor);
+                        m->showLNAnalysisAvg((int)last_col*(newY+80.0),(int)last_row*(newX+80.0),-2,LNSegment[LNMultimeters]/simStep,LNStart[LNMultimeters]/simStep, LNStop[LNMultimeters]/simStep,totalNumberTrials,multimeterIDs[i],LNfactor);
                     }else{
-                        m->showLNAnalysisAvg((int)last_col*(newY+80.0),(int)last_row*(newX+80.0),0,LNSegment[LNMultimeters]/simStep,LNStart[LNMultimeters]/simStep, LNStop[LNMultimeters]/simStep,totalNumberTrials,LNFile,LNfactor);
+                        m->showLNAnalysisAvg((int)last_col*(newY+80.0),(int)last_row*(newX+80.0),0,LNSegment[LNMultimeters]/simStep,LNStart[LNMultimeters]/simStep, LNStop[LNMultimeters]/simStep,totalNumberTrials,multimeterIDs[i],LNfactor);
                     }
                 }
                 LNMultimeters++;

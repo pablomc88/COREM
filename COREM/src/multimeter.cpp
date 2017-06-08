@@ -26,7 +26,7 @@ void multimeter::setSimStep(double value){
 
 //------------------------------------------------------------------------------//
 
-void multimeter::showSpatialProfile(CImg<double> *img,bool rowCol,int number,string title,int col,int row,double waitTime){
+void multimeter::showSpatialProfile(CImg<double> *img,bool rowCol,int number,string title,int col,int row,double waitTime, string TempFile){
 
     double dim = 0.0;
 
@@ -37,6 +37,7 @@ void multimeter::showSpatialProfile(CImg<double> *img,bool rowCol,int number,str
     }
 
     CImg <double> *SpatialProfile1 = new CImg <double>(dim,1,1,1,0);
+    double sp[int(dim)];
 
     double max_value1 = DBL_EPSILON;
     double min_value1 = DBL_INF;
@@ -44,8 +45,10 @@ void multimeter::showSpatialProfile(CImg<double> *img,bool rowCol,int number,str
     for(int k=0;k<dim;k++){
         if(rowCol == true){
             (*SpatialProfile1)(k,0,0,0)=(*img)(k,number,0,0);
+            sp[k] = (*img)(k,number,0,0);
         }else{
             (*SpatialProfile1)(k,0,0,0)=(*img)(number,k,0,0);
+            sp[k] = (*img)(number,k,0,0);
         }
 
         if ((*SpatialProfile1)(k,0,0,0)>max_value1)
@@ -64,6 +67,10 @@ void multimeter::showSpatialProfile(CImg<double> *img,bool rowCol,int number,str
         min_value1 = 0;
     if(max_value1<0)
         max_value1 = 0;
+
+    // remove file and save new file
+    removeFile(TempFile);
+    saveArray(sp,int(dim),TempFile);
 
 //    // plot
     if(waitTime > -2){
@@ -108,7 +115,7 @@ void multimeter::recordInput(double value){
 //------------------------------------------------------------------------------//
 
 
-void multimeter::showTemporalProfile(string title,int col,int row, double waitTime, const char * TempFile){
+void multimeter::showTemporalProfile(string title,int col,int row, double waitTime, string TempFile){
 
 
     CImg <double> *temporalProfilet = new CImg <double>(temporal.size(),1,1,1,0);
@@ -173,7 +180,7 @@ void multimeter::showTemporalProfile(string title,int col,int row, double waitTi
 
 //------------------------------------------------------------------------------//
 
-void multimeter::showLNAnalysisAvg(int col, int row, double waitTime,double segment, double start, double stop, double numberTrials, const char * LNFile, double ampl){
+void multimeter::showLNAnalysisAvg(int col, int row, double waitTime,double segment, double start, double stop, double numberTrials, string LNFile, double ampl){
 
     // normalize input
     double mean_value1 = 0;
@@ -189,9 +196,10 @@ void multimeter::showLNAnalysisAvg(int col, int row, double waitTime,double segm
     }
 
     // read values from file
-    string sto_file = composeResultsPath(LNFile);
-	const char* to_file = sto_file.c_str();    
-	vector<double> F;
+//    string sto_file = composeResultsPath(LNFile);
+    string sto_file = getWorkingDir() + "results/" + LNFile;
+    const char* to_file = sto_file.c_str();
+    vector<double> F;
 
     std::ifstream fin;
     fin.open(to_file, std::ifstream::in);
@@ -211,6 +219,7 @@ void multimeter::showLNAnalysisAvg(int col, int row, double waitTime,double segm
 
         fin.close(); 
     }
+
     // Non-linearity: The stimulus is convolved with the filter.
     // g = S*F
 
@@ -219,14 +228,16 @@ void multimeter::showLNAnalysisAvg(int col, int row, double waitTime,double segm
     const char * seq1 = "inp";
     const char * seq2 = "tmp";
 
+    const char* to_file2 = LNFile.c_str();
+
     char seqFile1[1000];
     char seqFile2[1000];
 
     strcpy(seqFile1,seq1);
-    strcat(seqFile1,LNFile);
+    strcat(seqFile1,to_file2);
 
     strcpy(seqFile2,seq2);
-    strcat(seqFile2,LNFile);
+    strcat(seqFile2,to_file2);
 
     vector <double> historyInput = readSeq(seqFile1);
     vector <double> historyTemporal = readSeq(seqFile2);
@@ -480,14 +491,16 @@ void multimeter::showLNAnalysisAvg(int col, int row, double waitTime,double segm
     char f1[1000];
     char f2[1000];
     strcpy(f1,SNL);
-    strcat(f1,LNFile);
+    strcat(f1,to_file2);
     strcpy(f2,SNL2);
-    strcat(f2,LNFile);
+    strcat(f2,to_file2);
 
     removeFile((const char*)f1);
     removeFile((const char*)f2);
     saveArray(auxSP,400,f1);
     saveArray(auxSP2,400,f2);
+
+    cout << "Saving auxSP = "<< auxSP[10] << " with name f1 = "<< f1 << endl;
 
 
     // display results
@@ -535,7 +548,7 @@ void multimeter::showLNAnalysisAvg(int col, int row, double waitTime,double segm
 
 //------------------------------------------------------------------------------//
 
-void multimeter::showLNAnalysis(string title, int col, int row, double waitTime, double segment, double interval, double start, double stop,double numberTrials,const char * LNFile){
+void multimeter::showLNAnalysis(string title, int col, int row, double waitTime, double segment, double interval, double start, double stop,double numberTrials,string LNFile){
 
 
     // normalize vectors
@@ -578,15 +591,16 @@ void multimeter::showLNAnalysis(string title, int col, int row, double waitTime,
     // save seq
     const char * seq1 = "inp";
     const char * seq2 = "tmp";
+    const char* to_file = LNFile.c_str();
 
     char seqFile1[1000];
     char seqFile2[1000];
 
     strcpy(seqFile1,seq1);
-    strcat(seqFile1,LNFile);
+    strcat(seqFile1,to_file);
 
     strcpy(seqFile2,seq2);
-    strcat(seqFile2,LNFile);
+    strcat(seqFile2,to_file);
 
     saveSeq(historyInput,seqFile1,(stop-start)*2*simStep);
     saveSeq(historyTemporal,seqFile2,(stop-start)*2*simStep);
@@ -851,7 +865,7 @@ string multimeter::getWorkingDir(){
 
 string multimeter::composeResultsPath(const char * File){
 
-    string sFile = (string) File; 
+    string sFile = (string) File;
     string stringResult = getWorkingDir()+ "results/" + sFile;
 
     return stringResult;
@@ -860,14 +874,15 @@ string multimeter::composeResultsPath(const char * File){
 //------------------------------------------------------------------------------//
 
 
-void multimeter::removeFile(const char *File){
+void multimeter::removeFile(string File){
 
     string stringResult = getWorkingDir()+ "results/";
     const char * root = (stringResult).c_str();
     char result[1000];
+    const char * Filechar = (File).c_str();
 
     strcpy(result,root);
-    strcat(result,File);
+    strcat(result,Filechar);
 
     remove((const char*)result);
 }

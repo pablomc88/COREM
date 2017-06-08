@@ -61,23 +61,23 @@ public:
     ~multimeter(void);
 
     // Spatial multimeter
-    void showSpatialProfile(CImg<double> *img,bool rowCol,int number,string title,int col,int row,double waitTime);
+    void showSpatialProfile(CImg<double> *img,bool rowCol,int number,string title,int col,int row,double waitTime,string TempFile);
 
     // Temporal multimeter
     void recordValue(double value);
-    void showTemporalProfile(string title, int col, int row, double waitTime,const char * TempFile);
+    void showTemporalProfile(string title, int col, int row, double waitTime, string TempFile);
 
     // LN analysis
     void recordInput(double value);
-    void showLNAnalysis(string title, int col, int row, double waitTime, double segment,double interval, double start, double stop, double numberTrials,const char * LNFile);
-    void showLNAnalysisAvg(int col, int row,double waitTime, double segment, double start, double stop, double numberTrials, const char * LNFile, double ampl);
+    void showLNAnalysis(string title, int col, int row, double waitTime, double segment, double interval, double start, double stop, double numberTrials, string LNFile);
+    void showLNAnalysisAvg(int col, int row, double waitTime, double segment, double start, double stop, double numberTrials, string LNFile, double ampl);
     // Save array in a text file with nama fileID. One value per file. If file already exit,
     // add each each value of array to each value in the file and save the resulting values.
     void saveArray(double* array, size_t arraySize, string fileID);
     void getSwitchTime(double t){switchTime=t;}
     string getWorkingDir();
     string composeResultsPath(const char * File);
-    void removeFile(const char * File);
+    void removeFile(string File);
 
     vector<double> readSeq(const char *LNFile);
     void saveSeq(vector<double> newSeq, const char * LNFile, double maxSize);

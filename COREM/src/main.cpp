@@ -19,14 +19,14 @@
 using namespace cimg_library;
 using namespace std;
 
-#define LN_OUT_FILENAME_TAIL "_output_multimeter.txt"
+#define MULT_OUT_FILENAME_TAIL "_output_multimeter.txt"
 
 // main
 int main(int argc, char *argv[])
 {
     string currentDirRoot = constants::getPath();
 
-    // delete old LN analysis files in results folder (if any)
+    // delete old multimeter files in results folder (if any)
     DIR *dir;
     struct dirent *ent;
     
@@ -34,26 +34,28 @@ int main(int argc, char *argv[])
     const char * charesdir = (resdir).c_str();
 
     if ((dir = opendir(charesdir)) != NULL) {
-        size_t fn_tail_len;
+//        size_t fn_tail_len;
         bool files_deleted=false;
-        fn_tail_len = strlen(LN_OUT_FILENAME_TAIL);
+//        fn_tail_len = strlen(MULT_OUT_FILENAME_TAIL);
         
         while((ent = readdir (dir)) != NULL) {
-            size_t d_name_len;
-            d_name_len=strlen(ent->d_name);
+//            size_t d_name_len;
+//            d_name_len=strlen(ent->d_name);
             
-            if(d_name_len >= fn_tail_len && strcmp(ent->d_name+d_name_len-fn_tail_len, LN_OUT_FILENAME_TAIL)==0) {
-                string removed_fn_path = resdir + ent->d_name;
-                if(remove(removed_fn_path.c_str()) == -1)
-                    perror("Error while deleting old multimeter files");
-                else
-                    files_deleted=true;                
-            }
+//            if(d_name_len >= fn_tail_len && strcmp(ent->d_name+d_name_len-fn_tail_len, MULT_OUT_FILENAME_TAIL)==0) {
+            string removed_fn_path = resdir + ent->d_name;
+            remove(removed_fn_path.c_str());
+            files_deleted=true;
+//            if(remove(removed_fn_path.c_str()) == -1)
+//                perror("Error while deleting old multimeter files");
+//            else
+//                files_deleted=true;
+//            }
         
         }
         closedir (dir);
         if(files_deleted)
-            cout << "Deleted previous *" LN_OUT_FILENAME_TAIL " files of ./results/ directory." << endl;
+            cout << "Deleted previous files of ./results/ directory." << endl;
     }else{
         string tocreate = currentDirRoot+"results";
         cout << "Creating results/ directory" << endl;
@@ -113,7 +115,7 @@ int main(int argc, char *argv[])
             // Create new retina interface for every trial (reset values)
             RetinaInterface interface;
             interface.setVerbosity(verbose_flag);
-            if(!interface.allocateValues(retinaSim, LN_OUT_FILENAME_TAIL, constants::outputfactor, trial_ind)) {
+            if(!interface.allocateValues(retinaSim, MULT_OUT_FILENAME_TAIL, constants::outputfactor, trial_ind)) {
                 cout << "Incorrect parameter/value specified or resorce allocation. Aborting." << endl;
                 break;
             }

@@ -179,7 +179,7 @@ def retina_luminance(individual,ID,sel):
     cnt = True
 
     try:
-        tmp = numpy.float64(numpy.loadtxt(root+'results/_output_multimeter.txt'))
+        tmp = numpy.float64(numpy.loadtxt(root+'results/SNL_photoreceptors'))
         cnt = False
     except IOError:
         cnt = True
