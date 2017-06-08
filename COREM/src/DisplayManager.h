@@ -98,7 +98,7 @@ public:
     void addModule(int pos, string ID);
 
     // Add multimeter
-    void addMultimeterTempSpat(string multimeterID, string moduleID, int param1, int param2, bool temporalSpatial, string Show);
+    void addMultimeterTempSpat(string multimeterID, string moduleID, int param1, int param2, bool temporalSpatial, string Show, bool recordAllCells);
     void addMultimeterLN(string multimeterID, string moduleID, int x, int y, double segment, double interval, double start, double stop, string Show);
     void setLNFile(const char * file, double ampl);
 

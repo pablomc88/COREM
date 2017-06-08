@@ -43,7 +43,9 @@ protected:
     CImgDisplay *draw_disp;
     // temporal registers
     vector <double> temporal;
+    vector < vector <double> > temporal2D;
     vector <double> input;
+    bool recordAllCells;
     // LN analysis
     std::ifstream fin;
     std::ofstream fout;
@@ -65,7 +67,11 @@ public:
 
     // Temporal multimeter
     void recordValue(double value);
+     void recordAllValues(double value, int cell);
     void showTemporalProfile(string title, int col, int row, double waitTime, string TempFile);
+    // Initialize vetor
+    void initializeTemporal2D(int X, int Y);
+    void setRecordAllCells(bool value);
 
     // LN analysis
     void recordInput(double value);

@@ -829,7 +829,7 @@ void FileReader::parseFile(Retina &retina, DisplayManager &displayMg){
 
                 if (token[2] && token[3] && token[4] && token[5]){
                     // read multimeter type
-                    if (strcmp(token[2], "spatial") != 0 && strcmp(token[2], "temporal") != 0 && strcmp(token[2], "Linear-Nonlinear") != 0)
+                    if (strcmp(token[2], "spatial") != 0 && strcmp(token[2], "temporal") != 0 && strcmp(token[2], "temporal_all") != 0 && strcmp(token[2], "Linear-Nonlinear") != 0)
                     {
                         abort(line,"Expected any of the parameters for multimeter: 'spatial','temporal','Linear-Nonlinear'");
                         break;
@@ -857,9 +857,9 @@ void FileReader::parseFile(Retina &retina, DisplayManager &displayMg){
                                     if(strcmp(token[6], "timeStep") == 0 && strcmp(token[8], "rowcol") == 0 && strcmp(token[10], "value") == 0 && strcmp(token[13], "Show") == 0){
 
                                         if(strcmp(token[9], "True") == 0)
-                                            displayMg.addMultimeterTempSpat(token[3],token[4],atof(token[11]),atof(token[7]),false,token[14]);
+                                            displayMg.addMultimeterTempSpat(token[3],token[4],atof(token[11]),atof(token[7]),false,token[14],false);
                                         else if(strcmp(token[9], "False") == 0)
-                                            displayMg.addMultimeterTempSpat(token[3],token[4],-atof(token[11]),atof(token[7]),false,token[14]);
+                                            displayMg.addMultimeterTempSpat(token[3],token[4],-atof(token[11]),atof(token[7]),false,token[14],false);
                                         else
                                             continueReading=false;
                                     }else{
@@ -868,7 +868,14 @@ void FileReader::parseFile(Retina &retina, DisplayManager &displayMg){
                                     }
                                 }else if(strcmp(token[2], "temporal") == 0 && token[6] && token[7] && token[8] && token[9] && token[10] && token[11] && token[12]){
                                     if(strcmp(token[6], "x") == 0 && strcmp(token[8], "y") == 0 && strcmp(token[11], "Show") == 0){
-                                        displayMg.addMultimeterTempSpat(token[3],token[4],atof(token[7]),atof(token[9]),true,token[12]);
+                                        displayMg.addMultimeterTempSpat(token[3],token[4],atof(token[7]),atof(token[9]),true,token[12],false);
+                                    }else{
+                                        abort(line,"Expected temporal multimeter parameter list: 'x','y','Show'");
+                                        break;
+                                    }
+                                }else if(strcmp(token[2], "temporal_all") == 0 && token[6] && token[7] && token[8] && token[9] && token[10] && token[11] && token[12]){
+                                    if(strcmp(token[6], "x") == 0 && strcmp(token[8], "y") == 0 && strcmp(token[11], "Show") == 0){
+                                        displayMg.addMultimeterTempSpat(token[3],token[4],atof(token[7]),atof(token[9]),true,token[12],true);
                                     }else{
                                         abort(line,"Expected temporal multimeter parameter list: 'x','y','Show'");
                                         break;

@@ -7,6 +7,7 @@ multimeter::multimeter(int x, int y){
     sizeY = y;
     simStep=1.0;
     draw_disp = new CImgDisplay();
+    recordAllCells = False;
 }
 
 multimeter::multimeter(const multimeter& copy){
@@ -14,6 +15,7 @@ multimeter::multimeter(const multimeter& copy){
     sizeY=copy.sizeY;
     simStep=copy.simStep;
     draw_disp = new CImgDisplay(*copy.draw_disp);
+    temporal2D = copy.temporal2D;
 }
 
 multimeter::~multimeter(){
@@ -22,6 +24,26 @@ multimeter::~multimeter(){
 
 void multimeter::setSimStep(double value){
     simStep = value;
+}
+
+void multimeter::setRecordAllCells(bool value){
+    recordAllCells = value;
+}
+
+void multimeter::initializeTemporal2D(int X,int Y){
+
+    sizeX = X;
+    sizeY = Y;
+
+    if (recordAllCells) {
+
+        for (int i = 0; i < X*Y; i++) {
+            vector<double> row; // Create an empty row
+            row.push_back(0.0); // Add an element (column) to the row
+            temporal2D.push_back(row); // Add the row to the main vector
+        }
+    }
+
 }
 
 //------------------------------------------------------------------------------//
@@ -108,6 +130,11 @@ void multimeter::recordValue(double value){
     temporal.push_back(value);
 }
 
+void multimeter::recordAllValues(double value,int cell){
+    if (recordAllCells)
+        temporal2D[cell].push_back(value);
+}
+
 void multimeter::recordInput(double value){
     input.push_back(value);
 }
@@ -116,7 +143,6 @@ void multimeter::recordInput(double value){
 
 
 void multimeter::showTemporalProfile(string title,int col,int row, double waitTime, string TempFile){
-
 
     CImg <double> *temporalProfilet = new CImg <double>(temporal.size(),1,1,1,0);
     double temp[temporal.size()];
@@ -147,6 +173,21 @@ void multimeter::showTemporalProfile(string title,int col,int row, double waitTi
     // remove file and save new file
     removeFile(TempFile);
     saveArray(temp,temporal.size(),TempFile);
+
+    // Save responses of all cells
+    if (temporal2D.size() > 0 and  recordAllCells){
+        cout << "saving responses of all cells..." << endl;
+        for(int cell=0;cell<sizeX*sizeY;cell++){
+            double temp2D[temporal2D[cell].size()];
+
+            for(size_t k=0;k<temporal2D[cell].size();k++){
+                temp2D[k] = temporal2D[cell][k];
+            }
+
+            string cc = to_string(cell);
+            saveArray(temp2D,temporal2D[cell].size(),TempFile + cc);
+        }
+    }
 
     // plot
     if(waitTime > -2){

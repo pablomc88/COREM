@@ -161,10 +161,12 @@ bool DisplayManager::setSimStep(double step_value){
 //------------------------------------------------------------------------------//
 
 
-void DisplayManager::addMultimeterTempSpat(string multimeterID, string moduleID, int param1, int param2,bool temporalSpatial, string Show){
+void DisplayManager::addMultimeterTempSpat(string multimeterID, string moduleID, int param1, int param2,bool temporalSpatial, string Show, bool recordAllCells){
 
     multimeter* nm= new multimeter(sizeX,sizeY);
     nm->setSimStep(simStep);
+    if (recordAllCells)
+        nm->setRecordAllCells(recordAllCells);
     multimeters.push_back(nm);
 
     multimeterIDs.push_back(multimeterID);
@@ -419,8 +421,20 @@ void DisplayManager::updateDisplay(CImg <double> *input, Retina &retina, int sim
                     m->recordValue((*input)(aux[0],aux[1],0,0));
                 }else{
                     CImg<double> *module_output = n->getOutput();
-                    if(module_output != NULL)
+                    if(module_output != NULL){
                         m->recordValue((*module_output)(aux[0],aux[1],0,0));
+                        // Record values of all pixels
+                        if (simTime < 1)
+                            m->initializeTemporal2D(n->getSizeX(),n->getSizeY());
+
+                        int cell = 0;
+                        for(int xx=0;xx < n->getSizeX();xx++){
+                            for(int yy=0;yy < n->getSizeY();yy++){
+                                m->recordAllValues((*module_output)(xx,yy,0,0),cell);
+                                cell+=1;
+                            }
+                        }
+                    }
                 }
 
                 m->recordInput((*input)(aux[0],aux[1],0,0));
