@@ -22,7 +22,7 @@
 #include "universal_data_logger.h"
 
 // Corem interface
-#include "../src/InterfaceNEST.h"
+#include "../src/RetinaInterface.h"
 
 // Includes from sli:
 #include "dictdatum.h"
@@ -71,7 +71,7 @@ public:
   void set_status( const DictionaryDatum& );
 
 private:
-  static InterfaceNEST retina;
+  static RetinaInterface retina;
 
   void init_state_( const Node& proto );
   void init_buffers_();

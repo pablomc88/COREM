@@ -83,7 +83,7 @@ y8 = [0.0,0.0 ,0.0 ,0.0, -0.1,-0.3 ,-0.6 ,-0.75 ,-0.85,-1.1 ,-1.2 ,-1.2,-1.25,-1
 ### Function to generate scripts ###
 def generateScript(individual,simParam,ID,root):
 
-    text_file = open(root+"Retina_scripts/scripts/retina"+str(ID)+".py", "w")
+    text_file = open(root+"Retina_scripts/scripts/retina"+str(ID), "w")
 
     text_file.write(""+
 
@@ -172,7 +172,7 @@ def retina_luminance(individual,ID,sel):
 
 
     # run simulation
-    call = "./corem Retina_scripts/scripts/retina"+str(ID)+".py "
+    call = "./corem Retina_scripts/scripts/retina"+str(ID)
     os.system(call)
 
     # return simulated values

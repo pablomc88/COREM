@@ -22,7 +22,7 @@
 #include "lockptrdatum.h"
 
 
-InterfaceNEST mynest::corem::retina;
+RetinaInterface mynest::corem::retina;
 
 using namespace nest;
 
