@@ -69,6 +69,7 @@ public:
     void recordValue(double value);
      void recordAllValues(double value, int cell);
     void showTemporalProfile(string title, int col, int row, double waitTime, string TempFile);
+
     // Initialize vector
     void initializeTemporal2D(int X, int Y);
     void setRecordAllCells(bool value);
