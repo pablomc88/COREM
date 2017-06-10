@@ -5,7 +5,9 @@
 # simulates the retina script "primate_parvo.py" and plots temporal evolution of
 # membrane potentials of cells recorded by multimeters. It also computes a
 # time-averaged population activity metric. It is also possible to simulate
-# spiking output of ganglion cells using NEST (deactivated by default).
+# spiking output of ganglion cells using NEST (deactivated by default), but first
+# the retina model 'ganglion cell' must be downloaded and built from the repository 
+# https://github.com/pablomc88/Primate_Visual_System.
 
 # Use NEST to simulate ganglion cells
 use_NEST = False
