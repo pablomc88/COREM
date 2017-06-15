@@ -63,5 +63,5 @@ retina.Connect('SNL_ganglion','SNL_ganglion_static','Current')
 retina.Show('Input','False','margin','0')
 
 # LN multimeter
-retina.multimeter('Linear-Nonlinear','Ganglion cell','SNL_ganglion_static',{'x','0','y','0','segment','1000.0','interval','10.0','start','21000','stop','30000.0','Show','True'}
+retina.multimeter('Linear-Nonlinear','Ganglion cell','SNL_ganglion_static',{'x','0','y','0','segment','1000.0','interval','10.0','start','21000','stop','30000.0','rangePlot','330','Show','True'}
 

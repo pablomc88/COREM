@@ -39,7 +39,7 @@ retina.NumTrials('1') # number of trials
 retina.PixelsPerDegree({'1.0'}) # pixels per degree of visual angle
 retina.DisplayDelay('0') # display delay
 retina.DisplayZoom({'10.0'}) # display zoom
-retina.DisplayWindows('4') # Display windows per row
+retina.DisplayWindows('5') # Display windows per row
 
 ### Visual input ###
 
@@ -103,17 +103,17 @@ retina.Show('X','False','margin','0')
 
 # Temporal multimeters
 
-#retina.multimeter('temporal','Input','Input',{'x','0','y','0'},'Show','True')
-#retina.multimeter('temporal','tmp_tauE','tmp_tauE',{'x','0','y','0'},'Show','True')
-#retina.multimeter('temporal','beta','beta',{'x','0','y','0'},'Show','True')
+#retina.multimeter('temporal','Input','Input',{'x','0','y','0'},'Show','True','startTime','400')
+#retina.multimeter('temporal','tmp_tauE','tmp_tauE',{'x','0','y','0'},'Show','True','startTime','400')
+#retina.multimeter('temporal','beta','beta',{'x','0','y','0'},'Show','True','startTime','400')
 
-#retina.multimeter('temporal','tmp_tauC','tmp_tauC',{'x','0','y','0'},'Show','True')
-#retina.multimeter('temporal','1_div_alpha','1_div_alpha',{'x','0','y','0'},'Show','True')
-#retina.multimeter('temporal','alpha','alpha',{'x','0','y','0'},'Show','True')
-#retina.multimeter('temporal','X','X',{'x','0','y','0'},'Show','True')
+#retina.multimeter('temporal','tmp_tauC','tmp_tauC',{'x','0','y','0'},'Show','True','startTime','400')
+#retina.multimeter('temporal','1_div_alpha','1_div_alpha',{'x','0','y','0'},'Show','True','startTime','400')
+#retina.multimeter('temporal','alpha','alpha',{'x','0','y','0'},'Show','True','startTime','400')
+#retina.multimeter('temporal','X','X',{'x','0','y','0'},'Show','True','startTime','400')
 
-#retina.multimeter('temporal','ais','ais',{'x','0','y','0'},'Show','True')
-#retina.multimeter('temporal','tmp_tauis','tmp_tauis',{'x','0','y','0'},'Show','True')
-#retina.multimeter('temporal','tmp_taum','tmp_taum',{'x','0','y','0'},'Show','True')
+#retina.multimeter('temporal','ais','ais',{'x','0','y','0'},'Show','True','startTime','400')
+#retina.multimeter('temporal','tmp_tauis','tmp_tauis',{'x','0','y','0'},'Show','True','startTime','400')
+#retina.multimeter('temporal','tmp_taum','tmp_taum',{'x','0','y','0'},'Show','True','startTime','400')
 
-retina.multimeter('temporal','Vis','Vis',{'x','0','y','0'},'Show','False')
+retina.multimeter('temporal','Vis','Vis',{'x','0','y','0'},'Show','True','startTime','400')

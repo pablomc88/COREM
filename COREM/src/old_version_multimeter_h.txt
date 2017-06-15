@@ -1,0 +1,101 @@
+#ifndef MULTIMETER_H
+#define MULTIMETER_H
+
+/* BeginDocumentation
+ * Name: multimeter
+ *
+ * Description: A multimeter records spatial or temporal evolution of connected
+ * neural layers. It is also possible to define a linear-nonlinear (LN) analysis [1]
+ *
+ * FFT code from the book "Numerical Recipes in C".
+ *
+ * [1] Baccus, Stephen A., and Markus Meister. "Fast and slow contrast adaptation
+ * in retinal circuitry." Neuron 36.5 (2002): 909-919.
+ *
+ * Author: Pablo Martinez Cañada. University of Granada. CITIC-UGR. Spain.
+ * <pablomc@ugr.es>
+ *
+ */
+
+#include "../CImg-1.6.0_rolling141127/CImg.h"
+
+#include "vector"
+#include "dirent.h"
+#include <fstream>
+#include <sstream>
+#include <stdio.h>
+#include <algorithm>
+
+#include "constants.h"
+
+// FFT
+#define _USE_MATH_DEFINES
+
+
+using namespace cimg_library;
+using namespace std;
+
+class multimeter{
+protected:
+    // Image size
+    int sizeX, sizeY;
+    // Image display for the multimeter (windows destroyed when object deleted)
+    CImgDisplay *draw_disp;
+    // temporal registers
+    vector <double> temporal;
+    vector < vector <double> > temporal2D;
+    vector <double> input;
+    bool recordAllCells;
+    // LN analysis
+    std::ifstream fin;
+    std::ofstream fout;
+    std::fstream finout;
+    double switchTime;
+
+    // simulation step
+    double simStep;
+
+public:
+
+    // Constructor, copy, destructor.
+    multimeter(int x=1,int y=1);
+    multimeter(const multimeter& copy);
+    ~multimeter(void);
+
+    // Spatial multimeter
+    void showSpatialProfile(CImg<double> *img,bool rowCol,int number,string title,int col,int row,double waitTime,string TempFile);
+
+    // Temporal multimeter
+    void recordValue(double value);
+     void recordAllValues(double value, int cell);
+    void showTemporalProfile(string title, int col, int row, double waitTime, string TempFile);
+
+    // Initialize vector
+    void initializeTemporal2D(int X, int Y);
+    void setRecordAllCells(bool value);
+
+    // LN analysis
+    void recordInput(double value);
+    void showLNAnalysis(string title, int col, int row, double waitTime, double segment, double interval, double start, double stop, double numberTrials, string LNFile);
+    void showLNAnalysisAvg(int col, int row, double waitTime, double segment, double start, double stop, double numberTrials, string LNFile, double ampl);
+    // Save array in a text file with nama fileID. One value per file. If file already exit,
+    // add each each value of array to each value in the file and save the resulting values.
+    void saveArray(double* array, size_t arraySize, string fileID);
+    void getSwitchTime(double t){switchTime=t;}
+    string getWorkingDir();
+    string composeResultsPath(const char * File);
+    void removeFile(string File);
+
+    vector<double> readSeq(const char *LNFile);
+    void saveSeq(vector<double> newSeq, const char * LNFile, double maxSize);
+
+    //Sim step
+    void setSimStep(double value);
+
+    //FFT
+    void fft(double data[], int nn, int isign);
+    void conj(double data[], double copy[], int NFFT);
+
+};
+
+#endif // MULTIMETER_H

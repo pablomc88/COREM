@@ -57,10 +57,6 @@ DisplayManager::~DisplayManager(void){
         delete templateBar;
 }
 
-void DisplayManager::setLNFile(const char *file, double ampl){
-    LNFile = file;
-    LNfactor = ampl;
-}
 
 void DisplayManager::reset(){
     sizeX = 1;
@@ -111,6 +107,12 @@ bool DisplayManager::setSizeX(int x){
     if (x>0){
         sizeX = x;
         ret_correct=true;
+
+        for(size_t i=0;i<multimeters.size();i++){
+            multimeter *m = multimeters[i];
+            m->setSizeX(x);
+        }
+
     } else
         ret_correct=false;
     return(ret_correct);
@@ -121,6 +123,12 @@ bool DisplayManager::setSizeY(int y){
     if (y>0){
         sizeY = y;
         ret_correct=true;
+
+        for(size_t i=0;i<multimeters.size();i++){
+            multimeter *m = multimeters[i];
+            m->setSizeY(y);
+        }
+
     } else
         ret_correct=false;
     return(ret_correct);
@@ -153,6 +161,12 @@ bool DisplayManager::setSimStep(double step_value){
         simStep = step_value;
         cout << "Display simStep = "<< simStep << endl;
         ret_correct=true;
+
+        for(size_t i=0;i<multimeters.size();i++){
+            multimeter *m = multimeters[i];
+            m->setStep(step_value);
+        }
+
     } else
         ret_correct=false;
     return(ret_correct);
@@ -161,12 +175,13 @@ bool DisplayManager::setSimStep(double step_value){
 //------------------------------------------------------------------------------//
 
 
-void DisplayManager::addMultimeterTempSpat(string multimeterID, string moduleID, int param1, int param2,bool temporalSpatial, string Show, bool recordAllCells){
+void DisplayManager::addMultimeterTempSpat(string multimeterID, string moduleID, int param1, int param2,bool temporalSpatial, string Show, bool recordAllCells, double startTime){
 
-    multimeter* nm= new multimeter(sizeX,sizeY);
-    nm->setSimStep(simStep);
+    multimeter* nm= new multimeter(sizeX,sizeY,1);
+    nm->setStartTime(startTime);
+
     if (recordAllCells)
-        nm->setRecordAllCells(recordAllCells);
+        nm->setRecordAllCells(true);
     multimeters.push_back(nm);
 
     multimeterIDs.push_back(multimeterID);
@@ -189,10 +204,10 @@ void DisplayManager::addMultimeterTempSpat(string multimeterID, string moduleID,
 
 }
 
-void DisplayManager::addMultimeterLN(string multimeterID, string moduleID, int x, int y, double segment, double interval, double start, double stop, string Show){
+void DisplayManager::addMultimeterLN(string multimeterID, string moduleID, int x, int y, double segment, double interval, double start, double stop, double rangePlot,string Show){
 
-    multimeter* nm= new multimeter(sizeX,sizeY);
-    nm->setSimStep(simStep);
+    multimeter* nm= new multimeter(sizeX,sizeY,1);
+    nm->setRangeToPlot(rangePlot);
     multimeters.push_back(nm);
 
     multimeterIDs.push_back(multimeterID);
@@ -397,6 +412,9 @@ void DisplayManager::updateDisplay(CImg <double> *input, Retina &retina, int sim
         }
     }
 
+
+    // Multimeters //
+
     if(input!=NULL) { // If the retina has input, update multimeters
         for(size_t i=0;i<multimeters.size();i++){
             multimeter *m = multimeters[i];
@@ -417,29 +435,62 @@ void DisplayManager::updateDisplay(CImg <double> *input, Retina &retina, int sim
             if(multimeterType[i]==0 || multimeterType[i]==2){
                 vector <int> aux = multimeterParam[i];
 
+                // Initialize multimeters
+                if (simTime<1){
+                    // LN-analysis multimeter
+                    if (multimeterType[i]==2)
+                        m->initializeLNAnalysis(totalNumberTrials);
+                    // time multimeter
+                    else
+                        m->initializeTimeRecord();
+                }
+
+                // Save LN multimeters to file for the last simulation step
+                if(valuesAllocated && simTime==totalSimTime-simStep){
+                    if (multimeterType[i]==2)
+                        m->saveAllVectors(numberTrials);
+                }
+
                 if(strcmp(moduleID, "Input") == 0){
-                    m->recordValue((*input)(aux[0],aux[1],0,0));
+                    // LN multimeter
+                    if (multimeterType[i]==2){
+                        m->recordInputLNAnalysis((*input)(aux[0],aux[1],0,0),numberTrials);
+                        m->recordValueLNAnalysis((*input)(aux[0],aux[1],0,0),numberTrials);
+                    // time multimeter
+                    }else{
+                        m->recordValue((*input)(aux[0],aux[1],0,0),0);
+                    }
+
+
                 }else{
                     CImg<double> *module_output = n->getOutput();
                     if(module_output != NULL){
-                        m->recordValue((*module_output)(aux[0],aux[1],0,0));
-                        // Record values of all pixels
-                        if (simTime < 1)
-                            m->initializeTemporal2D(n->getSizeX(),n->getSizeY());
-
-                        int cell = 0;
-                        for(int xx=0;xx < n->getSizeX();xx++){
-                            for(int yy=0;yy < n->getSizeY();yy++){
-                                m->recordAllValues((*module_output)(xx,yy,0,0),cell);
-                                cell+=1;
+                        // LN multimeter
+                        if (multimeterType[i]==2){
+                            m->recordInputLNAnalysis((*input)(aux[0],aux[1],0,0),numberTrials);
+                            m->recordValueLNAnalysis((*module_output)(aux[0],aux[1],0,0),numberTrials);
+                        }
+                        // time multimeter
+                        else{
+                            // Record values of all cells
+                            if (m->getRecordAllCells()){
+                                int cell = 0;
+                                for(int xx=0;xx < n->getSizeX();xx++){
+                                    for(int yy=0;yy < n->getSizeY();yy++){
+                                        m->recordValue((*module_output)(xx,yy,0,0),cell);
+                                        cell+=1;
+                                    }
+                                }
+                            }else{
+                                m->recordValue((*module_output)(aux[0],aux[1],0,0),0);
                             }
                         }
                     }
                 }
 
-                m->recordInput((*input)(aux[0],aux[1],0,0));
             }
-            // spatial mult.
+
+            // Spatial multimeter
             else if(multimeterType[i]==1){
                 vector <int> aux = multimeterParam[i];
                 if(simTime >= aux[1] && simTime < aux[1]+simStep) { // aux[1] may not be divisible by simStep, we check that aux[1] is in the current sim. slot
@@ -458,16 +509,18 @@ void DisplayManager::updateDisplay(CImg <double> *input, Retina &retina, int sim
                         if(strcmp(moduleID, "Input") == 0){
 
                             if(aux[0]>0)
-                                m->showSpatialProfile(input,true,aux[0],multimeterIDs[i],(int)last_col*(newY+80.0),(int)last_row*(newX+80.0),-1,multimeterIDs[i]);
+                                m->showSpatialProfile(input,true,aux[0],multimeterIDs[i],(int)last_col*(newY+80.0),(int)last_row*(newX+80.0),true,true,multimeterIDs[i]);
+
                             else
-                                m->showSpatialProfile(input,false,-aux[0],multimeterIDs[i],(int)last_col*(newY+80.0),(int)last_row*(newX+80.0),-1,multimeterIDs[i]);
+                                m->showSpatialProfile(input,false,-aux[0],multimeterIDs[i],(int)last_col*(newY+80.0),(int)last_row*(newX+80.0),true,true,multimeterIDs[i]);
                         }else{
+                            CImg <double> image ((int)newY,(int)newX,1,1,0.0);
                             CImg<double> *module_output = n->getOutput();
                             if(module_output != NULL) {
                                 if(aux[0]>0)
-                                    m->showSpatialProfile(module_output,true,aux[0],multimeterIDs[i],(int)last_col*(newY+80.0),(int)last_row*(newX+80.0),-1,multimeterIDs[i]);
+                                    m->showSpatialProfile(module_output,true,aux[0],multimeterIDs[i],(int)last_col*(newY+80.0),(int)last_row*(newX+80.0),true,true,multimeterIDs[i]);
                                 else
-                                    m->showSpatialProfile(module_output,false,-aux[0],multimeterIDs[i],(int)last_col*(newY+80.0),(int)last_row*(newX+80.0),-1,multimeterIDs[i]);
+                                    m->showSpatialProfile(module_output,false,-aux[0],multimeterIDs[i],(int)last_col*(newY+80.0),(int)last_row*(newX+80.0),true,true,multimeterIDs[i]);
                             }
                         }
                     }
@@ -476,7 +529,9 @@ void DisplayManager::updateDisplay(CImg <double> *input, Retina &retina, int sim
         }
     }
 
-    // display temporal and LN multimeters for the last simulation step
+
+
+    // Display time and LN multimeters for the last simulation step
     if(valuesAllocated && (simTime==totalSimTime-simStep || input == NULL)) { // if time to show or end of input:
         int LNMultimeters = 0;
         for(size_t i=0;i<multimeters.size();i++){
@@ -494,37 +549,35 @@ void DisplayManager::updateDisplay(CImg <double> *input, Retina &retina, int sim
                 }
             }
 
-            // temporal mult.
+            // Time multimeter
             if(multimeterType[i]==0){
 
                 if(isShown[numberModules+i]==true){
                     if (i<multimeters.size()-1)
-                        m->showTemporalProfile(multimeterIDs[i],(int)last_col*(newY+80.0),(int)last_row*(newX+80.0),delay,multimeterIDs[i]);
+                        m->showTimeProfile(multimeterIDs[i],(int)last_col*(newY+80.0),(int)last_row*(newX+80.0),false,true,multimeterIDs[i]);
+
                     else
-                        m->showTemporalProfile(multimeterIDs[i],(int)last_col*(newY+80.0),(int)last_row*(newX+80.0),-1,multimeterIDs[i]);
+                        m->showTimeProfile(multimeterIDs[i],(int)last_col*(newY+80.0),(int)last_row*(newX+80.0),true,true,multimeterIDs[i]);
 
                 }else{
-                    m->showTemporalProfile(multimeterIDs[i],(int)last_col*(newY+80.0),(int)last_row*(newX+80.0),-2,multimeterIDs[i]);
+                    m->showTimeProfile(multimeterIDs[i],(int)last_col*(newY+80.0),(int)last_row*(newX+80.0),false,false,multimeterIDs[i]);
                 }
 
-            // LN mult.
+            // LN multimeter
             }else if(multimeterType[i]==2){
-                if(isShown[numberModules+i]==false){
-                    m->showLNAnalysis(multimeterIDs[i],(int)last_col*(newY+80.0),(int)last_row*(newX+80.0),-2,LNSegment[LNMultimeters]/simStep,LNInterval[LNMultimeters]/simStep,LNStart[LNMultimeters]/simStep,LNStop[LNMultimeters]/simStep,totalNumberTrials,multimeterIDs[i]);
-                }else{
-                    if (i<multimeters.size()-1)
-                        m->showLNAnalysis(multimeterIDs[i],(int)last_col*(newY+80.0),(int)last_row*(newX+80.0),delay,LNSegment[LNMultimeters]/simStep,LNInterval[LNMultimeters]/simStep,LNStart[LNMultimeters]/simStep,LNStop[LNMultimeters]/simStep,totalNumberTrials,multimeterIDs[i]);
-                    else
-                        m->showLNAnalysis(multimeterIDs[i],(int)last_col*(newY+80.0),(int)last_row*(newX+80.0),-1,LNSegment[LNMultimeters]/simStep,LNInterval[LNMultimeters]/simStep,LNStart[LNMultimeters]/simStep,LNStop[LNMultimeters]/simStep,totalNumberTrials,multimeterIDs[i]);
-                }
 
-                // check last trial to show average results
+                // check last trial to show LN average results
                 if(numberTrials == totalNumberTrials-1){
-                    m->getSwitchTime(retina.getWhiteNoise()->getSwitchTime());
-                    if(isShown[numberModules+i]==false){
-                        m->showLNAnalysisAvg((int)last_col*(newY+80.0),(int)last_row*(newX+80.0),-2,LNSegment[LNMultimeters]/simStep,LNStart[LNMultimeters]/simStep, LNStop[LNMultimeters]/simStep,totalNumberTrials,multimeterIDs[i],LNfactor);
+
+                    // load multimeter values of all trials from file
+                    m->loadAllVectors(totalNumberTrials);
+
+                    // Show LN multimeters
+                    if(isShown[numberModules+i]==true){
+                        m->showLNAnalysis((int)last_col*(newY+80.0),(int)last_row*(newX+80.0),true,true,multimeterIDs[i],LNSegment[LNMultimeters]/simStep,LNInterval[LNMultimeters]/simStep,LNStart[LNMultimeters]/simStep,LNStop[LNMultimeters]/simStep,totalNumberTrials);
+
                     }else{
-                        m->showLNAnalysisAvg((int)last_col*(newY+80.0),(int)last_row*(newX+80.0),0,LNSegment[LNMultimeters]/simStep,LNStart[LNMultimeters]/simStep, LNStop[LNMultimeters]/simStep,totalNumberTrials,multimeterIDs[i],LNfactor);
+                        m->showLNAnalysis((int)last_col*(newY+80.0),(int)last_row*(newX+80.0),true,false,multimeterIDs[i],LNSegment[LNMultimeters]/simStep,LNInterval[LNMultimeters]/simStep,LNStart[LNMultimeters]/simStep,LNStop[LNMultimeters]/simStep,totalNumberTrials);
                     }
                 }
                 LNMultimeters++;

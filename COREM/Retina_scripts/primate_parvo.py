@@ -213,21 +213,21 @@ retina.Show('MB_L_ON','False','margin','0')
 retina.Show('MB_L_OFF','False','margin','0')
 
 # Temporal multimeters
-retina.multimeter('temporal','Input','Input',{'x','10','y','10'},'Show','False')
-retina.multimeter('temporal','SNL_photoreceptor_L','SNL_photoreceptor_L',{'x','10','y','10'},'Show','False')
-retina.multimeter('temporal','SNL_activation_L_ON','SNL_activation_L_ON',{'x','10','y','10'},'Show','False')
-retina.multimeter('temporal','SNL_activation_L_OFF','SNL_activation_L_OFF',{'x','10','y','10'},'Show','False')
+retina.multimeter('temporal','Input','Input',{'x','10','y','10'},'Show','True','startTime','100')
+retina.multimeter('temporal','SNL_photoreceptor_L','SNL_photoreceptor_L',{'x','10','y','10'},'Show','True','startTime','100')
+retina.multimeter('temporal','SNL_activation_L_ON','SNL_activation_L_ON',{'x','10','y','10'},'Show','True','startTime','100')
+retina.multimeter('temporal','SNL_activation_L_OFF','SNL_activation_L_OFF',{'x','10','y','10'},'Show','True','startTime','100')
 
-retina.multimeter('temporal','H1','H1',{'x','10','y','10'},'Show','False')
+retina.multimeter('temporal','H1','H1',{'x','10','y','10'},'Show','True','startTime','100')
 # Record the temporal evolution of all cells in MB_L_ON layer
-retina.multimeter('temporal_all','MB_L_ON','MB_L_ON',{'x','10','y','10'},'Show','False')
-retina.multimeter('temporal','MB_L_OFF','MB_L_OFF',{'x','10','y','10'},'Show','False')
-retina.multimeter('temporal','MB_M_ON','MB_M_ON',{'x','10','y','10'},'Show','False')
+retina.multimeter('temporal_all','MB_L_ON','MB_L_ON',{'x','10','y','10'},'Show','True','startTime','100')
+retina.multimeter('temporal','MB_L_OFF','MB_L_OFF',{'x','10','y','10'},'Show','True','startTime','100')
+retina.multimeter('temporal','MB_M_ON','MB_M_ON',{'x','10','y','10'},'Show','True','startTime','100')
 
-retina.multimeter('temporal','w_MB_L_ON_MG_L_ON','w_MB_L_ON_MG_L_ON',{'x','10','y','10'},'Show','False')
-retina.multimeter('temporal','w_MB_L_OFF_MG_L_OFF','w_MB_L_OFF_MG_L_OFF',{'x','10','y','10'},'Show','False')
-retina.multimeter('temporal','w_MB_M_ON_MG_M_ON','w_MB_M_ON_MG_M_ON',{'x','10','y','10'},'Show','False')
-retina.multimeter('temporal','w_MB_M_OFF_MG_M_OFF','w_MB_M_OFF_MG_M_OFF',{'x','10','y','10'},'Show','False')
+retina.multimeter('temporal','w_MB_L_ON_MG_L_ON','w_MB_L_ON_MG_L_ON',{'x','10','y','10'},'Show','True','startTime','100')
+retina.multimeter('temporal','w_MB_L_OFF_MG_L_OFF','w_MB_L_OFF_MG_L_OFF',{'x','10','y','10'},'Show','True','startTime','100')
+retina.multimeter('temporal','w_MB_M_ON_MG_M_ON','w_MB_M_ON_MG_M_ON',{'x','10','y','10'},'Show','True','startTime','100')
+retina.multimeter('temporal','w_MB_M_OFF_MG_M_OFF','w_MB_M_OFF_MG_M_OFF',{'x','10','y','10'},'Show','True','startTime','100')
 
 # Spatial multimeters (careful when using this multimeter because it overwrites the
 # temporal multimeter with the same ID)

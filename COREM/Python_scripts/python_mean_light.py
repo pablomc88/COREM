@@ -139,7 +139,7 @@ def generateScript(individual,simParam,ID,root):
 
     "retina.Show('Input','False','margin','0')\n"+
 
-    "retina.multimeter('temporal','SNL_photoreceptors','SNL_photoreceptors',{'x','0','y','0'},'Show','False')\n"
+    "retina.multimeter('temporal','SNL_photoreceptors','SNL_photoreceptors',{'x','0','y','0'},'Show','False','startTime','0')\n"
 
 
     )

@@ -20,8 +20,8 @@ import sys,os
 
 # root path
 root = "/home/pablo/Desktop/COREM_v2/COREM/"
-# starting time of plots
-tstart = 80 # ms
+# starting time of plots (the same value of the retina script!)
+tstart = 100 # ms
 # Parameters of the plot
 rows = 3
 cols = 4
@@ -29,6 +29,8 @@ cols = 4
 time = np.arange(tstart,1200.0)
 # Time intervals for the time-averaged population activity metric
 time_intervals = [480.0,500.0,520.,540.0,560.0,580.0]
+# Position of the cell situated in the center of the grid
+center_cell = 210
 
 # Simulation parameters
 number_cells = 20*20
@@ -66,11 +68,19 @@ output_array = []
 for ID in IDs:
     correct_value = True
     try:
-        output = np.float64(np.loadtxt(root+'results/'+ID))
+	ispopavg = False
+        for IDpop in IDs_pop:
+            if IDpop == ID:
+                ispopavg = True
+
+        if ispopavg:
+            output = np.float64(np.loadtxt(root+'results/'+ID+str(center_cell)))
+        else:
+            output = np.float64(np.loadtxt(root+'results/'+ID))
+
     except IOError:
         correct_value = False
     if correct_value:
-        output = output[tstart:]
         output_array.append(output)
 
 # Plot membrane potentials
@@ -118,8 +128,8 @@ for ID in IDs_pop:
 
         if correct_value:
             for interval in np.arange(len(time_intervals)-1):
-                avg_activity[interval] += np.mean(output[time_intervals[interval]:
-                    time_intervals[interval+1]])
+                avg_activity[interval] += np.mean(output[time_intervals[interval]-tstart:
+                    time_intervals[interval+1]-tstart])
 
 for interval in np.arange(len(time_intervals)-1):
     print "Time interval [%s,%s] -> Averaged activity = %s mV " % (time_intervals[interval],

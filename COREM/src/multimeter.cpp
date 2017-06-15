@@ -1,653 +1,378 @@
-#include <algorithm> // for std::min
-#include <cstring> // for size_t
 #include "multimeter.h"
 
-multimeter::multimeter(int x, int y){
+// Constants for the display
+const unsigned char color1[] = {255,0,0};
+const unsigned char color2[] = {0,0,255};
+const unsigned char backColor[] = {255,255,255};
+
+multimeter::multimeter(int x,int y,double step){
+
     sizeX = x;
     sizeY = y;
-    simStep=1.0;
-    draw_disp = new CImgDisplay();
+    simStep = step;
+    drawDisp = new CImgDisplay();
     recordAllCells = False;
 }
 
 multimeter::multimeter(const multimeter& copy){
-    sizeX=copy.sizeX;
-    sizeY=copy.sizeY;
-    simStep=copy.simStep;
-    draw_disp = new CImgDisplay(*copy.draw_disp);
-    temporal2D = copy.temporal2D;
+
+    sizeX = copy.sizeX;
+    sizeY = copy.sizeY;
+    simStep = copy.simStep;
+    drawDisp = new CImgDisplay(*copy.drawDisp);
+    recordAllCells = copy.recordAllCells;
 }
 
 multimeter::~multimeter(){
-    delete draw_disp;
+    delete drawDisp;
+    timeRecord.clear();
 }
 
-void multimeter::setSimStep(double value){
-    simStep = value;
+void multimeter::setSizeX(int x){
+    sizeX = x;
+}
+
+void multimeter::setSizeY(int y){
+    sizeY = y;
+}
+
+void multimeter::setStep(double step){
+    simStep = step;
 }
 
 void multimeter::setRecordAllCells(bool value){
     recordAllCells = value;
 }
 
-void multimeter::initializeTemporal2D(int X,int Y){
+void multimeter::setStartTime(double value){
+    startTime = value;
+}
 
-    sizeX = X;
-    sizeY = Y;
+void multimeter::setRangeToPlot(double value){
+    rangeToPlot = value;
+}
 
-    if (recordAllCells) {
+bool multimeter::getRecordAllCells(){
+    return recordAllCells;
+}
 
-        for (int i = 0; i < X*Y; i++) {
-            vector<double> row; // Create an empty row
-            row.push_back(0.0); // Add an element (column) to the row
-            temporal2D.push_back(row); // Add the row to the main vector
-        }
+void multimeter::initializeTimeRecord(){
+
+    for (int i = 0; i < sizeX*sizeY; i++) {
+        vector<double> row; // Create an empty row
+        row.push_back(0.0); // Add an element (column) to the row
+        timeRecord.push_back(row); // Add the row to the main vector
     }
 
 }
 
-//------------------------------------------------------------------------------//
+void multimeter::initializeLNAnalysis(int numberTrials){
 
-void multimeter::showSpatialProfile(CImg<double> *img,bool rowCol,int number,string title,int col,int row,double waitTime, string TempFile){
+    for (int i = 0; i < numberTrials; i++) {
+        vector<double> row1; // Create an empty row
+        row1.push_back(0.0); // Add an element (column) to the row
+        LN_timeRecord.push_back(row1); // Add the row to the main vector
 
-    double dim = 0.0;
-
-    if(rowCol == true){
-        dim = img->width();
-    }else{
-        dim = img->height();
+        vector<double> row2; // Create an empty row
+        row2.push_back(0.0); // Add an element (column) to the row
+        LN_input.push_back(row2); // Add the row to the main vector
     }
-
-    CImg <double> *SpatialProfile1 = new CImg <double>(dim,1,1,1,0);
-    double sp[int(dim)];
-
-    double max_value1 = DBL_EPSILON;
-    double min_value1 = DBL_INF;
-
-    for(int k=0;k<dim;k++){
-        if(rowCol == true){
-            (*SpatialProfile1)(k,0,0,0)=(*img)(k,number,0,0);
-            sp[k] = (*img)(k,number,0,0);
-        }else{
-            (*SpatialProfile1)(k,0,0,0)=(*img)(number,k,0,0);
-            sp[k] = (*img)(number,k,0,0);
-        }
-
-        if ((*SpatialProfile1)(k,0,0,0)>max_value1)
-            max_value1 = (*SpatialProfile1)(k,0,0,0);
-        if ((*SpatialProfile1)(k,0,0,0)<min_value1)
-            min_value1 = (*SpatialProfile1)(k,0,0,0);
-
-    }
-
-    if(max_value1==min_value1){
-        max_value1+=1;
-        min_value1-=1;
-    }
-
-    if(min_value1>0)
-        min_value1 = 0;
-    if(max_value1<0)
-        max_value1 = 0;
-
-    // remove file and save new file
-    removeFile(TempFile);
-    saveArray(sp,int(dim),TempFile);
-
-//    // plot
-    if(waitTime > -2){
-
-        const unsigned char color1[] = {255,0,0};
-        const unsigned char color2[] = {0,0,255};
-        unsigned char back_color[] = {255,255,255};
-        CImg <unsigned char> *profile = new CImg <unsigned char>(400,256,1,3,0);
-        profile->fill(*back_color);
-        const char * titleChar = (title).c_str();
-        draw_disp->assign(*profile,titleChar);
-
-        profile->draw_graph(SpatialProfile1->get_crop(0,0,0,0,dim-1,0,0,0)*255/(max_value1-min_value1) - min_value1*255/(max_value1-min_value1),color1,1,1,4,255,0).display(*draw_disp);
-        profile->draw_axes(0.0,dim,max_value1,min_value1,color2,1,-80,-80,0,0,~0U,~0U,20).display(*draw_disp);
-        profile->draw_text(320,200,"pixels",color2,back_color,1,20).display(*draw_disp);
-        profile->draw_text(40,5,"Output",color2,back_color,1,20).display(*draw_disp);
-
-        // move display
-        draw_disp->move(col,row);
-
-        if(waitTime == -1){
-            cout << "\rClose spatial multimeter window to continue..." << endl;
-            while (!draw_disp->is_closed())
-                draw_disp->wait();
-        }
-        delete profile;
-    }
-
-    delete SpatialProfile1;
 }
 
-//------------------------------------------------------------------------------//
 
-void multimeter::recordValue(double value){
-    temporal.push_back(value);
-}
-
-void multimeter::recordAllValues(double value,int cell){
+void multimeter::recordValue(double value,int cell){
     if (recordAllCells)
-        temporal2D[cell].push_back(value);
+        timeRecord[cell].push_back(value);
+    else
+        timeRecord[0].push_back(value);
+
 }
 
 void multimeter::recordInput(double value){
     input.push_back(value);
 }
 
-//------------------------------------------------------------------------------//
+void multimeter:: recordValueLNAnalysis(double value,int trial){
+    LN_timeRecord[trial].push_back(value);
+}
+
+void multimeter:: recordInputLNAnalysis(double value,int trial){
+    LN_input[trial].push_back(value);
+}
+
+string multimeter::getWorkingDir(){
+
+    char* cwd;
+    char buff[PATH_MAX + 1];
+
+    cwd = getcwd( buff, PATH_MAX + 1 );
+    string currentDir(cwd);
+    string currentDirRoot = currentDir+"/";
+
+    return currentDirRoot;
+}
+
+void multimeter::saveArray(double array[],int size,string fileID){
+
+    ofstream myfile (getWorkingDir() + "results/"+fileID);
+
+    if (myfile.is_open())
+    {
+        for(int count = 0; count < size; count ++){
+            myfile << array[count] << endl;
+        }
+        myfile.close();
+    }
+      else cout << "Unable to save the file "+fileID;
+
+}
+
+vector<double> multimeter::loadArray(string fileID){
+
+    // Load file content into a vector
+    ifstream myfile (getWorkingDir() + "results/"+fileID);
+    vector<double> loadVector;
+
+    if (myfile.is_open()) {
+        while (!myfile.eof())
+        {
+            char buf[1000];
+            myfile.getline(buf,1000);
+            const char* token[1] = {};
+            token[0] = strtok(buf, "\n");
+            if(token[0] != NULL)
+                loadVector.push_back(atof(token[0]));
+        }
+        myfile.close();
+    }
+    else cout << "Unable to open the file "+fileID;
+
+    return loadVector;
+}
+
+void multimeter::saveAllVectors(int trial){
+
+    double LN_input_array [LN_input[trial].size()];
+    double LN_timeRecord_array [LN_timeRecord[trial].size()];
+
+    for (int i=0;i<LN_input[trial].size();i++)
+        LN_input_array[i] = LN_input[trial][i];
+
+    for (int i=0;i<LN_timeRecord[trial].size();i++)
+        LN_timeRecord_array[i] = LN_timeRecord[trial][i];
+
+    saveArray(LN_input_array,LN_input[trial].size(),"LN_input_"+to_string(trial));
+    saveArray(LN_timeRecord_array,LN_timeRecord[trial].size(),"LN_timeRecord_"+to_string(trial));
+
+}
 
 
-void multimeter::showTemporalProfile(string title,int col,int row, double waitTime, string TempFile){
+void multimeter::loadAllVectors(int numberTrials){
 
-    CImg <double> *temporalProfilet = new CImg <double>(temporal.size(),1,1,1,0);
-    double temp[temporal.size()];
+    for (int i = 0; i < numberTrials; i++) {
 
-    double max_value = DBL_EPSILON;
-    double min_value = DBL_INF;
+        vector<double> LN_input_vector = loadArray("LN_input_"+to_string(i));
+        vector<double> LN_timeRecord_vector = loadArray("LN_timeRecord_"+to_string(i));
 
-    for(size_t k=0;k<temporal.size();k++){
-        (*temporalProfilet)(k,0,0,0)=temporal[k];
-        temp[k] = temporal[k];
+        LN_input[i].clear();
+        LN_timeRecord[i].clear();
 
-        if (temporal[k]>max_value)
-            max_value = temporal[k];
-        if (temporal[k]<min_value)
-            min_value = temporal[k];
+        for (int k=0;k<LN_input_vector.size();k++)
+            LN_input[i].push_back(LN_input_vector[k]);
+
+        for (int k=0;k<LN_timeRecord_vector.size();k++)
+            LN_timeRecord[i].push_back(LN_timeRecord_vector[k]);
+
     }
 
-    if(max_value==min_value){
+}
+
+
+void multimeter::showSpatialProfile(CImg<double> *img, bool rowCol, int cell,
+                                    string title, int col, int row, bool lastWindow,
+                                    bool showDisplay, string fileID){
+
+    double imSize = 0.0;
+
+    // Create a one-row image with the values of one row/col from the input image
+    if (rowCol == true)
+        imSize = img->width();
+    else
+        imSize = img->height();
+
+    CImg <double> *spatialPlot = new CImg <double>(imSize,1,1,1,0);
+    double arrayToFile[int(imSize)];
+    double max_value = -DBL_INF;
+    double min_value = DBL_INF;
+
+    for (int k=0;k<imSize;k++){
+
+        if (rowCol == true)
+            (*spatialPlot)(k,0,0,0) = (*img)(k,cell,0,0);
+        else
+            (*spatialPlot)(k,0,0,0) = (*img)(cell,k,0,0);
+
+        arrayToFile[k] = (*spatialPlot)(k,0,0,0);
+
+        // Maximum and minimum used for normalization
+        if ((*spatialPlot)(k,0,0,0) > max_value)
+            max_value = (*spatialPlot)(k,0,0,0);
+        if ((*spatialPlot)(k,0,0,0) < min_value)
+            min_value = (*spatialPlot)(k,0,0,0);
+    }
+
+    // to avoid errors with the display
+    if(max_value == min_value){
         max_value+=1;
         min_value-=1;
     }
-/*
-    if(min_value>0)
-        min_value = 0;
-    if(max_value<0)
-        max_value = 0;
-*/
-    // remove file and save new file
-    removeFile(TempFile);
-    saveArray(temp,temporal.size(),TempFile);
 
-    // Save responses of all cells
-    if (temporal2D.size() > 0 and  recordAllCells){
+    // Save results to file
+    saveArray(arrayToFile,int(imSize),fileID);
+
+    // Plot
+    if(showDisplay){
+        CImg <unsigned char> *display = new CImg <unsigned char>(400,256,1,3,0);
+        display->fill(*backColor);
+        const char * titleChar = (title).c_str();
+        drawDisp->assign(*display,titleChar);
+
+        display->draw_graph((spatialPlot->get_crop(0,0,0,0,imSize-1,0,0,0)-min_value)*255/(max_value-min_value)
+                            ,color1,1,1,4,255,0).display(*drawDisp);
+//        display->draw_axes(0.0,imSize,max_value,min_value,color2,1,-80,-80,0,0,~0U,~0U,20).display(*drawDisp);
+//        display->draw_text(320,200,"cell",color2,backColor,1,20).display(*drawDisp);
+//        display->draw_text(40,5,"Output",color2,backColor,1,20).display(*drawDisp);
+
+        // axes
+        CImg <double> *x_axis = new CImg <double>(3,1,1,1,0);
+        (*x_axis)(0,0,0,0) = -imSize/2.0;
+        (*x_axis)(1,0,0,0) = 0;
+        (*x_axis)(2,0,0,0) = imSize/2.0;;
+
+        CImg <double> *y_axis = new CImg <double>(1,3,1,1,0);
+        (*y_axis)(0,0,0,0) = max_value;
+        (*y_axis)(0,1,0,0) = (max_value-min_value)/2 + min_value;
+        (*y_axis)(0,2,0,0) = min_value;
+
+        display->draw_axis(*x_axis,226,color2,1,~0U,20,true).display(*drawDisp);
+        display->draw_axis(110,*y_axis,color2,1,~0U,20,true).display(*drawDisp);
+        display->draw_text(340,190,"cell",color2,backColor,1,20).display(*drawDisp);
+        display->draw_text(120,10,"Output",color2,backColor,1,20).display(*drawDisp);
+
+        // move display
+        drawDisp->move(col,row);
+
+        if(lastWindow){
+            cout << "\rClose spatial multimeter window to continue..." << endl;
+            while (!drawDisp->is_closed())
+                drawDisp->wait();
+        }
+        delete display;
+    }
+    delete spatialPlot;
+
+}
+
+void multimeter::showTimeProfile(string title, int col, int row, bool lastWindow,
+                                    bool showDisplay, string fileID){
+
+    // Size of the time array in simulation steps.
+    // The first position of the array is not taken (-1)
+    int size = int(timeRecord[0].size()-1-startTime/simStep);
+
+    CImg <double> *timePlot = new CImg <double>(size,1,1,1,0);
+    double arrayToFile[size];
+    double max_value = -DBL_INF;
+    double min_value = DBL_INF;
+
+    for (int k=0;k<size;k++){
+
+        (*timePlot)(k,0,0,0) = (timeRecord[0])[k+1+int(startTime/simStep)];
+        arrayToFile[k] = (*timePlot)(k,0,0,0);
+
+        // Maximum and minimum used for normalization
+        if ((*timePlot)(k,0,0,0) > max_value)
+            max_value = (*timePlot)(k,0,0,0);
+        if ((*timePlot)(k,0,0,0) < min_value)
+            min_value = (*timePlot)(k,0,0,0);
+    }
+
+    // to avoid errors with the display
+    if(max_value == min_value){
+        max_value+=1;
+        min_value-=1;
+    }
+
+    // Save results to file
+    if (recordAllCells){
         cout << "saving responses of all cells..." << endl;
-        for(int cell=0;cell<sizeX*sizeY;cell++){
-            double temp2D[temporal2D[cell].size()];
 
-            for(size_t k=0;k<temporal2D[cell].size();k++){
-                temp2D[k] = temporal2D[cell][k];
+        for(int cell=0;cell<sizeX*sizeY;cell++){
+            int size = int(timeRecord[cell].size()-1-startTime/simStep);
+            double temp[size];
+            for(size_t k=0;k<size;k++){
+                temp[k] = timeRecord[cell][k+1+int(startTime/simStep)];
             }
 
             string cc = to_string(cell);
-            saveArray(temp2D,temporal2D[cell].size(),TempFile + cc);
+            saveArray(temp,size,fileID + cc);
         }
-    }
 
-    // plot
-    if(waitTime > -2){
+    }else
+        saveArray(arrayToFile,size,fileID);
 
-        const unsigned char color1[] = {255,0,0};
-        const unsigned char color2[] = {0,0,255};
-        unsigned char back_color[] = {255,255,255};
-        CImg <unsigned char> *profile = new CImg <unsigned char>(400,256,1,3,0);
-        profile->fill(*back_color);
+    // Plot
+    if(showDisplay){
+        CImg <unsigned char> *display = new CImg <unsigned char>(400,256,1,3,0);
+        display->fill(*backColor);
         const char * titleChar = (title).c_str();
-        draw_disp->assign(*profile,titleChar); // // This object must not be deleted (it is static) in order to allow several temporal multimeter to remain open simultaneously
+        drawDisp->assign(*display,titleChar);
 
-        profile->draw_graph(temporalProfilet->get_crop(0,0,0,0,temporal.size()-1,0,0,0)*255/(max_value-min_value) - min_value*255/(max_value-min_value),color1,1,1,1,255,0).display(*draw_disp);
-        profile->draw_axes(0.0,temporal.size()*simStep,max_value,min_value,color2,1,-80,-80,0,0,~0U,~0U,20).display(*draw_disp);
-        profile->draw_text(320,200,"time (ms)",color2,back_color,1,20).display(*draw_disp);
-        profile->draw_text(40,5,"Output",color2,back_color,1,20).display(*draw_disp);
+        display->draw_graph((timePlot->get_crop(0,0,0,0,size-1,0,0,0)-min_value)*255/(max_value-min_value)
+                            ,color1,1,1,4,255,0).display(*drawDisp);
+
+        // axes
+        CImg <double> *x_axis = new CImg <double>(3,1,1,1,0);
+        (*x_axis)(0,0,0,0) = startTime;
+        (*x_axis)(1,0,0,0) = startTime + ((timeRecord[0].size()-1)*simStep -
+                startTime)/2;
+        (*x_axis)(2,0,0,0) = (timeRecord[0].size()-1)*simStep;
+
+        CImg <double> *y_axis = new CImg <double>(1,3,1,1,0);
+        (*y_axis)(0,0,0,0) = max_value;
+        (*y_axis)(0,1,0,0) = (max_value-min_value)/2 + min_value;
+        (*y_axis)(0,2,0,0) = min_value;
+
+        display->draw_axis(*x_axis,226,color2,1,~0U,20,true).display(*drawDisp);
+        display->draw_axis(110,*y_axis,color2,1,~0U,20,true).display(*drawDisp);
+        display->draw_text(300,190,"Time (ms)",color2,backColor,1,20).display(*drawDisp);
+        display->draw_text(120,10,"Output",color2,backColor,1,20).display(*drawDisp);
 
         // move display
-        draw_disp->move(col,row);
+        drawDisp->move(col,row);
 
-        if(waitTime == -1){
-            cout << "\rClose last temporal multimeter window to continue..." << endl;
-            while (!draw_disp->is_closed())
-                draw_disp->wait();
+        if(lastWindow){
+            cout << "\rClose spatial multimeter window to continue..." << endl;
+            while (!drawDisp->is_closed())
+                drawDisp->wait();
         }
-        
-        delete profile;
+        delete display;
     }
-    delete temporalProfilet;
+    delete timePlot;
+
 }
 
-//------------------------------------------------------------------------------//
 
-void multimeter::showLNAnalysisAvg(int col, int row, double waitTime,double segment, double start, double stop, double numberTrials, string LNFile, double ampl){
+void multimeter::showLNAnalysis(int col, int row, bool lastWindow, bool showDisplay, string fileID, double segment, double interval, double start, double stop, int numberTrials){
 
-    // normalize input
-    double mean_value1 = 0;
+    cout << "LN analysis" << endl;
 
-    for(size_t k=0;k<input.size();k++){
-        mean_value1+= input[k];
-    }
-
-    mean_value1 /= input.size();
-
-    for(size_t k=0;k<input.size();k++){
-        input[k] = (input[k] - mean_value1);
-    }
-
-    // read values from file
-//    string sto_file = composeResultsPath(LNFile);
-    string sto_file = getWorkingDir() + "results/" + LNFile;
-    const char* to_file = sto_file.c_str();
-    vector<double> F;
-
-    std::ifstream fin;
-    fin.open(to_file, std::ifstream::in);
-    if(fin.is_open())
-    {
-
-        while (!fin.eof())
-        {
-          char buf[1000];
-          fin.getline(buf,1000);
-          const char* token[1] = {};
-          token[0] = strtok(buf, "\n");
-          if(token[0] != NULL)
-             F.push_back(atof(token[0]));
-
-        }
-
-        fin.close(); 
-    }
-
-    // Non-linearity: The stimulus is convolved with the filter.
-    // g = S*F
-
-//    int length = (stop-start);
-
-    const char * seq1 = "inp";
-    const char * seq2 = "tmp";
-
-    const char* to_file2 = LNFile.c_str();
-
-    char seqFile1[1000];
-    char seqFile2[1000];
-
-    strcpy(seqFile1,seq1);
-    strcat(seqFile1,to_file2);
-
-    strcpy(seqFile2,seq2);
-    strcat(seqFile2,to_file2);
-
-    vector <double> historyInput = readSeq(seqFile1);
-    vector <double> historyTemporal = readSeq(seqFile2);
-    int length = historyInput.size();
-
-    // create arrays to store FFT of G, S and F
-
-    int NFFT = (int)pow(2.0, ceil(log((double)segment)/log(2.0)));
-    int newNFFT = (int)pow(2.0, ceil(log((double)length)/log(2.0)));
-
-    double *g = (double *) malloc((2*newNFFT+1) * sizeof(double));
-    double *newS = (double *) malloc((2*newNFFT+1) * sizeof(double));
-    double *newF = (double *) malloc((2*newNFFT+1) * sizeof(double));
-
-    g[0]=0.0;
-    newS[0]=0.0;
-    newF[0]=0.0;
-
-//    for(int i=(int)start; i<length+start; i++)
-//    {
-//        newS[2*(i-(int)start)+1] = input[i];
-//        newS[2*(i-(int)start)+2] = 0.0;
-
-//        g[2*(i-(int)start)+1] = 0.0;
-//        g[2*(i-(int)start)+2] = 0.0;
-
-//    }
-
-//    for(int i=length+start; i<newNFFT+(int)start; i++)
-//    {
-//        newS[2*(i-(int)start)+1] = 0.0;
-//        newS[2*(i-(int)start)+2] = 0.0;
-
-//        g[2*(i-(int)start)+1] = 0.0;
-//        g[2*(i-(int)start)+2] = 0.0;
-//    }
-
-    for(int i=0; i<length; i++)
-    {
-        newS[2*i+1] = historyInput[i];
-        newS[2*i+2] = 0.0;
-
-        g[2*i+1] = 0.0;
-        g[2*i+2] = 0.0;
-    }
-
-    for(int i=length; i<newNFFT; i++)
-    {
-        newS[2*i+1] = 0.0;
-        newS[2*i+2] = 0.0;
-
-        g[2*i+1] = 0.0;
-        g[2*i+2] = 0.0;
-    }
-
-    for(int i=0; i<newNFFT; i++)
-    {
-        if(i<NFFT){
-            newF[2*i+1]=(F[2*i+1]/numberTrials);
-            newF[2*i+2]=(F[2*i+2]/numberTrials);
-        }else{
-            newF[2*i+1]=0.0;
-            newF[2*i+2]=0.0;
-        }
-    }
-
-    // FFT
-    fft(newF, newNFFT, 1);
-    fft(newS, newNFFT, 1);
-
-    // Convolution
-    for(int i=0; i<newNFFT; i++)
-    {
-        g[2*i+1] = (newF[2*i+1]*newS[2*i+1]) - (newF[2*i+2]*newS[2*i+2]);
-        g[2*i+2] = (newF[2*i+1]*newS[2*i+2]) + (newF[2*i+2]*newS[2*i+1]);
-    }
-
-    // iFFT of g
-    fft(g, newNFFT, -1);
-
-    // normalize the IFFT of g
-    for(int i=0; i<newNFFT; i++)
-    {
-        g[2*i+1] /= newNFFT;
-        g[2*i+2] /= newNFFT;
-
-    }
-
-    // Normalize g: the variance of the filtered stimulus is equal to
-    // the variance of the stimulus (Baccus 2002)
-
-    double varianceG = 0;
-    double varianceS = 0;
-
-//    for (int k=0;k<newNFFT;k++) {
-//        if((k+start)<(start+length))
-//            varianceS += input[k+start]*input[k+start];
-//         varianceG += g[2*k+1]*g[2*k+1];
-//    }
-
-    for (int k=0;k<newNFFT;k++) {
-        if(k<length)
-            varianceS += historyInput[k]*historyInput[k];
-        varianceG += g[2*k+1]*g[2*k+1];
-    }
-
-    varianceS /= length;
-    varianceG /= newNFFT;
-
-    for(int k=0;k<NFFT;k++)
-        F[2*k+1]*=(sqrt(varianceS)/sqrt(varianceG))*ampl;
-
-    for(int k=0;k<newNFFT;k++)
-        g[2*k+1]*=(sqrt(varianceS)/sqrt(varianceG));
-
-    // Plot of F
-    segment = int(segment/3);
-    CImg <double> *temporalProfile = new CImg <double>(segment,1,1,1,0);
-
-    double max_value1 = 0;
-    double min_value1 = 0;
-
-    double max_valuex = 0;double max_valuey = -DBL_INF;
-    double min_valuex = 0;double min_valuey = DBL_INF;
-
-    double auxF[int(segment)];
-
-    for(int k=0;k<segment;k++){
-        (*temporalProfile)(k,0,0,0)=F[2*k+1]/numberTrials;
-        auxF[k]=F[2*k+1]/numberTrials;
-        if (F[2*k+1]/numberTrials>max_value1)
-            max_value1 = F[2*k+1]/numberTrials;
-        if (F[2*k+1]/numberTrials<min_value1)
-            min_value1 = F[2*k+1]/numberTrials;
-    }
-
-    if(min_value1 == max_value1){ // Prevent min and max from being equal since values are later normalized to max-min
-        min_value1-=0.5;
-        max_value1+=0.5;
-    }
-
-    // remove LN file and save new file
-    removeFile(LNFile);
-    saveArray(auxF,int(segment),LNFile);
-
-    // discard the beginning of the sequence to plot g
-    //int begin = start;
-    //if(length > 300)
-    //    begin = start+200;
-
-    // Plot of the response vs g
-
-    max_valuex = sqrt(varianceS);
-    min_valuex = -sqrt(varianceS);
-
-    CImg <double> *staticProfile = new CImg <double>(400,1,1,1,0);
-    double numberPoints[400];for(int l=0;l<400;l++)numberPoints[l]=0;
-
-
-//    for(int k=begin;k<(start+length);k++){
-//        if(abs(g[2*(k-(int)start)+1]) < sqrt(varianceS)){
-//            double value1 = (g[2*(k-(int)start)+1]-min_valuex)*(399/(max_valuex-min_valuex));
-//            (*staticProfile)(int(value1),0,0,0)+=(k/((start+length)))*temporal[k];
-//            numberPoints[int(value1)]+=(k/((start+length)));
-////            (*staticProfile)(int(value1),0,0,0)=temporal[k];
-//        }
-//    }
-
-    for(int k=0;k<length;k++){
-        if(abs(g[2*k+1]) < sqrt(varianceS)){
-            double value1 = (g[2*k+1]-min_valuex)*(399/(max_valuex-min_valuex));
-            (*staticProfile)(int(value1),0,0,0)+=historyTemporal[k];
-            numberPoints[int(value1)]+=1;
-//            (*staticProfile)(int(value1),0,0,0)=temporal[k];
-        }
-    }
-
-    free(newF);
-    free(newS);
-    free(g);
-    
-    double auxSP[400];
-    double auxSP2[400];
-
-    for(int l=0;l<400;l++){
-
-        if(numberPoints[l]>0)
-            (*staticProfile)(l,0,0,0)/=numberPoints[l];
-        auxSP[l] = (*staticProfile)(l,0,0,0);
-
-        if((*staticProfile)(l,0,0,0)<min_valuey && abs((*staticProfile)(l,0,0,0)) > 0)
-            min_valuey = (*staticProfile)(l,0,0,0);
-        if((*staticProfile)(l,0,0,0)>max_valuey && abs((*staticProfile)(l,0,0,0)) > 0)
-            max_valuey = (*staticProfile)(l,0,0,0);
-    }
-
-    if(min_valuey == max_valuey){ // Prevent min and max from being equal
-        min_valuey-=0.5;
-        max_valuey+=0.5;
-    }
-
-    (*staticProfile)(399,0,0,0) = (*staticProfile)(398,0,0,0);
-
-    for(int l=0;l<400;l++){
-        auxSP2[l] = (l-200)*((max_valuex-min_valuex)/399);
-    }
-
-
-    // Simple average of points
-    int bin_size = 100;// even number
-    CImg <double> *newStaticProfile = new CImg <double>(400,1,1,1,0);
-
-    for(int l=0;l<400;l++){
-        double accumulator = 0;
-
-        if(l>=bin_size/2 && l<400-bin_size/2){
-            for(int k=1;k<bin_size/2+1;k++)
-                accumulator+= (*staticProfile)(l-k,0,0,0);
-            for(int k=0;k<bin_size/2;k++)
-                accumulator+= (*staticProfile)(l+k,0,0,0);
-
-            (*newStaticProfile)(l,0,0,0) = accumulator/bin_size;
-        }
-        else if(l<bin_size/2){
-            for(int k=0;k<l+bin_size/2;k++)
-                accumulator+= (*staticProfile)(k,0,0,0);
-
-            (*newStaticProfile)(l,0,0,0) = accumulator/(l+bin_size/2);
-        }else{
-            for(int k=l-bin_size/2;k<400;k++)
-                accumulator+= (*staticProfile)(k,0,0,0);
-
-            (*newStaticProfile)(l,0,0,0) = accumulator/(400-l+bin_size/2);
-        }
-
-
-
-    }
-
-    for(int l=0;l<400;l++){
-        (*staticProfile)(l,0,0,0) = (*newStaticProfile)(l,0,0,0);
-        auxSP[l] = (*staticProfile)(l,0,0,0);
-    }
-
-    delete newStaticProfile;
-
-
-    // Remove and save new static NL
-    const char * SNL = "SNL";
-    const char * SNL2 = "SNL2";
-    char f1[1000];
-    char f2[1000];
-    strcpy(f1,SNL);
-    strcat(f1,to_file2);
-    strcpy(f2,SNL2);
-    strcat(f2,to_file2);
-
-    removeFile((const char*)f1);
-    removeFile((const char*)f2);
-    saveArray(auxSP,400,f1);
-    saveArray(auxSP2,400,f2);
-
-    cout << "Saving auxSP = "<< auxSP[10] << " with name f1 = "<< f1 << endl;
-
-
-    // display results
-
-    // code for parameter waitTime:
-    // waitTime = -2 -> display is not shown
-
-
-    if(waitTime > -2){
-
-        const unsigned char color1[] = {255,0,0};
-        const unsigned char color2[] = {0,0,255};
-        unsigned char back_color[] = {255,255,255};
-        CImg <unsigned char> *profile = new CImg <unsigned char>(400,256,1,3,0);
-        CImg <unsigned char> *nonlinearity = new CImg <unsigned char>(400,256,1,3,0);
-        profile->fill(*back_color);
-        nonlinearity->fill(*back_color);
-
-        draw_disp->assign((*profile,*nonlinearity),"LN analysis averaged"); // Window is closed when this object is deleted
-        profile->draw_graph(temporalProfile->get_crop(0,0,0,0,segment-1,0,0,0)*255/(max_value1-min_value1) - min_value1*255/(max_value1-min_value1),color1,1,1,4,255,0);
-        nonlinearity->draw_graph(staticProfile->get_crop(0,0,0,0,400-1,0,0,0)*255/(max_valuey-min_valuey) - min_valuey*255/(max_valuey-min_valuey),color1,1,1,4,255,0);
-        profile->draw_text(320,200,"time (ms)",color2,back_color,1,20).display(*draw_disp);
-        profile->draw_text(40,5,"Linear Filter",color2,back_color,1,20).display(*draw_disp);
-        nonlinearity->draw_text(320,200,"Input",color2,back_color,1,20).display(*draw_disp);
-        nonlinearity->draw_text(10,5,"Static NonLinearity",color2,back_color,1,20).display(*draw_disp);
-
-        (profile->draw_axes(0,segment*simStep,max_value1,min_value1,color2,1,-80,-80,0,0,~0U,~0U,20),nonlinearity->draw_axes(min_valuex,max_valuex,max_valuey,min_valuey,color2,1,-40,-20,0,0,~0U,~0U,13)).display(*draw_disp);
-
-
-        // move display
-        draw_disp->move(col,row);
-
-        // wait for the user closes display
-        cout << "\rClose LN analysis multimeter window to continue..." << endl;
-        while (!draw_disp->is_closed())
-            draw_disp->wait();
-
-        delete nonlinearity;
-        delete profile;
-    }
-
-    delete temporalProfile;
-    delete staticProfile;    
-}
-
-//------------------------------------------------------------------------------//
-
-void multimeter::showLNAnalysis(string title, int col, int row, double waitTime, double segment, double interval, double start, double stop,double numberTrials,string LNFile){
-
-
-    // normalize vectors
-    vector <double> newInput;
-    vector <double> newTemporal;
-    vector <double> historyInput;
-    vector <double> historyTemporal;
-
-    double mean_value1 = 0;
-    double mean_value2 = 0;
-
-    for(size_t k=0;k<input.size();k++){
-        mean_value1+= input[k];
-        mean_value2+= temporal[k];
-    }
-
-    mean_value1 /= input.size();
-    mean_value2 /= temporal.size();
-
-    for(size_t k=0;k<input.size();k++){
-        if(k>temporal.size()/100){
-            newInput.push_back(input[k] - mean_value1);
-    //        input[k] = (input[k] - mean_value1);
-            newTemporal.push_back(temporal[k] - mean_value2);
-    //        temporal[k] = temporal[k] - mean_value2;
-        }else{
-            newInput.push_back(0.0);
-    //        input[k] = 0.0;
-            newTemporal.push_back(0.0);
-    //        temporal[k] = 0.0;
-        }
-
-        if(k>=start && k<stop){
-            historyInput.push_back(input[k] - mean_value1);
-            historyTemporal.push_back(temporal[k]);
-        }
-
-    }
-
-    // save seq
-    const char * seq1 = "inp";
-    const char * seq2 = "tmp";
-    const char* to_file = LNFile.c_str();
-
-    char seqFile1[1000];
-    char seqFile2[1000];
-
-    strcpy(seqFile1,seq1);
-    strcat(seqFile1,to_file);
-
-    strcpy(seqFile2,seq2);
-    strcat(seqFile2,to_file);
-
-    saveSeq(historyInput,seqFile1,(stop-start)*2*simStep);
-    saveSeq(historyTemporal,seqFile2,(stop-start)*2*simStep);
+    // The filter F is computed as the correlation between s(t) and the response
+    // r(t), normalized by the autocorrelation of the stimulus in the Fourier
+    // domain
 
     // calculate NFFT as the next higher power of 2 >= Nx.
-    int NFFT = (int)pow(2.0, ceil(log((double)segment)/log(2.0)));
+    int NFFT = (int)pow(2.0, ceil(log(double(segment))/log(2.0)));
 
     // allocate memory for NFFT complex numbers
     double *R = (double *) malloc((2*NFFT+1) * sizeof(double));
@@ -664,70 +389,113 @@ void multimeter::showLNAnalysis(string title, int col, int row, double waitTime,
     denominator[0] = 0.0;
     F[0] = 0.0;
 
-    int number_rep = int((stop-start)/interval);
-    for (int rep=0;rep<number_rep;rep++){
-        // Storing vectors in a complex array. This is needed even though x(n) is purely real in this case.
-        for(int i=0; i<segment; i++)
-        {
-            R[2*i+1] = newTemporal[start + rep*interval + i];
-            R[2*i+2] = 0.0;
+    // -> 'start' and 'stop' are the start and end simulation times of the
+    // recording used for computing the LN analysis.
+    // -> 'segment' is the length of the time window where the filter F is calculated
+    // (typically 1000 ms).
+    // -> F is averaged over all trials and segments spaced every 'interval' ms
+    // throughout the recording.
 
-            S[2*i+1] = newInput[start + rep*interval + i];
-            S[2*i+2] = 0.0;
+    int number_rep = int((stop-start)/interval); // number of segments between
+                                                // start and stop
+    double sum_s = 0;
+    double sum_r = 0;
+    double mean_s = 0;
+    double mean_r = 0;
+    vector <double> s; // input stimulus
+    vector <double> r; // cell response
 
-            S_conj[2*i+1] = 0.0;
-            S_conj[2*i+2] = 0.0;
+    // Average F for all trials
+    for(int trial = 0;trial < numberTrials;trial++){
+
+        // Reset vectors
+        s.clear();
+        r.clear();
+
+        // The stimulus intensity is normalized to have zero mean and a standard
+        // deviation equal to the contrast. The response is normalized to have
+        // zero mean
+        sum_s = accumulate(LN_input[trial].begin(), LN_input[trial].end(), 0.0);
+        mean_s = sum_s / LN_input[trial].size();
+        sum_r = accumulate(LN_timeRecord[trial].begin(), LN_timeRecord[trial].end(), 0.0);
+        mean_r = sum_r / LN_timeRecord[trial].size();
+
+        for (size_t k=0;k<LN_input[trial].size()-1;k++)
+            s.push_back(LN_input[trial][k+1]-mean_s);
+
+        for (size_t k=0;k<LN_timeRecord[trial].size()-1;k++){
+            r.push_back(LN_timeRecord[trial][k+1]-mean_r);
         }
-        // pad the remainder of the array with zeros (0 + 0 j) //
-        for(int i=segment; i<NFFT; i++)
-        {
-            R[2*i+1] = 0.0;
-            R[2*i+2] = 0.0;
 
-            S[2*i+1] = 0.0;
-            S[2*i+2] = 0.0;
+        // Normalize input to have a standard deviation equal to the contrast
+        // (input values are between 0 and 255)
+        for (size_t k=0;k<s.size();k++)
+            s[k] /= double(255);
 
-            S_conj[2*i+1] = 0.0;
-            S_conj[2*i+2] = 0.0;
-        }
+        // Average F for all segments
+        for (int rep=0;rep<number_rep;rep++){
+            // Storing vectors in a complex array. This is needed even though x(n)
+            // is purely real in this case.
+            for(int i=0; i<segment; i++)
+            {
+                R[2*i+1] = r[start + rep*interval + i];
+                R[2*i+2] = 0.0;
 
+                S[2*i+1] = s[start + rep*interval + i];
+                S[2*i+2] = 0.0;
 
+                S_conj[2*i+1] = 0.0;
+                S_conj[2*i+2] = 0.0;
 
-        // FFT
-        fft(R, NFFT, 1);
-        fft(S, NFFT, 1);
-        conj(S,S_conj,NFFT);
+            }
+            // pad the remainder of the array with zeros (0 + 0 j)
+            for(int i=segment; i<NFFT; i++)
+            {
+                R[2*i+1] = 0.0;
+                R[2*i+2] = 0.0;
 
+                S[2*i+1] = 0.0;
+                S[2*i+2] = 0.0;
 
-        for(int i=0; i<NFFT; i++)
-        {
+                S_conj[2*i+1] = 0.0;
+                S_conj[2*i+2] = 0.0;
+            }
 
-            if(rep==0){
-                numerator[2*i+1] = (S_conj[2*i+1]*R[2*i+1]) - (S_conj[2*i+2]*R[2*i+2]);
-                numerator[2*i+2] = (S_conj[2*i+1]*R[2*i+2]) + (S_conj[2*i+2]*R[2*i+1]);
+            // FFT
+            fft(R, NFFT, 1);
+            fft(S, NFFT, 1);
+            conj(S,S_conj,NFFT);
 
-                denominator[2*i+1] = (S_conj[2*i+1]*S[2*i+1]) - (S_conj[2*i+2]*S[2*i+2]);
-                denominator[2*i+2] = (S_conj[2*i+1]*S[2*i+2]) + (S_conj[2*i+2]*S[2*i+1]);
-            }else{
-                numerator[2*i+1] += (S_conj[2*i+1]*R[2*i+1]) - (S_conj[2*i+2]*R[2*i+2]);
-                numerator[2*i+2] += (S_conj[2*i+1]*R[2*i+2]) + (S_conj[2*i+2]*R[2*i+1]);
+            for(int i=0; i<NFFT; i++)
+            {
+                // Initialize for the first trial and first segment
+                if(rep==0 && trial==0){
+                    numerator[2*i+1] = (S_conj[2*i+1]*R[2*i+1]) - (S_conj[2*i+2]*R[2*i+2]);
+                    numerator[2*i+2] = (S_conj[2*i+1]*R[2*i+2]) + (S_conj[2*i+2]*R[2*i+1]);
 
-                denominator[2*i+1] += (S_conj[2*i+1]*S[2*i+1]) - (S_conj[2*i+2]*S[2*i+2]);
-                denominator[2*i+2] += (S_conj[2*i+1]*S[2*i+2]) + (S_conj[2*i+2]*S[2*i+1]);
+                    denominator[2*i+1] = (S_conj[2*i+1]*S[2*i+1]) - (S_conj[2*i+2]*S[2*i+2]);
+                    denominator[2*i+2] = (S_conj[2*i+1]*S[2*i+2]) + (S_conj[2*i+2]*S[2*i+1]);
+
+                }else{
+                    numerator[2*i+1] += (S_conj[2*i+1]*R[2*i+1]) - (S_conj[2*i+2]*R[2*i+2]);
+                    numerator[2*i+2] += (S_conj[2*i+1]*R[2*i+2]) + (S_conj[2*i+2]*R[2*i+1]);
+
+                    denominator[2*i+1] += (S_conj[2*i+1]*S[2*i+1]) - (S_conj[2*i+2]*S[2*i+2]);
+                    denominator[2*i+2] += (S_conj[2*i+1]*S[2*i+2]) + (S_conj[2*i+2]*S[2*i+1]);
+                }
+
             }
 
         }
-
     }
 
 
     for(int i=0; i<NFFT; i++)
     {
-
-        numerator[2*i+1] /= number_rep;
-        numerator[2*i+2] /= number_rep;
-        denominator[2*i+1] /= number_rep;
-        denominator[2*i+2] /= number_rep;
+        numerator[2*i+1] /= (number_rep * numberTrials);
+        numerator[2*i+2] /= (number_rep * numberTrials);
+        denominator[2*i+1] /= (number_rep * numberTrials);
+        denominator[2*i+2] /= (number_rep * numberTrials);
 
         F[2*i+1] = ((numerator[2*i+1]*denominator[2*i+1]) + (numerator[2*i+2]*denominator[2*i+2]))/((denominator[2*i+1])*(denominator[2*i+1]) + (denominator[2*i+2])*(denominator[2*i+2]) + DBL_EPSILON);
         F[2*i+2] = ((numerator[2*i+2]*denominator[2*i+1]) - (numerator[2*i+1]*denominator[2*i+2]))/((denominator[2*i+1])*(denominator[2*i+1]) + (denominator[2*i+2])*(denominator[2*i+2]) + DBL_EPSILON);
@@ -743,64 +511,320 @@ void multimeter::showLNAnalysis(string title, int col, int row, double waitTime,
         F[2*i+2] /= NFFT;
     }
 
+    // All samples between start and stop for all trials are now convolved with the
+    // filter F to get g(t): g(t) = F*s(t). This convolution is again computed
+    // using the FFT
+    int newNFFT = (int)pow(2.0, ceil(log(double(numberTrials*(stop-start)))/log(2.0)));
 
-    saveArray(F,int(2*NFFT+1),LNFile);
+    double *G = (double *) malloc((2*newNFFT+1) * sizeof(double));
+    double *newS = (double *) malloc((2*newNFFT+1) * sizeof(double));
+    double *newF = (double *) malloc((2*newNFFT+1) * sizeof(double));
 
-    // code for parameter waitTime:
-    // waitTime = -2 -> display is not shown
-    // waitTime = -1 -> display is shown till the user close it
-    // waitTime >= 0 -> display is shown a duration waitTime
+    G[0]=0.0;
+    newS[0]=0.0;
+    newF[0]=0.0;
 
-    if(waitTime > -2 and numberTrials==1){
+    double varianceS = 0; // to compute the variance of the stimulus
 
-//        CImg <double> *temporalProfile = new CImg <double>(segment,1,1,1,0);
+    int trial = 0;
+    int m = 0; // index to traverse samples between start and stop
 
-//        double max_value1 = 0;
-//        double min_value1 = 0;
+    for(int i=0; i < numberTrials*(stop-start); i++)
+    {
+        // Reset stimulus for each trial
+        if (m==0){
+            s.clear();
+            sum_s = accumulate(LN_input[trial].begin(), LN_input[trial].end(), 0.0);
+            mean_s = sum_s / LN_input[trial].size();
 
+            for (size_t k=0;k<LN_input[trial].size()-1;k++)
+                s.push_back(LN_input[trial][k+1]-mean_s);
 
-//        for(int k=0;k<segment;k++){
-//            (*temporalProfile)(k,0,0,0)=F[2*k+1];
+            for (size_t k=0;k<s.size();k++)
+                s[k] /= double(255);
+        }
 
-//            if (F[2*k+1]>max_value1)
-//                max_value1 = F[2*k+1];
-//            if (F[2*k+1]<min_value1)
-//                min_value1 = F[2*k+1];
-//        }
+        newS[2*i+1] = s[start + m];
+        newS[2*i+2] = 0.0;
 
+        G[2*i+1] = 0.0;
+        G[2*i+2] = 0.0;
 
-//        const unsigned char color1[] = {255,0,0};
-//        const unsigned char color2[] = {0,0,255};
-//        unsigned char back_color[] = {255,255,255};
-//        CImg <unsigned char> *profile = new CImg <unsigned char>(400,256,1,3,0);
-//        profile->fill(*back_color);
-//        const char * titleChar = (title).c_str();
-//        draw_disp->assign(*profile,titleChar);
+        varianceS += s[start + m]*s[start + m];
 
-//        profile->draw_graph(temporalProfile->get_crop(0,0,0,0,segment-1,0,0,0)*255/(max_value1-min_value1) - min_value1*255/(max_value1-min_value1),color1,1,1,4,255,0);
-//        profile->draw_axes(0.0,segment*simStep,max_value1,min_value1,color2,1,-80,-80,0,0,~0U,~0U,20).display(*draw_disp);
-
-//        // move display
-//        draw_disp->move(col,row);
-
-//        // wait for the user closes display
-//        if(waitTime == -1){
-//            while (!draw_disp->is_closed()) {
-//                draw_disp->wait();
-//            }
-//        }
+        if (m<(stop-start) - 1)
+            m+=1;
+        else{
+            m=0;
+            trial+=1;
+        }
 
     }
 
+    for(int i= numberTrials*(stop-start); i<newNFFT; i++)
+    {
+        newS[2*i+1] = 0.0;
+        newS[2*i+2] = 0.0;
+
+        G[2*i+1] = 0.0;
+        G[2*i+2] = 0.0;
+    }
+
+    for(int i=0; i<newNFFT; i++)
+    {
+        if(i<NFFT){
+            newF[2*i+1]=F[2*i+1];
+            newF[2*i+2]=F[2*i+2];
+        }else{
+            newF[2*i+1]=0.0;
+            newF[2*i+2]=0.0;
+        }
+    }
+
+    // FFT
+    fft(newF, newNFFT, 1);
+    fft(newS, newNFFT, 1);
+
+    // Convolution
+    for(int i=0; i<newNFFT; i++)
+    {
+        G[2*i+1] = (newF[2*i+1]*newS[2*i+1]) - (newF[2*i+2]*newS[2*i+2]);
+        G[2*i+2] = (newF[2*i+1]*newS[2*i+2]) + (newF[2*i+2]*newS[2*i+1]);
+    }
+
+    // iFFT of g
+    fft(G, newNFFT, -1);
+
+    // normalize the IFFT of g
+    for(int i=0; i<newNFFT; i++)
+    {
+        G[2*i+1] /= newNFFT;
+        G[2*i+2] /= newNFFT;
+
+    }
+
+    // Scale the filter in amplitude so that the variance of the filtered
+    // stimulus, g(t), was equal to the variance of the stimulus, s(t).
+    // Note that mean values of g(t) and s(t) are 0.
+
+    double varianceG = 0;
+
+    for (int k=0;k<newNFFT;k++) {
+        varianceG += G[2*k+1]*G[2*k+1];
+    }
+
+    varianceS /= (numberTrials*(stop-start));
+    varianceG /= newNFFT;
+
+    cout << "varianceG = "<< varianceG << endl;
+    cout << "varianceS = "<< varianceS << endl;
+    cout << "F[18] = "<< F[2*18 + 1] << endl;
+    cout << "sqrt(varianceS/varianceG) = "<< sqrt(varianceS/varianceG) << endl;
+
+    for(int k=0;k<newNFFT;k++)
+        G[2*k+1]*=sqrt(varianceS/varianceG);
+
+    for(int k=0;k<NFFT;k++)
+        F[2*k+1]*=sqrt(varianceS/varianceG);
+
+    // Min and max values of G
+    double max_g = -DBL_INF;
+    double min_g = DBL_INF;
+
+    for(int k=0;k<newNFFT;k++){
+        if(G[2*k+1] < min_g)
+            min_g = G[2*k+1];
+        if(G[2*k+1] > max_g)
+            max_g = G[2*k+1];
+    }
+
+    if (min_g == max_g){
+        min_g-=1;
+        max_g+=1;
+    }
+
+    // Then, the fixed nonlinearity N(g) is calculated by plotting r(t)
+    // against g(t) and averaging the values of r over bins of g
+
+    // Histogram of g
+    double number_bins = 1000;
+    double histogram[int(number_bins)];
+    int histogram_count[int(number_bins)];
+    double pos_hist = 0;
+
+    for (size_t k=0;k<number_bins;k++){
+        histogram[k] = 0;
+        histogram_count[k] = 0;
+    }
+
+    m = 0;
+    trial = 0;
+
+    for(int i=0; i < numberTrials*(stop-start); i++)
+    {
+        // Reset r
+        if (m==0){
+            r.clear();
+            for (size_t k=0;k<LN_timeRecord[trial].size()-1;k++)
+                r.push_back(LN_timeRecord[trial][k+1]);
+        }
+
+        // Update histogram
+        pos_hist = (G[2*i+1] - min_g)/(max_g - min_g);
+        histogram[int(pos_hist*(number_bins-1))] += r[start + m];
+        histogram_count[int(pos_hist*(number_bins-1))] += 1;
+
+        if (m<(stop-start) - 1)
+            m+=1;
+        else{
+            m=0;
+            trial+=1;
+        }
+
+    }
+
+    // Normalize
+    for (size_t k=0;k<number_bins;k++){
+        if (histogram_count[k]>0)
+            histogram[k] /= double(histogram_count[k]);
+    }
+
+    // Interpolation and discard of extreme values
+    double window = number_bins/10; // Number of bins used for the interpolation
+    double discard_bins = number_bins/4; // Number of bins to discard on each side
+    double histogram_interpolated[int(number_bins-window-2*discard_bins+1)];
+
+    for (size_t k=window/2+discard_bins;k<=number_bins-window/2-discard_bins;k++){
+        for(int j=-window/2;j<=window/2;j++)
+            histogram_interpolated[int(k-window/2-discard_bins)]+=histogram[k+j];
+    }
+
+    for (size_t k=0;k<number_bins-window-2*discard_bins+2;k++)
+        histogram_interpolated[k] /= double(window + 1);
+
+    // Plot
+    int size_F = int(rangeToPlot/simStep);
+    int size_NL = int(number_bins-window-2*discard_bins+1);
+
+    CImg <double> *LNPlot_F = new CImg <double>(size_F,1,1,1,0);
+    CImg <double> *LNPlot_NL = new CImg <double>(size_NL,1,1,1,0);
+
+    double max_value_F = -DBL_INF;
+    double min_value_F = DBL_INF;
+    double max_value_NL = -DBL_INF;
+    double min_value_NL = DBL_INF;
+
+    double arrayToFile_Fx[size_F];
+    double arrayToFile_Fy[size_F];
+    double arrayToFile_NLx[size_NL];
+    double arrayToFile_NLy[size_NL];
+
+    for (int k=0;k<size_F;k++){
+
+        if (k < int(rangeToPlot/simStep)){
+            (*LNPlot_F)(k,0,0,0) = F[2*k+1];
+
+            arrayToFile_Fy[k] = (*LNPlot_F)(k,0,0,0);
+            arrayToFile_Fx[k] = (rangeToPlot/size_F)*k;
+
+            // Maximum and minimum used for normalization
+            if ((*LNPlot_F)(k,0,0,0) > max_value_F)
+                max_value_F = (*LNPlot_F)(k,0,0,0);
+            if ((*LNPlot_F)(k,0,0,0) < min_value_F)
+                min_value_F = (*LNPlot_F)(k,0,0,0);
+        }
+    }
+
+    for (int k=0;k<size_NL;k++){
+
+        (*LNPlot_NL)(k,0,0,0) = histogram_interpolated[k];
+
+        arrayToFile_NLy[k] = (*LNPlot_NL)(k,0,0,0);
+        arrayToFile_NLx[k] = min_g + (discard_bins/number_bins)*(max_g - min_g) +
+                k*(max_g - min_g -2*(discard_bins/number_bins)*(max_g - min_g))/size_NL;
+
+        // Maximum and minimum used for normalization
+        if ((*LNPlot_NL)(k,0,0,0) > max_value_NL)
+            max_value_NL = (*LNPlot_NL)(k,0,0,0);
+        if ((*LNPlot_NL)(k,0,0,0) < min_value_NL)
+            min_value_NL = (*LNPlot_NL)(k,0,0,0);
+    }
+
+    // Save results to file
+    saveArray(arrayToFile_Fy,size_F,fileID+"Fy");
+    saveArray(arrayToFile_Fx,size_F,fileID+"Fx");
+    saveArray(arrayToFile_NLy,size_NL,fileID+"NLy");
+    saveArray(arrayToFile_NLx,size_NL,fileID+"NLx");
+
+    // Show displays
+    if(showDisplay){
+        CImg <unsigned char> *F_curve = new CImg <unsigned char>(400,256,1,3,0);
+        CImg <unsigned char> *nonlinearity = new CImg <unsigned char>(400,256,1,3,0);
+        F_curve->fill(*backColor);
+        nonlinearity->fill(*backColor);
+
+        drawDisp->assign((*F_curve,*nonlinearity),"LN analysis averaged");
+
+        F_curve->draw_graph((LNPlot_F->get_crop(0,0,0,0,size_F-1,0,0,0)-min_value_F)*255/(max_value_F-min_value_F)
+                            ,color1,1,1,4,255,0);
+        nonlinearity->draw_graph((LNPlot_NL->get_crop(0,0,0,0,size_NL-1,0,0,0)-min_value_NL)*255/(max_value_NL-min_value_NL)
+                            ,color1,1,1,4,255,0);
+
+        // axes
+        F_curve->draw_text(300,200,"Time (ms)",color2,backColor,1,20).display(*drawDisp);
+        F_curve->draw_text(130,5,"Linear Filter",color2,backColor,1,20).display(*drawDisp);
+        nonlinearity->draw_text(320,200,"Input",color2,backColor,1,20).display(*drawDisp);
+        nonlinearity->draw_text(130,5,"Static NonLinearity",color2,backColor,1,20).display(*drawDisp);
+
+        CImg <double> *x_axis1 = new CImg <double>(3,1,1,1,0);
+        (*x_axis1)(0,0,0,0) = 0;
+        (*x_axis1)(1,0,0,0) = rangeToPlot/2;
+        (*x_axis1)(2,0,0,0) = rangeToPlot;
+
+        CImg <double> *y_axis1 = new CImg <double>(1,3,1,1,0);
+        (*y_axis1)(0,0,0,0) = max_value_F;
+        (*y_axis1)(0,1,0,0) = (max_value_F-min_value_F)/2 + min_value_F;
+        (*y_axis1)(0,2,0,0) = min_value_F;
+
+        CImg <double> *x_axis2 = new CImg <double>(3,1,1,1,0);
+        (*x_axis2)(0,0,0,0) = min_g + discard_bins*(max_g - min_g)/number_bins;
+        (*x_axis2)(1,0,0,0) = (max_g - min_g)/2 + min_g;
+        (*x_axis2)(2,0,0,0) = max_g - discard_bins*(max_g - min_g)/number_bins;
+
+        CImg <double> *y_axis2 = new CImg <double>(1,3,1,1,0);
+        (*y_axis2)(0,0,0,0) = max_value_NL;
+        (*y_axis2)(0,1,0,0) = (max_value_NL-min_value_NL)/2 + min_value_NL;
+        (*y_axis2)(0,2,0,0) = min_value_NL;
+
+        (F_curve->draw_axis(*x_axis1,226,color2,1,~0U,20,true),
+                nonlinearity->draw_axis(*x_axis2,226,color2,1,~0U,20,true)).display(*drawDisp);
+
+        (F_curve->draw_axis(110,*y_axis1,color2,1,~0U,20,true),
+                nonlinearity->draw_axis(110,*y_axis2,color2,1,~0U,20,true)).display(*drawDisp);
+
+        // move display
+        drawDisp->move(col,row);
+
+        if(lastWindow){
+            cout << "\rClose spatial multimeter window to continue..." << endl;
+            while (!drawDisp->is_closed())
+                drawDisp->wait();
+        }
+        delete nonlinearity;
+        delete F_curve;
+    }
+    delete LNPlot_F;
+    delete LNPlot_NL;
+
+    // free memory
     free(F);
     free(denominator);
     free(numerator);
     free(S_conj);
     free(S);
     free(R);
-}
 
-//------------------------------------------------------------------------------//
+}
 
 void multimeter::fft(double data[], int nn, int isign){
     /*
@@ -869,9 +893,6 @@ void multimeter::fft(double data[], int nn, int isign){
 
 }
 
-//------------------------------------------------------------------------------//
-
-
 void multimeter::conj(double data[], double copy[], int NFFT){
 
     for(int i=0; i<NFFT; i++)
@@ -881,227 +902,3 @@ void multimeter::conj(double data[], double copy[], int NFFT){
     }
 
 }
-
-//------------------------------------------------------------------------------//
-
-string multimeter::getWorkingDir(){
-
-    char* cwd;
-    char buff[PATH_MAX + 1];
-
-    cwd = getcwd( buff, PATH_MAX + 1 );
-    string currentDir(cwd);
-
-    //size_t pos = currentDir.find(constants::retinaFolder);
-    //string currentDirRoot = currentDir.substr(0,pos+(constants::retinaFolder.length())+1)+"/";
-    string currentDirRoot = currentDir+"/";
-
-    //if (pos==std::string::npos)
-    //    cout << "error: impossible to find the simulator folder" << endl;
-
-    return currentDirRoot;
-}
-
-//------------------------------------------------------------------------------//
-
-string multimeter::composeResultsPath(const char * File){
-
-    string sFile = (string) File;
-    string stringResult = getWorkingDir()+ "results/" + sFile;
-
-    return stringResult;
-}
-
-//------------------------------------------------------------------------------//
-
-
-void multimeter::removeFile(string File){
-
-    string stringResult = getWorkingDir()+ "results/";
-    const char * root = (stringResult).c_str();
-    char result[1000];
-    const char * Filechar = (File).c_str();
-
-    strcpy(result,root);
-    strcat(result,Filechar);
-
-    remove((const char*)result);
-}
-
-//------------------------------------------------------------------------------//
-
-vector<double> multimeter::readSeq(const char * LNFile){
-
-    // read data from file
-    const char * seq = "seq";
-    char seqFile[1000];
-    strcpy(seqFile,seq);
-    strcat(seqFile,LNFile);
-
-    string sto_file = composeResultsPath((const char *)seqFile);
-	const char* to_file = sto_file.c_str();
-    std::ifstream fin;
-    fin.open(to_file);
-    vector<double> F;
-
-    if (fin.good()) {
-        while (!fin.eof())
-        {
-            char buf[1000];
-            fin.getline(buf,1000);
-            const char* token[1] = {};
-            token[0] = strtok(buf, "\n");
-            if(token[0] != NULL)
-                F.push_back(atof(token[0]));
-        }
-        fin.close();
-    }
-    return F;
-}
-
-//------------------------------------------------------------------------------//
-
-
-void multimeter::saveSeq(vector<double> newSeq, const char *LNFile, double maxSize){
-
-    // read first
-    vector<double> FileSeq = readSeq(LNFile);
-
-    const char * seq = "seq";
-    char seqFile[1000];
-    strcpy(seqFile,seq);
-    strcat(seqFile,LNFile);
-
-    // new seq
-    if(FileSeq.size()==0){
-
-        // save new array
-        double *F = (double *) malloc((newSeq.size()) * sizeof(double));
-        if(F != NULL) {
-            for(size_t k=0;k<newSeq.size();k++)
-                F[k]=newSeq[k];
-            saveArray(F, newSeq.size(), (const char *)seqFile);
-            free(F);
-        } else perror("saving new multimeter array");
-    // another seq
-    }else{
-
-        if(FileSeq.size() < maxSize){
-            // remove file
-            removeFile((const char *)seqFile);
-
-            // save new array
-            double *F = (double *) malloc((FileSeq.size() + newSeq.size() ) * sizeof(double));
-            if(F != NULL) {
-                for(size_t k=0;k<FileSeq.size() + newSeq.size();k++){
-                    if(k<FileSeq.size()){
-                        F[k] = FileSeq[k];
-                    }else{
-                        F[k] = newSeq[k-FileSeq.size()];
-                    }
-                }
-
-                saveArray(F, FileSeq.size() + newSeq.size(),(const char *)seqFile);
-                free(F);
-            } else perror("saving new multimeter array (another seq)");
-        }
-    }
-}
-
-//------------------------------------------------------------------------------//
-
-void multimeter::saveArray(double* array, size_t arraySize, string fileID){
-
-      // read file
-      std::vector <std::string> files;
-      dirent* de;
-
-      string stringResult = getWorkingDir()+ "results/";
-      const char * currentDir = (stringResult).c_str();
-      DIR* dp=opendir(currentDir);
-
-      if (dp){
-          while (true)
-          {
-              de = readdir( dp );
-              if (de == NULL)
-                  break;
-              files.push_back(std::string(de->d_name));
-          }
-        closedir( dp );
-        std::sort( files.begin(), files.end() );
-      }else{
-          cout << "the directory \"results\" cannot be opened!" << endl;
-      }
-
-      bool fileFound = false;
-
-      for(size_t k=0;k<files.size();k++){
-
-          const char * f1 = (files[k]).c_str();
-          const char * f2 = fileID.c_str();
-          if (strcmp(f1,f2)==0){
-
-              fileFound = true;
-              // Read current value
-              const char * fileName = (fileID).c_str();
-              string sto_file = composeResultsPath(fileName);
-				const char* to_file = sto_file.c_str();
-              fin.precision(64);
-              fin.open(to_file);
-              if (fin.good()) {
-                  vector <string> fileValues;
-
-                  while (!fin.eof())
-                  {
-                    char buf[1000];
-                    fin.getline(buf,1000);
-                    const char* token[1] = {};
-                    token[0] = strtok(buf, "\n");
-                    if(token[0] != NULL) // If the last line ends with \n, we may have an extra loop iteration with token[0] == NULL
-                        fileValues.push_back(token[0]);
-                  }
-
-                  fin.close();
-
-                  // update values and write to file
-                  fout.open(to_file);
-                  if (fout.good()) {
-                      const char * add_value;
-                      for(size_t l=0;l<min(arraySize,fileValues.size());l++){
-                          add_value = (fileValues[l]).c_str();
-                          fout.precision(64);
-                          if(l<arraySize-1)
-                              fout << (array[l]+atof(add_value)) << endl;
-                          else
-                              fout << (array[l]+atof(add_value));
-                      }
-                      
-                      fout.close();
-                  }
-              }
-          }
-      }
-
-      // new file
-      if(fileFound==false){
-
-          // Read current value
-          const char * fileName = (fileID).c_str();
-          string sto_file = composeResultsPath(fileName);
-const 		char* to_file = sto_file.c_str();
-          // write new file
-          fout.open(to_file);
-          if (fout.good()) {
-              for(size_t l=0;l<arraySize;l++){
-                  fout.precision(64);
-                  if(l<arraySize-1)
-                      fout << array[l] << endl;
-                  else
-                      fout << array[l];
-              }
-              fout.close();
-          }
-      }
-}
-

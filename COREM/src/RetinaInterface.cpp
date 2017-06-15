@@ -84,9 +84,7 @@ bool RetinaInterface::allocateValues(const char *retinaPath, const char * output
         // Display manager
         displayMg.setSizeX(sizeX);
         displayMg.setSizeY(sizeY);
-
-        // LN parameters
-        displayMg.setLNFile(outputFile,outputfactor);
+        displayMg.setSimStep(step);
 
         // Display manager
         for(int k=0;k<retina.getNumberModules();k++){ // we call addModule() even if retina ony has one module in order to always initialize Displays of Display Manager

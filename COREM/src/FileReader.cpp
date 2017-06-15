@@ -857,34 +857,34 @@ void FileReader::parseFile(Retina &retina, DisplayManager &displayMg){
                                     if(strcmp(token[6], "timeStep") == 0 && strcmp(token[8], "rowcol") == 0 && strcmp(token[10], "value") == 0 && strcmp(token[13], "Show") == 0){
 
                                         if(strcmp(token[9], "True") == 0)
-                                            displayMg.addMultimeterTempSpat(token[3],token[4],atof(token[11]),atof(token[7]),false,token[14],false);
+                                            displayMg.addMultimeterTempSpat(token[3],token[4],atof(token[11]),atof(token[7]),false,token[14],false,0);
                                         else if(strcmp(token[9], "False") == 0)
-                                            displayMg.addMultimeterTempSpat(token[3],token[4],-atof(token[11]),atof(token[7]),false,token[14],false);
+                                            displayMg.addMultimeterTempSpat(token[3],token[4],-atof(token[11]),atof(token[7]),false,token[14],false,0);
                                         else
                                             continueReading=false;
                                     }else{
                                         abort(line,"Expected spatial multimeter parameter list: 'timeStep','rowcol','value','Show'");
                                         break;
                                     }
-                                }else if(strcmp(token[2], "temporal") == 0 && token[6] && token[7] && token[8] && token[9] && token[10] && token[11] && token[12]){
-                                    if(strcmp(token[6], "x") == 0 && strcmp(token[8], "y") == 0 && strcmp(token[11], "Show") == 0){
-                                        displayMg.addMultimeterTempSpat(token[3],token[4],atof(token[7]),atof(token[9]),true,token[12],false);
+                                }else if(strcmp(token[2], "temporal") == 0 && token[6] && token[7] && token[8] && token[9] && token[10] && token[11] && token[12] && token[13] && token[14]){
+                                    if(strcmp(token[6], "x") == 0 && strcmp(token[8], "y") == 0 && strcmp(token[11], "Show") == 0 && strcmp(token[13], "startTime") == 0){
+                                        displayMg.addMultimeterTempSpat(token[3],token[4],atof(token[7]),atof(token[9]),true,token[12],false,atof(token[14]));
                                     }else{
-                                        abort(line,"Expected temporal multimeter parameter list: 'x','y','Show'");
+                                        abort(line,"Expected temporal multimeter parameter list: 'x','y','Show', 'startTime'");
                                         break;
                                     }
-                                }else if(strcmp(token[2], "temporal_all") == 0 && token[6] && token[7] && token[8] && token[9] && token[10] && token[11] && token[12]){
-                                    if(strcmp(token[6], "x") == 0 && strcmp(token[8], "y") == 0 && strcmp(token[11], "Show") == 0){
-                                        displayMg.addMultimeterTempSpat(token[3],token[4],atof(token[7]),atof(token[9]),true,token[12],true);
+                                }else if(strcmp(token[2], "temporal_all") == 0 && token[6] && token[7] && token[8] && token[9] && token[10] && token[11] && token[12] && token[13] && token[14]){
+                                    if(strcmp(token[6], "x") == 0 && strcmp(token[8], "y") == 0 && strcmp(token[11], "Show") == 0 && strcmp(token[13], "startTime") == 0){
+                                        displayMg.addMultimeterTempSpat(token[3],token[4],atof(token[7]),atof(token[9]),true,token[12],true,atof(token[14]));
                                     }else{
-                                        abort(line,"Expected temporal multimeter parameter list: 'x','y','Show'");
+                                        abort(line,"Expected temporal multimeter parameter list: 'x','y','Show', 'startTime'");
                                         break;
                                     }
-                                }else if(strcmp(token[2], "Linear-Nonlinear") == 0 && token[6] && token[7] && token[8] && token[9] && token[10] && token[11] && token[12] && token[13] && token[14] && token[15] && token[16] && token[17] && token[18] && token[19] && token[20]){
-                                    if(strcmp(token[6], "x") == 0 && strcmp(token[8], "y") == 0 && strcmp(token[10], "segment") == 0 && strcmp(token[12], "interval") == 0 && strcmp(token[14], "start") == 0 && strcmp(token[16], "stop") == 0 && strcmp(token[18], "Show") == 0){
-                                        displayMg.addMultimeterLN(token[3],token[4],atof(token[7]),atof(token[9]),atof(token[11]),atof(token[13]),atof(token[15]),atof(token[17]),token[19]);
+                                }else if(strcmp(token[2], "Linear-Nonlinear") == 0 && token[6] && token[7] && token[8] && token[9] && token[10] && token[11] && token[12] && token[13] && token[14] && token[15] && token[16] && token[17] && token[18] && token[19] && token[20] && token[21] && token[22]){
+                                    if(strcmp(token[6], "x") == 0 && strcmp(token[8], "y") == 0 && strcmp(token[10], "segment") == 0 && strcmp(token[12], "interval") == 0 && strcmp(token[14], "start") == 0 && strcmp(token[16], "stop") == 0 && strcmp(token[18], "rangePlot") == 0 && strcmp(token[20], "Show") == 0){
+                                        displayMg.addMultimeterLN(token[3],token[4],atof(token[7]),atof(token[9]),atof(token[11]),atof(token[13]),atof(token[15]),atof(token[17]),atof(token[19]),token[21]);
                                     }else{
-                                        abort(line,"Expected Linear-Nonlinear multimeter parameter list: 'x','y','segment','interval','start','stop','Show'");
+                                        abort(line,"Expected Linear-Nonlinear multimeter parameter list: 'x','y','segment','interval','start','stop','rangePlot','Show'");
                                         break;
                                     }
                                 }
@@ -908,6 +908,7 @@ void FileReader::parseFile(Retina &retina, DisplayManager &displayMg){
 
                 }else{
                     // Shouldn't we abort here?
+                    // Only God knows this... How can you follow all if-elses?
                 }
 
                 action = 0;

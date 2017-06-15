@@ -94,4 +94,4 @@ retina.multimeter('spatial','Horizontal cells','SNL_horizontal',{'timeStep','200
 retina.multimeter('spatial','Horizontal cells','SNL_horizontal',{'timeStep','200','rowcol','False','value','12'},'Show','True')
 
 # Temporal multimeter of ganglion cell at (5,5)
-retina.multimeter('temporal','Ganglion cell','SNL_ganglion',{'x','5','y','5'},'Show','True')
+retina.multimeter('temporal','Ganglion cell','SNL_ganglion',{'x','5','y','5'},'Show','True','startTime','100')
