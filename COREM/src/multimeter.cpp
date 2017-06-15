@@ -616,11 +616,6 @@ void multimeter::showLNAnalysis(int col, int row, bool lastWindow, bool showDisp
     varianceS /= (numberTrials*(stop-start));
     varianceG /= newNFFT;
 
-    cout << "varianceG = "<< varianceG << endl;
-    cout << "varianceS = "<< varianceS << endl;
-    cout << "F[18] = "<< F[2*18 + 1] << endl;
-    cout << "sqrt(varianceS/varianceG) = "<< sqrt(varianceS/varianceG) << endl;
-
     for(int k=0;k<newNFFT;k++)
         G[2*k+1]*=sqrt(varianceS/varianceG);
 
