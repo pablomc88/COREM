@@ -36,7 +36,7 @@ retina.DisplayWindows('3') # Display windows per row
 # dull cloudy day, and is an order of magnitude higher than the typical mean luminance indoors. 
 
 # Response to a light flash
-retina.Input('impulse',{'start','500.0','stop','750.0','amplitude','400.0','offset','100.0','sizeX','20','sizeY','20'})
+retina.Input('impulse',{'start','500.0','stop','750.0','amplitude','200.0','offset','250.0','sizeX','20','sizeY','20'})
 
 # Input sequence
 #retina.Input('sequence','input_sequences/Weberlaw/0_255/',{'InputFramePeriod','100'})
@@ -63,6 +63,8 @@ retina.Create('SingleCompartment','MB_M_OFF',{'number_current_ports','1.0','numb
 # Horizontal cell H1
 # R_L = 0.1 mOhm, Cm = 100 pF, E_ex = 0 mV, E_L = -60 mV
 retina.Create('SingleCompartment','H1',{'number_current_ports','1.0','number_conductance_ports','2.0','Rm','0.1','Cm','100.0','E',{'0.0','-60.0'}})
+# Delay of 5 ms in the synapse H1 - Bip. cells
+retina.Create('LinearFilter','tmp_H1_delay',{'type','Gamma','tau','5.0','n','0.0'})
 
 ## Nonlinearities
 # Conversion factor of the input stimulus to trolands (modify the slope to transform
@@ -172,7 +174,8 @@ retina.Connect({'w_L_cone_H1',+,'w_M_cone_H1'},'H1','Conductance')
 
 # H1's output
 retina.Connect('H1','Gauss_OPL_surround','Current')
-retina.Connect('Gauss_OPL_surround','SNL_activation_H1_output','Current')
+retina.Connect('Gauss_OPL_surround','tmp_H1_delay','Current')
+retina.Connect('tmp_H1_delay','SNL_activation_H1_output','Current')
 
 # Synaptic connections from horizontal cells to bipolar cells
 retina.Connect('SNL_activation_H1_output','w_H1_MB_L_ON','Current')
