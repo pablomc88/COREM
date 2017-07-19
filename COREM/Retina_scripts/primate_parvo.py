@@ -36,7 +36,7 @@ retina.DisplayWindows('3') # Display windows per row
 # dull cloudy day, and is an order of magnitude higher than the typical mean luminance indoors. 
 
 # Response to a light flash
-retina.Input('impulse',{'start','500.0','stop','750.0','amplitude','200.0','offset','250.0','sizeX','20','sizeY','20'})
+retina.Input('impulse',{'start','500.0','stop','750.0','amplitude','1000.0','offset','100.0','sizeX','20','sizeY','20'})
 
 # Input sequence
 #retina.Input('sequence','input_sequences/Weberlaw/0_255/',{'InputFramePeriod','100'})
@@ -51,14 +51,14 @@ retina.Create('LinearFilter','tmp_photoreceptor_M',{'type','Gamma','tau','15.0',
 retina.Create('LinearFilter','tmp_photoreceptor_M_overshoot',{'type','Gamma','tau','30.0','n','0.0'})
 
 # Midget bipolar cells
-# R_L = 0.1 mOhm, Cm = 100 pF, E_ex = 0 mV, E_in = -70 mV, E_L = -54 mV (ON), E_L = -45 mV (OFF).
+# R_L = 0.1 mOhm, Cm = 100 pF, E_ex = 0 mV, E_in = -70 mV, E_L = -60 mV (ON), E_L = -50 mV (OFF).
 # ON bipolar cells receive excitatory synapses from photoreceptors and horizontal cells.
 # OFF bipolar cells receive excitatory synapses from photoreceptors and inhibitory synapses
 # from horizontal cells
-retina.Create('SingleCompartment','MB_L_ON',{'number_current_ports','1.0','number_conductance_ports','3.0','Rm','0.1','Cm','100.0','E',{'0.0','0.0','-54.0'}})
-retina.Create('SingleCompartment','MB_L_OFF',{'number_current_ports','1.0','number_conductance_ports','3.0','Rm','0.1','Cm','100.0','E',{'0.0','-70.0','-45.0'}})
-retina.Create('SingleCompartment','MB_M_ON',{'number_current_ports','1.0','number_conductance_ports','3.0','Rm','0.1','Cm','100.0','E',{'0.0','0.0','-54.0'}})
-retina.Create('SingleCompartment','MB_M_OFF',{'number_current_ports','1.0','number_conductance_ports','3.0','Rm','0.1','Cm','100.0','E',{'0.0','-70.0','-45.0'}})
+retina.Create('SingleCompartment','MB_L_ON',{'number_current_ports','1.0','number_conductance_ports','3.0','Rm','0.1','Cm','100.0','E',{'0.0','0.0','-60.0'}})
+retina.Create('SingleCompartment','MB_L_OFF',{'number_current_ports','1.0','number_conductance_ports','3.0','Rm','0.1','Cm','100.0','E',{'0.0','-70.0','-50.0'}})
+retina.Create('SingleCompartment','MB_M_ON',{'number_current_ports','1.0','number_conductance_ports','3.0','Rm','0.1','Cm','100.0','E',{'0.0','0.0','-60.0'}})
+retina.Create('SingleCompartment','MB_M_OFF',{'number_current_ports','1.0','number_conductance_ports','3.0','Rm','0.1','Cm','100.0','E',{'0.0','-70.0','-50.0'}})
 
 # Horizontal cell H1
 # R_L = 0.1 mOhm, Cm = 100 pF, E_ex = 0 mV, E_L = -60 mV
@@ -87,37 +87,37 @@ retina.Create('SigmoidNonLinearity','SNL_activation_M_ON',{'slope','-0.25','offs
 retina.Create('SigmoidNonLinearity','SNL_activation_M_OFF',{'slope','0.25','offset','-12.5','max','1.0'})
 
 # Synaptic connections from photoreceptors to bipolar cells (nS)
-retina.Create('StaticNonLinearity','w_L_cone_MB_L_ON',{'slope','3.0','offset','0.0','exponent','1.0'})
-retina.Create('StaticNonLinearity','w_L_cone_MB_L_OFF',{'slope','2.5','offset','0.0','exponent','1.0'})
-retina.Create('StaticNonLinearity','w_M_cone_MB_M_ON',{'slope','3.0','offset','0.0','exponent','1.0'})
-retina.Create('StaticNonLinearity','w_M_cone_MB_M_OFF',{'slope','2.5','offset','0.0','exponent','1.0'})
+retina.Create('StaticNonLinearity','w_L_cone_MB_L_ON',{'slope','5.0','offset','0.0','exponent','1.0'})
+retina.Create('StaticNonLinearity','w_L_cone_MB_L_OFF',{'slope','6.5','offset','0.0','exponent','1.0'})
+retina.Create('StaticNonLinearity','w_M_cone_MB_M_ON',{'slope','5.0','offset','0.0','exponent','1.0'})
+retina.Create('StaticNonLinearity','w_M_cone_MB_M_OFF',{'slope','6.5','offset','0.0','exponent','1.0'})
 
 # Synaptic connections from photoreceptors to horizontal cells (nS)
 retina.Create('StaticNonLinearity','w_L_cone_H1',{'slope','2.0','offset','0.0','exponent','1.0'})
 retina.Create('StaticNonLinearity','w_M_cone_H1',{'slope','2.0','offset','0.0','exponent','1.0'})
 
 # Activation function of the output of H1
-retina.Create('SigmoidNonLinearity','SNL_activation_H1_output',{'slope','0.33','offset','-16.67','max','1.0'})
+retina.Create('SigmoidNonLinearity','SNL_activation_H1_output',{'slope','0.25','offset','-12.5','max','1.0'})
 
 # Synaptic connections from horizontal cells to bipolar cells (nS)
-retina.Create('StaticNonLinearity','w_H1_MB_L_ON',{'slope','2.0','offset','0.0','exponent','1.0'})
-retina.Create('StaticNonLinearity','w_H1_MB_M_ON',{'slope','2.0','offset','0.0','exponent','1.0'})
-retina.Create('StaticNonLinearity','w_H1_MB_L_OFF',{'slope','3.0','offset','0.0','exponent','1.0'})
-retina.Create('StaticNonLinearity','w_H1_MB_M_OFF',{'slope','3.0','offset','0.0','exponent','1.0'})
+retina.Create('StaticNonLinearity','w_H1_MB_L_ON',{'slope','3.5','offset','0.0','exponent','1.0'})
+retina.Create('StaticNonLinearity','w_H1_MB_M_ON',{'slope','3.5','offset','0.0','exponent','1.0'})
+retina.Create('StaticNonLinearity','w_H1_MB_L_OFF',{'slope','5.0','offset','0.0','exponent','1.0'})
+retina.Create('StaticNonLinearity','w_H1_MB_M_OFF',{'slope','5.0','offset','0.0','exponent','1.0'})
 
 # Activation functions of the output of bipolar cells
-retina.Create('SigmoidNonLinearity','SNL_activation_MB_L_ON_output',{'slope','0.33','offset','-11.67','max','1.0'})
-retina.Create('SigmoidNonLinearity','SNL_activation_MB_L_OFF_output',{'slope','0.33','offset','-11.67','max','1.0'})
-retina.Create('SigmoidNonLinearity','SNL_activation_MB_M_ON_output',{'slope','0.33','offset','-11.67','max','1.0'})
-retina.Create('SigmoidNonLinearity','SNL_activation_MB_M_OFF_output',{'slope','0.33','offset','-11.67','max','1.0'})
+retina.Create('SigmoidNonLinearity','SNL_activation_MB_L_ON_output',{'slope','0.25','offset','-10.0','max','1.0'})
+retina.Create('SigmoidNonLinearity','SNL_activation_MB_L_OFF_output',{'slope','0.25','offset','-10.0','max','1.0'})
+retina.Create('SigmoidNonLinearity','SNL_activation_MB_M_ON_output',{'slope','0.25','offset','-10.0','max','1.0'})
+retina.Create('SigmoidNonLinearity','SNL_activation_MB_M_OFF_output',{'slope','0.25','offset','-10.0','max','1.0'})
 
 # Synaptic connections from bipolar cells to ganglion cells (nS).
 # These values have been increased compared to the values indicated in [1] to
 # produce larger firing rates
-retina.Create('StaticNonLinearity','w_MB_L_ON_MG_L_ON',{'slope','35.0','offset','0.0','exponent','1.0'})
-retina.Create('StaticNonLinearity','w_MB_L_OFF_MG_L_OFF',{'slope','35.0','offset','0.0','exponent','1.0'})
-retina.Create('StaticNonLinearity','w_MB_M_ON_MG_M_ON',{'slope','35.0','offset','0.0','exponent','1.0'})
-retina.Create('StaticNonLinearity','w_MB_M_OFF_MG_M_OFF',{'slope','35.0','offset','0.0','exponent','1.0'})
+retina.Create('StaticNonLinearity','w_MB_L_ON_MG_L_ON',{'slope','4.0','offset','0.0','exponent','1.0'})
+retina.Create('StaticNonLinearity','w_MB_L_OFF_MG_L_OFF',{'slope','4.0','offset','0.0','exponent','1.0'})
+retina.Create('StaticNonLinearity','w_MB_M_ON_MG_M_ON',{'slope','4.0','offset','0.0','exponent','1.0'})
+retina.Create('StaticNonLinearity','w_MB_M_OFF_MG_M_OFF',{'slope','4.0','offset','0.0','exponent','1.0'})
 
 ## Spatial filters
 # Outer Plexiform Layer

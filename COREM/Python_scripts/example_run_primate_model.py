@@ -104,7 +104,7 @@ for j in np.arange(len(IDs)):
     if j==0:
         Vax.set_ylabel('td')
     else:
-        Vax.set_ylabel('trolands (td)')
+        Vax.set_ylabel('Amplitude')
 
     if current_col < cols-1:
         current_col+=1
@@ -165,12 +165,12 @@ if use_NEST:
     # Midget ganglion cells
     retina_parvo_ganglion_cell_params = {
     "C_m": 100.0,
-    "g_L": 20.0,
+    "g_L": 10.0,
     "E_ex": 0.0,
     "E_in": -70.0,
     "E_L": -60.0,
     "V_th": -55.0,
-    "V_reset": -65.0,
+    "V_reset": -60.0,
     "t_ref":  2.0,
     "rate": 0.0
     }
