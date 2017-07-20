@@ -1,8 +1,8 @@
 ###################################################################################
 ##                                                                               ##
 ## Model of the primate Parvocellular pathway implemented with conductance-based ##
-## neurons. Adapted from the model proposed in [1]. Most of the parameters of    ##
-## this model correspond to the parameters specified in Tables 1 and 2 in [1].   ##
+## neurons. Adapted from the model proposed in [1]. Some parameters of this      ##
+## model are different from the parameters specified in Tables 1 and 2 in [1].   ##
 ## Amacrine cells have not been considered in this first version of the model.   ##
 ## Comment and uncomment the two different types of visual stimuli to see the    ##
 ## effects on the retinal cells' responses.                                      ##
@@ -112,8 +112,6 @@ retina.Create('SigmoidNonLinearity','SNL_activation_MB_M_ON_output',{'slope','0.
 retina.Create('SigmoidNonLinearity','SNL_activation_MB_M_OFF_output',{'slope','0.25','offset','-10.0','max','1.0'})
 
 # Synaptic connections from bipolar cells to ganglion cells (nS).
-# These values have been increased compared to the values indicated in [1] to
-# produce larger firing rates
 retina.Create('StaticNonLinearity','w_MB_L_ON_MG_L_ON',{'slope','4.0','offset','0.0','exponent','1.0'})
 retina.Create('StaticNonLinearity','w_MB_L_OFF_MG_L_OFF',{'slope','4.0','offset','0.0','exponent','1.0'})
 retina.Create('StaticNonLinearity','w_MB_M_ON_MG_M_ON',{'slope','4.0','offset','0.0','exponent','1.0'})
