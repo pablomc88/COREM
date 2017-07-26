@@ -106,10 +106,10 @@ retina.Create('StaticNonLinearity','w_H1_MB_L_OFF',{'slope','6.0','offset','0.0'
 retina.Create('StaticNonLinearity','w_H1_MB_M_OFF',{'slope','6.0','offset','0.0','exponent','1.0'})
 
 # Activation functions of the output of bipolar cells
-retina.Create('SigmoidNonLinearity','SNL_activation_MB_L_ON_output',{'slope','0.5','offset','-18.0','max','1.0'})
-retina.Create('SigmoidNonLinearity','SNL_activation_MB_L_OFF_output',{'slope','0.5','offset','-18.0','max','1.0'})
-retina.Create('SigmoidNonLinearity','SNL_activation_MB_M_ON_output',{'slope','0.5','offset','-18.0','max','1.0'})
-retina.Create('SigmoidNonLinearity','SNL_activation_MB_M_OFF_output',{'slope','0.5','offset','-18.0','max','1.0'})
+retina.Create('SigmoidNonLinearity','SNL_activation_MB_L_ON_output',{'slope','0.5','offset','-18.5','max','1.0'})
+retina.Create('SigmoidNonLinearity','SNL_activation_MB_L_OFF_output',{'slope','0.5','offset','-18.5','max','1.0'})
+retina.Create('SigmoidNonLinearity','SNL_activation_MB_M_ON_output',{'slope','0.5','offset','-18.5','max','1.0'})
+retina.Create('SigmoidNonLinearity','SNL_activation_MB_M_OFF_output',{'slope','0.5','offset','-18.5','max','1.0'})
 
 # Synaptic connections from bipolar cells to ganglion cells (nS).
 retina.Create('StaticNonLinearity','w_MB_L_ON_MG_L_ON',{'slope','30.0','offset','0.0','exponent','1.0'})
