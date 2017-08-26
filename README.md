@@ -2,7 +2,7 @@
 
 COREM is a configurable retina simulator that has been implemented within the framework of the Human Brain Project (HBP). The software platform can be interfaced with neural simulators (e.g., NEST) to connect with models of higher visual areas and with the Neurorobotics Platform of the HBP. The code is implemented in C++ and computations of spatiotemporal equations are optimized by means of recursive filtering techniques and multithreading.
 
-Most retina simulators are more focused on fitting specific retina functions. By contrast, the versatility of COREM allows the configuration of different retina models using a set of basic retina computational primitives. We implemented a series of example retina models by combining these primitives that are included in the software package.
+Most retina simulators are more focused on fitting specific retina functions. By contrast, the versatility of COREM allows the configuration of different retina models using a set of basic retina computational primitives. Several example retina models are included in the software package for ready use.
 
 The code has been extensively tested in Linux. The software can be also adapted to Mac OS. Installation instructions as well as the user manual can be found in the [wiki](https://github.com/pablomc88/COREM/wiki). COREM is the result of a research work and its associated publication is:
 
