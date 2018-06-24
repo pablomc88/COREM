@@ -31,23 +31,23 @@ retina.Input('sequence','input_sequences/Weberlaw/0_255/',{'InputFramePeriod','1
 ### Creation of computational retinal microcircuits ###
 
 # Temporal modules
-retina.Create('LinearFilter','tmp_photoreceptors',{'type','Gamma','tau','30.0','n','10.0'})
-retina.Create('LinearFilter','tmp_horizontal',{'type','Gamma','tau','20.0','n','1.0'})
+retina.Create('LinearFilter','tmp_photoreceptors',{'type','Gamma','tau','20.0','n','10.0'})
+retina.Create('LinearFilter','tmp_horizontal',{'type','Gamma','tau','10.0','n','1.0'})
 retina.Create('SingleCompartment','tmp_bipolar',{'number_current_ports','1.0','number_conductance_ports','2.0','Rm','0.0','Cm','100.0','E',{'0.0','0.0'}})
-retina.Create('LinearFilter','tmp_amacrine',{'type','Gamma','tau','10.0','n','1.0'})
+retina.Create('LinearFilter','tmp_amacrine',{'type','Gamma','tau','5.0','n','1.0'})
 
 # Spatial filters
-retina.Create('GaussFilter','Gauss_horizontal',{'sigma','0.3','spaceVariantSigma','False'})
-retina.Create('GaussFilter','Gauss_bipolar',{'sigma','0.1','spaceVariantSigma','False'})
-retina.Create('GaussFilter','Gauss_amacrine',{'sigma','0.3','spaceVariantSigma','False'})
-retina.Create('GaussFilter','Gauss_ganglion',{'sigma','0.2','spaceVariantSigma','False'})
+retina.Create('GaussFilter','Gauss_horizontal',{'sigma','0.1','spaceVariantSigma','False'})
+retina.Create('GaussFilter','Gauss_bipolar',{'sigma','0.05','spaceVariantSigma','False'})
+retina.Create('GaussFilter','Gauss_amacrine',{'sigma','0.1','spaceVariantSigma','False'})
+retina.Create('GaussFilter','Gauss_ganglion',{'sigma','0.1','spaceVariantSigma','False'})
 
 # Nonlinearities
-retina.Create('StaticNonLinearity','SNL_photoreceptors',{'slope','-0.1','offset','0.0','exponent','1.0'})
+retina.Create('StaticNonLinearity','SNL_photoreceptors',{'slope','-0.01','offset','0.0','exponent','1.0'})
 retina.Create('StaticNonLinearity','SNL_horizontal',{'slope','1.0','offset','0.0','exponent','1.0'})
-retina.Create('StaticNonLinearity','SNL_amacrine',{'slope','0.2','offset','1.0','exponent','2.0'})
-retina.Create('StaticNonLinearity','SNL_bipolar',{'slope','10.0','offset','0.0','exponent','1.0','threshold','0.0'})
-retina.Create('StaticNonLinearity','SNL_ganglion',{'slope','5.0','offset','0.0','exponent','1.0'})
+retina.Create('StaticNonLinearity','SNL_amacrine',{'slope','1.0','offset','0.5','exponent','2.0'})
+retina.Create('StaticNonLinearity','SNL_bipolar',{'slope','10.0','offset','0.0','exponent','1.0'})
+retina.Create('StaticNonLinearity','SNL_ganglion',{'slope','100.0','offset','0.0','exponent','1.0','threshold','0.0'})
 
 ### Connections ###
 
