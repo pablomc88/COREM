@@ -32,7 +32,7 @@ DisplayManager::~DisplayManager(void){
         delete displays.back();
         displays.pop_back();
     }
-    
+
     while(!multimeters.empty()) {
         delete multimeters.back();
         multimeters.pop_back();
@@ -52,7 +52,7 @@ DisplayManager::~DisplayManager(void){
 
     if(inputImage != NULL)
         delete inputImage;
-        
+
     if(templateBar != NULL)
         delete templateBar;
 }
@@ -119,7 +119,7 @@ bool DisplayManager::setSizeX(int x){
 }
 
 bool DisplayManager::setSizeY(int y){
-    bool ret_correct;    
+    bool ret_correct;
     if (y>0){
         sizeY = y;
         ret_correct=true;
@@ -379,6 +379,11 @@ void DisplayManager::updateDisplay(CImg <double> *input, Retina &retina, int sim
             // find maximum and minimum values
             min = findMin(intermediateImages[k]);
             max = findMax(intermediateImages[k]);
+
+            if (abs(min) < 1)
+              min = 0;
+            if (abs(max) < 1)
+              max = 0;
 
             // draw them
             std::ostringstream strs1,strs2;
