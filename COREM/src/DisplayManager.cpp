@@ -380,9 +380,10 @@ void DisplayManager::updateDisplay(CImg <double> *input, Retina &retina, int sim
             min = findMin(intermediateImages[k]);
             max = findMax(intermediateImages[k]);
 
-            if (abs(min) < 1)
+            // do not show small values
+            if (abs(min) < 0.1)
               min = 0;
-            if (abs(max) < 1)
+            if (abs(max) < 0.1)
               max = 0;
 
             // draw them
